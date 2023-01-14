@@ -100,9 +100,6 @@ class Entity
 	self.topic_command=['cmnd',TOPIC, string.toupper(self.name_sanitized)].concat('/')		
 	self.topic_state=['stat',TOPIC,string.toupper(self.name_sanitized)].concat('/')	
 	self.topic_announce=['homeassistant',self.platform,TOPIC,self.get_unique_id(),self.mac,'config'].concat('/')    
-
-    mqtt.publish(self.topic_command,'unknown')
-    mqtt.publish(self.topic_state,'unknown')
 	
     handle_outgoings= handle_outgoings ? handle_outgoings : {} 
     var closure_state 
