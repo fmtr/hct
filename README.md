@@ -5,7 +5,7 @@ This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simpli
 
 ## Do I Need This? Can't I Do this with Native Tasmota?
 
-You certainly can. But in my experience, the process is so fiddly, error-prone and hard to maintain that it's enough to deter the casual user (as I am) entirely. Plus, sharing your configuration, once you've finally got it working, can mean complex step-by-step guides, setting up rules, finding MAC addresses and topics (in Tasmota) - and numerious Blueprints, Helpers and Templates (on the Home Assistant side).
+You certainly can. But in my experience, the process is so fiddly, error-prone and hard to maintain that it's enough to deter the casual user (as I am) entirely. Plus, sharing your configuration, once you've finally got it working, can mean complex step-by-step guides, setting up triggers, finding MAC addresses and topics (in Tasmota) - and numerious Blueprints, Helpers and Templates (on the Home Assistant side).
 
 With `hct`, on the other hand, the thorny parts of the initial setup are abstracted away and your final configuration can be shared via a one-liner.
 
@@ -28,7 +28,13 @@ Frist we import this library.
 import hct
 ```
 
-Then we write a very simple handler function to tell Tasmota about changes on the Home Assistant side.
+Next we specify the options to show in our pull-down. This could be a list of strings (e.g. `['Foo','Bar']`) - or a mapping from "friendly" values to show in Home Assistant, to corresponding data on the Tasmota side. So here we map food descriptions to their Tuya IDs.
+
+```be
+options={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4, 'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
+```
+
+Then we write a very simple handler function to set those Tuya IDs on the Tasmota side, when their values are selected in Home Assistant.
 
 ```be   
 def set_cookbook_entry(value)
@@ -36,26 +42,26 @@ def set_cookbook_entry(value)
 end
 ```
 
-Next we specify this options to show in our pull-down. This could be a list of strings (e.g. `['Foo','Bar']`) - or a mapping from "friendly" values to show in Home Assistant, and corresponding data on the Tasmota side. So here we map food descriptions to their Tuya IDs.
+Now we specify a trigger defining when a change has happened on the Tasmota side that needs to be reflected in Home Assistant.
 
 ```be
-options={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4, 'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
+trigger='tuyareceived#dptype4id3'
 ```
 
-Now, we define a pull-down (Select).
+With that all done, we can we define a pull-down (`hct.Select`) object.
 
 ```be
 var select=Select(   
-    'Air Fryer Cookbook',                     # Name   
+    'Air Fryer Cookbook',                     # Entity name   
     cookbook_data,                            # The options we defined above.
     nil,                                      # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
-    'mdi:book-open-variant',                  # Icon the entity should have in Home Assistant
-    {                                         # Mapping from rules to outgoing handlers. Since we don't need any additional logic here, we can leave this as `nil`.
-        'tuyareceived#dptype4id3': nil
-    },                          
-        set_cookbook_entry                   # Incoming handler we defined above.
+    'mdi:book-open-variant',                  # Icon the entity should have in Home Assistant    
+    trigger                                   # Our trigger as above.  
+    set_cookbook_entry                        # The handler function we defined above.
     )
 )
 ```
 
-That's it. Now `hct` will handle everything else - like announcing the entity via MQTT, subscribing to the relevant topics, associating the entity with its parent device, translating Home Assistant to the provided IDs, etc. - for you. And sharing what you've done just means sharing the above script.
+That's it. Now `hct` will handle everything else - like announcing the entity via MQTT, subscribing to the relevant topics, associating the entity with its parent device, translating Home Assistant to the provided IDs, etc. - for you.
+
+And sharing what you've done just means sharing the above script.
