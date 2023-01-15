@@ -3,7 +3,7 @@
 ## Installing
 
 Simply paste the following into you Berry console
-```
+```be
 tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/master/hct.be','test.be')
 ```
 
