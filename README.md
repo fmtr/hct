@@ -20,7 +20,7 @@ Alternatively, manually download [hct.be](https://raw.githubusercontent.com/fmtr
 
 ## Example
 
-This is a real-world example of implementing the cookbook pull-down menu for a Proscenic T21 air fryer. It handles defining a friendly pull-down list of food types on the Home Assistant side and mapping those values their corresponding values required by the Tuya driver on the Tasmota side.
+This is a real-world example of implementing the cookbook pull-down menu for a Proscenic T21 air fryer. It handles defining a friendly pull-down list of food types on the Home Assistant side and mapping those values to the corresponding values required by the Tuya driver on the Tasmota side.
 
 Frist we import this library.
 
@@ -31,30 +31,31 @@ import hct
 Then we write a very simple handler function to tell Tasmota about changes on the Home Assistant side.
 
 ```be   
-    def set_cookbook_entry(value)
-        tasmota.cmd('TuyaSend4 '+str(value))
-    end
+def set_cookbook_entry(value)
+    tasmota.cmd('TuyaSend4 '+str(value))
+end
+```
+
+Next we specify this options to show in our pull-down. This could be a list of strings (e.g. `['Foo','Bar']`) - or a mapping from "friendly" values to show in Home Assistant, and corresponding data on the Tasmota side. So here we map food descriptions to their Tuya IDs.
+
+```be
+options={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4, 'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
 ```
 
 Now, we define a pull-down (Select).
 
 ```be
-    var select=Select(   
-        'Air Fryer Cookbook',                     # Name   
-        {                                         # Options   
-                'Default':0, 'Fries':1,'Shrimp':2,
-                'Pizza':3,'Chicken':4, 'Fish':5,
-                'Steak':6,'Cake':7,'Bacon':8,
-                'Preheat':9,'Custom':10
-            },
-        nil,                                      # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
-        'mdi:book-open-variant',                  # Icon the entity should have in Home Assistant
-        {                                         # Mapping from rules to outgoing handlers. Since we don't need any additional logic here, we can leave this as `nil`.
-                'tuyareceived#dptype4id3': nil
-            },                          
-            set_cookbook_entry                   # Incoming handler we defined above.
-        )
+var select=Select(   
+    'Air Fryer Cookbook',                     # Name   
+    cookbook_data,                            # The options we defined above.
+    nil,                                      # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
+    'mdi:book-open-variant',                  # Icon the entity should have in Home Assistant
+    {                                         # Mapping from rules to outgoing handlers. Since we don't need any additional logic here, we can leave this as `nil`.
+        'tuyareceived#dptype4id3': nil
+    },                          
+        set_cookbook_entry                   # Incoming handler we defined above.
     )
+)
 ```
 
 That's it. Now `hct` will handle everything else - like announcing the entity via MQTT, subscribing to the relevant topics, associating the entity with its parent device, translating Home Assistant to the provided IDs, etc. - for you. And sharing what you've done just means sharing the above script.
