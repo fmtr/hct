@@ -1,6 +1,6 @@
 # Home Assistant Controls for Tasmota
 
-This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simplify the process of exposing Home Assistant controls (e.g. Pull-down Lists, Number Sliders, Text Boxes, etc.) from a Tasmota device - and handling the communication between each side.
+This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simplify the process of exposing Home Assistant controls (e.g. Pull-down Lists, Number Sliders, Text Boxes, etc.) from a Tasmota device - and handling the communication between both sides.
 
 
 ## Do I Need This? Can't I Do this with Native Tasmota?
@@ -13,7 +13,7 @@ With `hct`, on the other hand, the thorny parts of the initial setup are abstrac
 
 Simply paste the following into you Berry console
 ```be
-tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/master/hct.be','test.be')
+tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/master/hct.be','/hct.be')
 ```
 
 Alternatively, manually download [hct.be](https://raw.githubusercontent.com/fmtr/hct/master/hct.be) and upload it onto your device.
