@@ -18,6 +18,14 @@ def get_topic()
     return topic
 end
 
+def get_device_name()
+    var device_name=tasmota.cmd('DeviceName').find('DeviceName')
+    if !device_name
+        raise "Couldn't get device name"
+    end
+    return device_name
+end
+
 def to_chars(s)
     var chars=[]
     for i: 0..(size(s)-1) 
@@ -26,12 +34,9 @@ def to_chars(s)
     return chars
 end
 
-
-
-
-
 CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789_-')
 TOPIC=get_topic()
+DEVICE_NAME=get_device_name()
 TOPIC_LWT=['tele',TOPIC,'LWT'].concat('/')	
 MAC=get_mac()
 TYPES_LITERAL=['string','int','real']
@@ -65,16 +70,6 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
 
   end
   
-  def handle_state_default(value, trigger, message)
-    var value_str={'value':value,'trigger':trigger,'message':message}.tostring()
-	print('State Handler got '+value_str)
-    print('Either provide a function/closure as a `handle_outgoings` parameter, or override the `handle_outgoings` method')
-
-  end
-
-
-	
-
 class Entity
 
   static var platform=nil
@@ -92,26 +87,26 @@ class Entity
   def init(name, entity_id, icon, handle_outgoings, handle_incoming)
   
     self.name=name
-	self.entity_id=nil
+	self.entity_id=entity_id
     self.icon=icon	
 
     self.name_sanitized=sanitize_name(self.name)		
 
 	self.topic_command=['cmnd',TOPIC, string.toupper(self.name_sanitized)].concat('/')		
 	self.topic_state=['stat',TOPIC,string.toupper(self.name_sanitized)].concat('/')	
-	self.topic_announce=['homeassistant',self.platform,TOPIC,self.get_unique_id(),self.mac,'config'].concat('/')    
+	self.topic_announce=['homeassistant',self.platform,TOPIC,self.get_unique_id(),'config'].concat('/')    
 	
     handle_outgoings= handle_outgoings ? handle_outgoings : {} 
     var closure_state 
     var handler
     for rule: handle_outgoings.keys()
-        handler=handle_outgoings[rule]
+        handler=handle_outgoings[rule] ? handle_outgoings[rule] : (/ value -> value)
         closure_state=(
             / value trigger message -> 
             mqtt.publish(
                 self.topic_state, 
                 infer_serialisation(
-                    handler(value, trigger, message)
+                    handler(self.translate_value_out(value), value, trigger, message)
                 )
             )
         )
@@ -123,17 +118,24 @@ class Entity
         / topic code value value_bytes -> 
         bool(
                 [
-                    handle_incoming(self.options_map.find(value), topic, code, value, value_bytes), 
+                    handle_incoming(self.translate_value_in(value), topic, code, value, value_bytes), 
                     mqtt.publish(self.topic_state,value)
                 ]
             )
     )
 	mqtt.subscribe(self.topic_command, closure_command)
-
     tasmota.add_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())
     self.announce()
 	
 	    
+  end
+
+  def translate_value_in(value)
+    return value
+  end
+
+  def translate_value_out(value)
+    return value
   end
 
   def get_unique_id()
@@ -159,7 +161,7 @@ class Entity
 		'device': {
             'connections': [['mac', self.mac]],
             'identifiers': self.mac
-            },
+        },
         'name': self.name,
 		'unique_id': self.get_unique_id(),		
 		'force_update': True,
@@ -182,8 +184,6 @@ class Entity
 	return mqtt.publish(self.topic_announce, json.dump(self.get_data_announce()))
   end
   
-
-  
 end
 
 
@@ -191,7 +191,8 @@ class Select : Entity
 
       static var platform='select'
 	  var options
-	  var options_map      
+	  var options_map_in      
+      var options_map_out     
 
 	def init(name, options, entity_id, icon, handle_outgoings, handle_incoming)
 	  
@@ -200,20 +201,25 @@ class Select : Entity
         
         self.options=options
         
-        self.options_map={} 
+        self.options_map_in={} 
         for option: options
-          self.options_map[option]=option		
+          self.options_map_in[option]=option		
         end	  	  
         
       else
         
-        self.options_map=options
+        self.options_map_in=options
   
         self.options=[] 
         for option: options.keys()
           self.options.push(option)
         end	
         
+      end
+
+      self.options_map_out={}
+      for key: self.options_map_in.keys()
+        self.options_map_out[self.options_map_in[key]]=key
       end
 
       super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
@@ -228,46 +234,74 @@ class Select : Entity
         return data
 
     end
-end
 
-
-# Write an incoming handler to tell Tasmota about changes on the Home Assistant side.
-
-def set_relay_state(value)
-    
-    print('USER Command Handler got '+[value].tostring())
-
-    if value=='H'
-        tasmota.set_power(1,true)
-    else
-        tasmota.set_power(1,false)
+    def translate_value_in(value)
+        return self.options_map_in.find(value)
     end
-end
 
-# Write an outgoing handler to tell Home Assistant about changes on the Tasmota side.
-
-def publish_relay_state(value)
-
-    print('USER State/Outgoing Handler got '+[value].tostring())
-    
-    if tasmota.get_power()[1]
-        return 'H'
-    else
-        return 'L'
+    def translate_value_out(value)
+        return self.options_map_out.find(value)
     end
+
 end
 
-select=Select(   
-   'West Window Speed Select',              # Name   
-   {'L':'L','M':'M','H':'H'},               # Options   
-   nil,                                     # Entity ID
-   'mdi:alert',                             # Icon
-   {                                        # Mapping from rules to outgoing handlers, 
-    'Power2':publish_relay_state, 
-    'Mqtt#Connected': publish_relay_state
+
+def run_demo()
+    # Write an incoming handler to tell Tasmota about changes on the Home Assistant side.
+
+    def set_cookbook_entry(value)
+
+        var cmd=['TuyaSend4',value].concat(' ')
+        print('Tuya CMD: '+cmd)
+
+        tasmota.cmd('TuyaSend4 '+str(value))
+        
+        print('USER Command Handler got '+[value].tostring())
+
+        if value=='Pizza'
+            tasmota.set_power(1,true)
+        else
+            tasmota.set_power(1,false)
+        end
+    end
+
+    # Write an outgoing handler to tell Home Assistant about changes on the Tasmota side.
+
+    def publish_cookbook_entry(value)
+        return value
+        
+
+        print('USER State/Outgoing Handler got '+{        
+            'value':value, 
+            #'value_raw':value_raw,'trigger':trigger,'message':message,
+            #'val_trans_ent':entity.translate_value_out(value_raw['State'])
+            }.tostring())
+        
+        if tasmota.get_power()[1]
+            return 'Pizza'
+        else
+            return 'Default'
+        end
+    end
+
+    var select=Select(   
+    'Development Cookbook',                  # Name   
+    {                                        # Options   
+            'Default':0, 'Fries':1,'Shrimp':2,
+            'Pizza':3,'Chicken':4, 'Fish':5,
+            'Steak':6,'Cake':7,'Bacon':8,
+            'Preheat':9,'Custom':10
+        },
+    'dev_cookbook',                          # Entity ID
+    'mdi:book-open-variant',                 # Icon
+    {                                        # Mapping from rules to outgoing handlers
+            'Power2#State': nil
     },                          
-    set_relay_state                          # Incoming handler, to tell Tasmota about changes on the Home Assistant side.
-   )
+        set_cookbook_entry                      # Incoming handler, to tell Tasmota about changes on the Home Assistant side.
+    )
 
-print(select.get_unique_id())
+end
+
+
+#run_demo()
 
