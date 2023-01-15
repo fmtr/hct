@@ -20,7 +20,7 @@ Alternatively, manually download [hct.be](https://raw.githubusercontent.com/fmtr
 
 ## Example
 
-This is a real-world example of implementing the cookbook pull-down menu for a Proscenic T21 air fryer. It handles defining a friendly pull-down list of food types on the Home Assistant side and mapping those values to the corresponding values required by the Tuya driver on the Tasmota side.
+This is a real-world example of implementing the cookbook pull-down menu for a Proscenic T21 air fryer. It handles defining a friendly pull-down list of food types on the Home Assistant side and mapping those values to the corresponding IDs required by the Tuya driver on the Tasmota side.
 
 Frist we import this library.
 
@@ -28,13 +28,13 @@ Frist we import this library.
 import hct
 ```
 
-Next we specify the options to show in our pull-down. This could be a list of strings (e.g. `['Foo','Bar']`) - or a mapping from "friendly" values to show in Home Assistant, to corresponding data on the Tasmota side. So here we map food descriptions to their Tuya IDs.
+Next we specify the options to show in our pull-down. This could be a list of strings (e.g. `['Foo','Bar']`) - or a mapping from "friendly" values to show in Home Assistant, to corresponding data on the Tasmota side. So here we map food descriptions to their IDs.
 
 ```be
 options={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4, 'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
 ```
 
-Then we write a very simple handler function to set those Tuya IDs on the Tasmota side, when their values are selected in Home Assistant.
+Then we write a very simple handler function to set those Tuya IDs (the `value` argument) on the Tasmota side, when their names are selected in Home Assistant.
 
 ```be   
 def set_cookbook_entry(value)
@@ -48,17 +48,16 @@ Now we specify a trigger defining when a change has happened on the Tasmota side
 trigger='tuyareceived#dptype4id3'
 ```
 
-With that all done, we can we define a pull-down (`hct.Select`) object.
+With that all done, we can define a pull-down (`hct.Select`) object.
 
 ```be
-var select=Select(   
-    'Air Fryer Cookbook',                     # Entity name   
-    cookbook_data,                            # The options we defined above.
-    nil,                                      # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
-    'mdi:book-open-variant',                  # Icon the entity should have in Home Assistant    
-    trigger                                   # Our trigger as above.  
-    set_cookbook_entry                        # The handler function we defined above.
-    )
+var select=hct.Select(   
+    'Air Fryer Cookbook',    # Entity name   
+    options,                 # The options we defined above.
+    nil,                     # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
+    'mdi:chef-hat',          # Icon the entity should have in Home Assistant    
+    trigger                  # Our trigger as above.  
+    set_cookbook_entry       # The handler function we defined above.
 )
 ```
 
