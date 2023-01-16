@@ -39,7 +39,7 @@ TOPIC=get_topic()
 DEVICE_NAME=get_device_name()
 TOPIC_LWT=['tele',TOPIC,'LWT'].concat('/')	
 MAC=get_mac()
-TYPES_LITERAL=['string','int','real']
+TYPES_LITERAL=['string']
 RULE_MQTT_CONNECTED='Mqtt#Connected'
 
 def infer_serialisation(value)    
@@ -189,119 +189,106 @@ end
 
 class Select : Entity
 
-      static var platform='select'
-	  var options
-	  var options_map_in      
-      var options_map_out     
+    static var platform='select'
+    var options
+    var options_map_in      
+    var options_map_out     
 
-	def init(name, options, entity_id, icon, handle_outgoings, handle_incoming)
-	  
+  def init(name, options, entity_id, icon, handle_outgoings, handle_incoming)
+    
 
-      if classname(options)=='list'       
-        
-        self.options=options
-        
-        self.options_map_in={} 
-        for option: options
-          self.options_map_in[option]=option		
-        end	  	  
-        
-      else
-        
-        self.options_map_in=options
-  
-        self.options=[] 
-        for option: options.keys()
-          self.options.push(option)
-        end	
-        
-      end
+    if classname(options)=='list'       
+      
+      self.options=options
+      
+      self.options_map_in={} 
+      for option: options
+        self.options_map_in[option]=option		
+      end	  	  
+      
+    else
+      
+      self.options_map_in=options
 
-      self.options_map_out={}
-      for key: self.options_map_in.keys()
-        self.options_map_out[self.options_map_in[key]]=key
-      end
-
-      super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
-
-	end
-
-    def get_data_announce()
-  
-        var data=super(self).get_data_announce()
-        data['options']=self.options        
-
-        return data
-
+      self.options=[] 
+      for option: options.keys()
+        self.options.push(option)
+      end	
+      
     end
 
-    def translate_value_in(value)
-        return self.options_map_in.find(value)
+    self.options_map_out={}
+    for key: self.options_map_in.keys()
+      self.options_map_out[self.options_map_in[key]]=key
     end
 
-    def translate_value_out(value)
-        return self.options_map_out.find(value)
-    end
+    super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+
+  end
+
+  def get_data_announce()
+
+      var data=super(self).get_data_announce()
+      data['options']=self.options        
+
+      return data
+
+  end
+
+  def translate_value_in(value)
+      return self.options_map_in.find(value)
+  end
+
+  def translate_value_out(value)
+      return self.options_map_out.find(value)
+  end
 
 end
 
 
-def run_demo()
-    # Write an incoming handler to tell Tasmota about changes on the Home Assistant side.
+class Number : Entity
 
-    def set_cookbook_entry(value)
+    static var platform='number'
+    var min
+    var max
+    var step
 
-        var cmd=['TuyaSend4',value].concat(' ')
-        print('Tuya CMD: '+cmd)
+  def init(name, min, max, step, entity_id, icon, handle_outgoings, handle_incoming)
+    
+    self.min=min
+    self.max=max
+    self.step=step
 
-        tasmota.cmd('TuyaSend4 '+str(value))
-        
-        print('USER Command Handler got '+[value].tostring())
+    super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
 
-        if value=='Pizza'
-            tasmota.set_power(1,true)
-        else
-            tasmota.set_power(1,false)
-        end
+  end
+
+  def is_int()
+
+    return self.step==nil || self.step==1
+
+  end
+
+  def get_data_announce()
+
+      var data=super(self).get_data_announce()
+
+      if self.min data['min']=self.min end
+      if self.max data['max']=self.max end
+      if self.step data['step']=self.step end      
+
+      return data
+
+  end
+
+  def translate_value_in(value)
+
+    if self.is_int()
+        return int(value)
+    else
+        return real(value)
     end
-
-    # Write an outgoing handler to tell Home Assistant about changes on the Tasmota side.
-
-    def publish_cookbook_entry(value)
-        return value
-        
-
-        print('USER State/Outgoing Handler got '+{        
-            'value':value, 
-            #'value_raw':value_raw,'trigger':trigger,'message':message,
-            #'val_trans_ent':entity.translate_value_out(value_raw['State'])
-            }.tostring())
-        
-        if tasmota.get_power()[1]
-            return 'Pizza'
-        else
-            return 'Default'
-        end
-    end
-
-    var select=Select(   
-    'Development Cookbook',                  # Name   
-    {                                        # Options   
-            'Default':0, 'Fries':1,'Shrimp':2,
-            'Pizza':3,'Chicken':4, 'Fish':5,
-            'Steak':6,'Cake':7,'Bacon':8,
-            'Preheat':9,'Custom':10
-        },
-    'dev_cookbook',                          # Entity ID
-    'mdi:book-open-variant',                 # Icon
-    {                                        # Mapping from rules to outgoing handlers
-            'Power2#State': nil
-    },                          
-        set_cookbook_entry                      # Incoming handler, to tell Tasmota about changes on the Home Assistant side.
-    )
+  end
 
 end
-
-
-#run_demo()
 
