@@ -1,6 +1,7 @@
 import mqtt
 import json
 import string
+import math
 
 def get_mac()
     var mac=tasmota.eth().find('mac', tasmota.wifi().find('mac', nil))	
@@ -54,10 +55,10 @@ def sanitize_name(s, sep)
     sep= sep ? sep : '-'
     var chars=[]
     for c: to_chars(string.tolower(s))
-        if CHARS_ALLOWED.find(c)
-            chars.push(c)
-        else
+        if CHARS_ALLOWED.find(c)==nil
             chars.push(sep)
+        else
+            chars.push(c)
         end        
     end 
     return chars.concat()
@@ -69,6 +70,31 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
     print('Either provide a function/closure as a `handle_incoming` parameter, or override the `handle_incoming` method')
 
   end
+
+  def handle_outgoing_wrapper(handler, entity, value_raw, trigger, message)
+
+    var value=entity.translate_value_out(value_raw)
+    var output_raw=handler(value,entity, value_raw, trigger, message)
+    if output_raw==nil 
+        output_raw=value
+    end
+    var output=infer_serialisation(output_raw)
+    mqtt.publish(entity.topic_state,output)    
+
+end
+
+def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes)
+
+    var value=entity.translate_value_in(value_raw)
+    var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
+    if output_raw==nil 
+        output_raw=value
+    end
+    var output=infer_serialisation(output_raw)
+    mqtt.publish(entity.topic_state,output)   
+    return true 
+
+end
   
 class Entity
 
@@ -95,35 +121,38 @@ class Entity
 	self.topic_command=['cmnd',TOPIC, string.toupper(self.name_sanitized)].concat('/')		
 	self.topic_state=['stat',TOPIC,string.toupper(self.name_sanitized)].concat('/')	
 	self.topic_announce=['homeassistant',self.platform,TOPIC,self.get_unique_id(),'config'].concat('/')    
+
+    print(handle_outgoings)
+    print(handle_incoming)
+
+    if type(handle_outgoings)=='string'
+        handle_outgoings={(/ value -> value):handle_outgoings}
+    end
 	
-    handle_outgoings= handle_outgoings ? handle_outgoings : {} 
-    var closure_state 
-    var handler
-    for rule: handle_outgoings.keys()
-        handler=handle_outgoings[rule] ? handle_outgoings[rule] : (/ value -> value)
-        closure_state=(
-            / value trigger message -> 
-            mqtt.publish(
-                self.topic_state, 
-                infer_serialisation(
-                    handler(self.translate_value_out(value), value, trigger, message)
-                )
+    handle_outgoings= handle_outgoings ? handle_outgoings : {}
+
+    var closure_outgoing         
+    for handler: handle_outgoings.keys()
+        var trigger_handlers=handle_outgoings[handler]        
+        if type(trigger_handlers)=='string'
+            trigger_handlers=[trigger_handlers]
+        end
+        for trigger_handler: trigger_handlers
+            closure_outgoing=(
+                / value trigger message -> 
+                handle_outgoing_wrapper(handler, self, value, trigger, message)
             )
-        )
-        tasmota.add_rule(string.toupper(rule),closure_state)
+            tasmota.add_rule(trigger_handler,closure_outgoing)
+        end
     end
 
-    handle_incoming= handle_incoming ? handle_incoming : handle_incoming_default    
-	var closure_command=(
+    handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
+	var closure_incoming=(
         / topic code value value_bytes -> 
-        bool(
-                [
-                    handle_incoming(self.translate_value_in(value), topic, code, value, value_bytes), 
-                    mqtt.publish(self.topic_state,value)
-                ]
-            )
-    )
-	mqtt.subscribe(self.topic_command, closure_command)
+        handle_incoming_wrapper(handle_incoming, self, topic, code, value, value_bytes)      
+    )  
+    mqtt.subscribe(self.topic_command, closure_incoming)
+
     tasmota.add_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())
     self.announce()
 	
