@@ -394,7 +394,7 @@ class Number : Entity
       if self.max data['max']=self.max end
       if self.mode data['mode ']=self.mode end      
       if self.step data['step']=self.step end      
-      if self.uom data['unit_of_measurement ']=self.uom end      
+      if self.uom data['unit_of_measurement']=self.uom end      
       
 
       return data
@@ -409,6 +409,30 @@ class Number : Entity
         return real(value)
     end
   end
+
+end
+
+class Sensor : Entity
+
+    static var platform='sensor'
+    static var has_command=false
+    var uom
+
+  def init(name, uom, entity_id, icon, handle_outgoings)    
+    
+    self.uom=uom
+    super(self).init(name, entity_id, icon, handle_outgoings, nil)      
+
+  end
+
+  def get_data_announce()
+
+      var data=super(self).get_data_announce()     
+      if self.uom data['unit_of_measurement']=self.uom end      
+      return data
+
+  end
+
 
 end
 
