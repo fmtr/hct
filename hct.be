@@ -101,7 +101,11 @@ def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes
         output_raw=value
     end
     var output=infer_serialisation(output_raw)
-    mqtt.publish(entity.topic_state,output)   
+
+    if entity.has_state
+        mqtt.publish(entity.topic_state,output)   
+    end
+
     return true 
 
 end
@@ -447,4 +451,7 @@ class Button : Entity
     super(self).init(name, entity_id, icon, nil, handle_incoming)      
 
   end
+
+
+end
 
