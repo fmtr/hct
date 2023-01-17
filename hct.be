@@ -168,54 +168,54 @@ class Entity
     self.register_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())    
   end
 
-  def subscribe_out(handle_outgoings)
+    def subscribe_out(handle_outgoings)
 
-    handle_outgoings= handle_outgoings ? handle_outgoings : {}
+        handle_outgoings= handle_outgoings ? handle_outgoings : {}
 
-    if !handle_outgoings
-        handle_outgoings={}
-    end
-
-    if type(handle_outgoings)=='string'
-        handle_outgoings=[handle_outgoings]
-    end
-
-    if classname(handle_outgoings)=='list'
-        handle_outgoings=list_to_map(handle_outgoings)
-    end
-
-    var closure_outgoing         
-    for handler: handle_outgoings.keys()
-        var trigger_handlers=handle_outgoings[handler]        
-        if type(trigger_handlers)=='string'
-            trigger_handlers=[trigger_handlers]
+        if !handle_outgoings
+            handle_outgoings={}
         end
-        for trigger_handler: trigger_handlers
-            closure_outgoing=(
-                / value trigger message -> 
-                handle_outgoing_wrapper(handler, self, value, trigger, message)
-            )
-            self.register_rule(trigger_handler,closure_outgoing)
-            
+
+        if type(handle_outgoings)=='string'
+            handle_outgoings=[handle_outgoings]
+        end
+
+        if classname(handle_outgoings)=='list'
+            handle_outgoings=list_to_map(handle_outgoings)
+        end
+
+        var closure_outgoing         
+        for handler: handle_outgoings.keys()
+            var trigger_handlers=handle_outgoings[handler]        
+            if type(trigger_handlers)=='string'
+                trigger_handlers=[trigger_handlers]
+            end
+            for trigger_handler: trigger_handlers
+                closure_outgoing=(
+                    / value trigger message -> 
+                    handle_outgoing_wrapper(handler, self, value, trigger, message)
+                )
+                self.register_rule(trigger_handler,closure_outgoing)
+                
+            end
         end
     end
-  end
 
-  def subscribe_in(handle_incoming)
+    def subscribe_in(handle_incoming)
 
 
-    if !self.has_command
-        return
+        if !self.has_command
+            return
+        end
+
+        handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
+        var closure_incoming=(
+            / topic code value value_bytes -> 
+            handle_incoming_wrapper(handle_incoming, self, topic, code, value, value_bytes)      
+        )  
+        mqtt.subscribe(self.topic_command, closure_incoming)
+
     end
-
-    handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
-	var closure_incoming=(
-        / topic code value value_bytes -> 
-        handle_incoming_wrapper(handle_incoming, self, topic, code, value, value_bytes)      
-    )  
-    mqtt.subscribe(self.topic_command, closure_incoming)
-
-  end
 
     def get_topic_command()
 
@@ -228,9 +228,9 @@ class Entity
 
     def get_topic_state()
 
-            if !self.has_state
-                return
-            end
+        if !self.has_state
+            return
+        end
 
         return ['stat',TOPIC,string.toupper(self.name_sanitized)].concat('/')	
     end
@@ -239,26 +239,26 @@ class Entity
         return ['homeassistant',self.platform,TOPIC,self.get_unique_id(),'config'].concat('/')    
     end
 
-  def translate_value_in(value)
-    return value
-  end
-
-  def translate_value_out(value)
-    return value
-  end
-
-  def get_unique_id()
-
-    var uid_segs=[string.split(TOPIC,'-').concat('_')]   
-
-    if string.find(string.tolower(TOPIC),self.mac)<0
-        uid_segs+=[self.mac]
+    def translate_value_in(value)
+        return value
     end
-    uid_segs+=[self.name]
 
-    var unique_id=sanitize_name(uid_segs.concat(' '), '_')
+    def translate_value_out(value)
+        return value
+    end
 
-    return unique_id
+    def get_unique_id()
+
+        var uid_segs=[string.split(TOPIC,'-').concat('_')]   
+
+        if string.find(string.tolower(TOPIC),self.mac)<0
+            uid_segs+=[self.mac]
+        end
+        uid_segs+=[self.name]
+
+        var unique_id=sanitize_name(uid_segs.concat(' '), '_')
+
+        return unique_id
 
   end
   
