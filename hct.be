@@ -436,3 +436,15 @@ class Sensor : Entity
 
 end
 
+class Button : Entity
+
+    static var platform='button'
+    static var has_state=false
+    var uom
+
+  def init(name, entity_id, icon, handle_incoming)        
+    
+    super(self).init(name, entity_id, icon, nil, handle_incoming)      
+
+  end
+
