@@ -45,7 +45,7 @@ RULE_MQTT_CONNECTED='Mqtt#Connected'
 
 def infer_serialisation(value)    
     if TYPES_LITERAL.find(type(value))==nil
-        return  json.dump(value)
+        return json.dump(value)
     else
         return value
     end
@@ -73,6 +73,16 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
 
   def handle_outgoing_wrapper(handler, entity, value_raw, trigger, message)
 
+    if type(handler)=='string'
+        print("handler is string.:"+handler)
+        return
+    end
+
+    if type(entity)=='string'
+        print("Entity is string. Entity has gone? "+entity)
+        return
+    end
+
     var value=entity.translate_value_out(value_raw)
     var output_raw=handler(value,entity, value_raw, trigger, message)
     if output_raw==nil 
@@ -95,11 +105,21 @@ def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes
     return true 
 
 end
+
+def list_to_map(as_list)
+    var as_map={}
+    for value: as_list
+        as_map[/value->value]=value
+    end
+    return as_map
+end
   
 class Entity
 
   static var platform=nil
   static var mac=string.split(string.tolower(MAC),':').concat()  
+  static var has_state=true
+  static var has_command=true
 
   var topic_command
   var topic_state
@@ -109,27 +129,56 @@ class Entity
   var unique_id
   var entity_id
   var icon 
+  var rule_registry
   
   def init(name, entity_id, icon, handle_outgoings, handle_incoming)
   
     self.name=name
 	self.entity_id=entity_id
     self.icon=icon	
-
     self.name_sanitized=sanitize_name(self.name)		
 
-	self.topic_command=['cmnd',TOPIC, string.toupper(self.name_sanitized)].concat('/')		
-	self.topic_state=['stat',TOPIC,string.toupper(self.name_sanitized)].concat('/')	
-	self.topic_announce=['homeassistant',self.platform,TOPIC,self.get_unique_id(),'config'].concat('/')    
+    self.rule_registry={}
+    self.register_rule('System#Save',/value->self.close())
 
-    print(handle_outgoings)
-    print(handle_incoming)
+	self.topic_command=self.get_topic_command()	
+	self.topic_state=self.get_topic_state()
+	self.topic_announce=self.get_topic_announce()
+
+    self.subscribe_announce()
+    self.subscribe_out(handle_outgoings)
+    self.subscribe_in(handle_incoming)
+
+    self.announce()    
+	    
+  end
+
+  def register_rule(trigger,closure)
+    var id=[str(classname(self)),str(closure)].concat('_')
+    tasmota.add_rule(trigger,closure,id)
+    self.rule_registry[id]=trigger
+    return id
+  end
+
+  def subscribe_announce()
+    self.register_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())    
+  end
+
+  def subscribe_out(handle_outgoings)
+
+    handle_outgoings= handle_outgoings ? handle_outgoings : {}
+
+    if !handle_outgoings
+        handle_outgoings={}
+    end
 
     if type(handle_outgoings)=='string'
-        handle_outgoings={(/ value -> value):handle_outgoings}
+        handle_outgoings=[handle_outgoings]
     end
-	
-    handle_outgoings= handle_outgoings ? handle_outgoings : {}
+
+    if classname(handle_outgoings)=='list'
+        handle_outgoings=list_to_map(handle_outgoings)
+    end
 
     var closure_outgoing         
     for handler: handle_outgoings.keys()
@@ -142,8 +191,17 @@ class Entity
                 / value trigger message -> 
                 handle_outgoing_wrapper(handler, self, value, trigger, message)
             )
-            tasmota.add_rule(trigger_handler,closure_outgoing)
+            self.register_rule(trigger_handler,closure_outgoing)
+            
         end
+    end
+  end
+
+  def subscribe_in(handle_incoming)
+
+
+    if !self.has_command
+        return
     end
 
     handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
@@ -153,11 +211,29 @@ class Entity
     )  
     mqtt.subscribe(self.topic_command, closure_incoming)
 
-    tasmota.add_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())
-    self.announce()
-	
-	    
   end
+
+    def get_topic_command()
+
+        if !self.has_command
+            return
+        end
+
+        return ['cmnd',TOPIC, string.toupper(self.name_sanitized)].concat('/')	
+    end
+
+    def get_topic_state()
+
+            if !self.has_state
+                return
+            end
+
+        return ['stat',TOPIC,string.toupper(self.name_sanitized)].concat('/')	
+    end
+
+    def get_topic_announce()
+        return ['homeassistant',self.platform,TOPIC,self.get_unique_id(),'config'].concat('/')    
+    end
 
   def translate_value_in(value)
     return value
@@ -181,7 +257,6 @@ class Entity
     return unique_id
 
   end
-
   
   def get_data_announce()
   
@@ -196,12 +271,11 @@ class Entity
 		'force_update': True,
 		'payload_available': 'Online',
 		'payload_not_available': 'Offline',
-		'availability_topic': TOPIC_LWT,
-		'state_topic': self.topic_state,
-		'command_topic': self.topic_command,	
-		
+		'availability_topic': TOPIC_LWT,		
     }
 
+    if self.topic_command data['command_topic']=self.topic_command end
+    if self.topic_state data['state_topic']=self.topic_state end
     if self.icon data['icon']=self.icon end
     if self.entity_id data['object_id']=self.entity_id end    
 
@@ -211,6 +285,16 @@ class Entity
   
   def announce()	
 	return mqtt.publish(self.topic_announce, json.dump(self.get_data_announce()))
+  end
+
+  def close()
+
+    log(['Closing',classname(self),self.name,'...'].concat(' '))
+    var trigger
+    for id: self.rule_registry.keys()
+        trigger=self.rule_registry[id]        
+        tasmota.remove_rule(trigger,id)
+    end
   end
   
 end
@@ -280,13 +364,17 @@ class Number : Entity
     static var platform='number'
     var min
     var max
+    var mode
     var step
+    var uom
 
-  def init(name, min, max, step, entity_id, icon, handle_outgoings, handle_incoming)
+  def init(name, min, max, mode, step, uom, entity_id, icon, handle_outgoings, handle_incoming)
     
     self.min=min
     self.max=max
+    self.mode=mode
     self.step=step
+    self.uom=uom
 
     super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
 
@@ -304,7 +392,10 @@ class Number : Entity
 
       if self.min data['min']=self.min end
       if self.max data['max']=self.max end
+      if self.mode data['mode ']=self.mode end      
       if self.step data['step']=self.step end      
+      if self.uom data['unit_of_measurement ']=self.uom end      
+      
 
       return data
 
