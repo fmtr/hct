@@ -3,12 +3,21 @@ import json
 import string
 import math
 
+var hct = module("hct")
+
 def get_mac()
-    var mac=tasmota.eth().find('mac', tasmota.wifi().find('mac', nil))	
-    if !mac
-        raise "Couldn't get MAC address"
+    var mac_empty='00:00:00:00:00:00'
+    var status_net=tasmota.cmd('status 5').find('StatusNET',{})
+    var mac_wifi=status_net.find('Mac', mac_empty)
+    var mac_ethernet=status_net.find('Ethernet', {}).find('Mac', mac_empty)    
+    
+    if [mac_empty,nil].find(mac_ethernet)==nil
+        return mac_ethernet
+    elif [mac_empty,nil].find(mac_wifi)==nil
+        return mac_wifi
     end
-    return mac
+    
+    raise "Couldn't get MAC address"
 end
 
 def get_topic()
@@ -35,13 +44,13 @@ def to_chars(s)
     return chars
 end
 
-CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789_-')
-TOPIC=get_topic()
-DEVICE_NAME=get_device_name()
-TOPIC_LWT=['tele',TOPIC,'LWT'].concat('/')	
-MAC=get_mac()
-TYPES_LITERAL=['string']
-RULE_MQTT_CONNECTED='Mqtt#Connected'
+var CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789_-')
+var TOPIC=get_topic()
+var DEVICE_NAME=get_device_name()
+var TOPIC_LWT=['tele',TOPIC,'LWT'].concat('/')	
+var MAC=get_mac()
+var TYPES_LITERAL=['string']
+var RULE_MQTT_CONNECTED='Mqtt#Connected'
 
 def infer_serialisation(value)    
     if TYPES_LITERAL.find(type(value))==nil
@@ -452,6 +461,129 @@ class Button : Entity
 
   end
 
+end
+
+hct.Select=Select
+hct.Number=Number
+hct.Sensor=Sensor
+hct.Button=Button
+
+def setup_t21()
+
+    var options={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
+
+    def set_cookbook_entry(value)
+        tasmota.cmd('TuyaEnum1 '+str(value))
+    end
+
+    var trigger='tuyareceived#dptype4id3'
+
+    var select=Select(   
+        'Air Fryer Cookbook',    # Entity name   
+        options,                 # The options we defined above.
+        nil,                     # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
+        'mdi:chef-hat',          # Icon the entity should have in Home Assistant    
+        trigger,                 # Our trigger as above.  
+        set_cookbook_entry       # The handler function we defined above.
+    )   
+
+
+    var cook_temp_f=Number(
+        'Air Fryer Cooking Temp (F)',
+        170,
+        399,
+        'slider',
+        nil,
+        '°F',
+        nil,
+        'mdi:temperature-fahrenheit',
+        'tuyareceived#dptype2id103',
+        /value->tasmota.cmd('TuyaSend2 103,'+str(value))
+    )
+
+    var cook_temp_c=Number(
+        'Air Fryer Cooking Temp (C)',
+        77,
+        204,
+        'slider',
+        nil,
+        '°C',
+        nil,
+        'mdi:temperature-celsius',
+        {
+            /value->math.ceil((value-32)/1.8): 'tuyareceived#dptype2id103'
+        },
+        /value->tasmota.cmd('TuyaSend2 103,'+str(int((value*1.8)+32)))
+    )
+
+    var cook_time=Number(
+        'Air Fryer Cooking Time',
+        1,
+        60,
+        'box',
+        nil,
+        'minutes',
+        nil,
+        'mdi:timer',
+        'tuyareceived#DpType2Id7',
+        /value->tasmota.cmd('TuyaSend2 7,'+str(value))
+    )
+
+    var keep_warm_time=Number(
+        'Air Fryer Keep Warm Time',
+        5,
+        120,
+        'box',
+        nil,
+        'minutes',
+        nil,
+        'mdi:timer',
+        {
+            /v->v:'tuyareceived#DpType2Id105',
+            /v->5:'power3#state'
+            
+        },        
+        def (value)
+            tasmota.set_power(2,true)
+            tasmota.cmd('TuyaSend2 105,'+str(value))
+            return nil 
+        end 
+    )
+
+    var delay_time=Number(
+        'Air Fryer Delay Time',
+        5,
+        720,
+        'box',
+        nil,
+        'minutes',
+        nil,
+        'mdi:timer-pause',
+        {
+            /v->v:'tuyareceived#DpType2Id6',
+            /v->5:'power4#state'
+            
+        },
+        def (value) tasmota.set_power(3,true) tasmota.cmd('TuyaSend2 6,'+str(value)) return nil end 
+    )
+
+    var test_sensor=Sensor(        
+        'Air Fryer Test Sensor',
+        'foos',
+        nil,
+        'mdi:timer-10',
+        {/value->math.rand():'Time#Minute'}
+    )
+
+    var upgrade_button=Button(        
+        'Air Fryer Upgrade Button',
+        nil,
+        'mdi:update',
+        /value->print("Upgrade button pressed.")
+    )
 
 end
 
+hct.setup_t21=setup_t21
+
+return hct
