@@ -85,7 +85,7 @@ hct.Number(
 
 hct.Number(
     'Air Fryer Delay Time',
-    5,
+    0,
     720,
     'box',
     nil,
@@ -94,10 +94,15 @@ hct.Number(
     'mdi:timer-pause',
     {
         /v->v:'tuyareceived#DpType2Id6',
-        /v->5:'power4#state'
+        /->0:'Power4#state=0'
 
     },
     def (value)
+        if value==0
+            tasmota.set_power(3,false)   
+            return nil     
+        end
+        value=value<5 ? 5 : value
         tasmota.set_power(3,true) 
         tasmota.cmd('TuyaSend2 6,'+str(value))
         return nil 
@@ -114,3 +119,15 @@ hct.Select(
     'tuyareceived#dptype4id3',
     /value->tasmota.cmd('TuyaEnum1 '+str(value))
 )  
+
+# Mode/status sensor. Note: This does not seem to exist on all versions.
+hct.Sensor(   
+    'Air Fryer Mode',    
+    nil,
+    'mdi:chef-hat',
+    {
+        /value->{0:'Ready',1:'Delayed Cook',2:'Cooking',3:'Keep Warm',4:'Off',5:'Cooking Complete'].find(value,'Unknown'):
+        'tuyareceived#dptype4id5'
+    }
+)  
+
