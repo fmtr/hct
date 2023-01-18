@@ -1,4 +1,4 @@
-# To use this code, add it to your `autoexec.be`.
+# To use this code, add it to your `autoexec.be` - or upload this script to your device and add `load("/proscenic_t21.be")`.
 # Before using this code, make sure you've completed the initial Tuya setup, as shown here: https://templates.blakadder.com/proscenic_T21.html
 
 #First we import this library.

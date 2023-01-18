@@ -1,7 +1,7 @@
 # Home Assistant Controls for Tasmota
 
 This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simplify the process of exposing Home
-Assistant controls (e.g. Pull-down Lists, Number Sliders, Text Boxes, etc.) from a Tasmota device - and handling the
+Assistant controls (e.g. Pull-down Lists, Number Sliders, Sensors, etc.) from a Tasmota device - and handling the
 communication between both sides.
 
 Using `hct` to expose, for example, an "Upgrade Tasmota Fireware" button to Home Assistant is as simple as adding the
@@ -47,7 +47,7 @@ compared with the [full `hct`-based equivalent](/examples/proscenic_t21.be).
 
 With `hct`, on the other hand, the thorny parts of the initial setup are abstracted away and your final configuration
 can often be shared via a one-liner, or failing that a single script. Below is a list of some of the tasks that `hct`
-handles for your:
+handles for you:
 
 * Announcing the entity via MQTT to Home Assistant
 * Generating MQTT/HA-friendly unique IDs
@@ -95,7 +95,7 @@ Then we write a very simple callback closure to set those Tuya IDs (the `value` 
 their names are selected in Home Assistant.
 
 ```be   
-/value->tasmota.cmd('TuyaEnum1 '+str(value))
+set_cookbook_entry=/value->tasmota.cmd('TuyaEnum1 '+str(value))
 ```
 
 Now we specify a trigger defining when a change has happened on the Tasmota side that needs to be reflected in Home Assistant.
