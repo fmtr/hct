@@ -120,5 +120,5 @@ hct.Select(
 And that's it. Now `hct` will handle everything else mentioned above - and sharing what you've done just means sharing
 the above script.
 
-For the rest of the air fryer setup (which includes define more entity type)
+For the rest of the air fryer setup (which includes defining more entity types)
 see [its setup script](examples/proscenic_t21.be).
