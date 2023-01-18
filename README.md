@@ -33,13 +33,14 @@ hct.Select(
 
 For a full walkthrough of configuring the cookbook entity, see Example below.
 
+
 ## Do I Need This? Can't I Do this with Native Tasmota?
 
 You certainly can. But in my experience, the process is so fiddly, error-prone and hard to maintain that it's enough to
 deter the casual user (as I am) entirely. Plus, sharing your configuration, once you've finally got it working, can mean
 complex step-by-step guides, setting up triggers, finding MAC addresses and topics (in Tasmota) - and numerious
 Blueprints, Helpers and Templates (on the Home Assistant side). You can see how much work creating such guides involves
-by seeing how it was heroically [undertaken by Blakadder](https://blakadder.com/proscenic-in-home-assistant/), as
+by seeing how it was [heroically undertaken by Blakadder](https://blakadder.com/proscenic-in-home-assistant/), as
 compared with the [full `hct`-based equivalent](/examples/proscenic_t21.be).
 
 With `hct`, on the other hand, the thorny parts of the initial setup are abstracted away and your final configuration
@@ -53,6 +54,7 @@ can often be shared via a one-liner. Below is a list of some of the tasks that `
 * Appropriate serialization of data
 * Translating Home Assistant messages to their to appropriate Berry data types, and vice versa
 
+
 ## Pre-Release
 
 :warning: This library is currently in a pre-release state. The configuration format (and perhaps even the library name)
@@ -61,7 +63,6 @@ is likely to change, and only `Sensor`, `Select`, `Button` and `Number` entities
 ## Installing
 
 Simply paste the following into you Tasmota Berry Script Console:
-
 ```be
 tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/master/hct.be','/hct.be')
 ```
@@ -103,7 +104,7 @@ trigger='tuyareceived#dptype4id3'
 With that all done, we can define a pull-down (`hct.Select`) object.
 
 ```be
-var select=hct.Select(   
+hct.Select(   
     'Air Fryer Cookbook',    # Entity name   
     options,                 # The options we defined above.
     nil,                     # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
