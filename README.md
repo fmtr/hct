@@ -4,8 +4,9 @@ This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simpli
 Assistant controls (e.g. Pull-down Lists, Number Sliders, Text Boxes, etc.) from a Tasmota device - and handling the
 communication between both sides.
 
-Using `hct` to add, for example, an "Upgrade Tasmota" button is as simple as adding the following lines to
-your `autoexec.be`
+Using `hct` to expose, for example, an "Upgrade Tasmota Fireware" button to Home Assistant is as simple as adding the
+following lines to
+your `autoexec.be`:
 
 ```be
 import hct
@@ -18,7 +19,7 @@ hct.Button(
 )
 ```
 
-Or, more practically, a cookbook pull-down menu for a Tuya air fryer might look like this:
+Or, more practically, a cookbook pull-down menu, for a Tuya air fryer, might look like this:
 
 ```
 hct.Select(   
@@ -31,8 +32,7 @@ hct.Select(
     )  
 ```
 
-For a full walkthrough of configuring the cookbook entity, see Example below.
-
+For a full walk-through of configuring the cookbook entity, see the [Walkthrough Example](#example-walkthrough) below.
 
 ## Do I Need This? Can't I Do this with Native Tasmota?
 
@@ -44,7 +44,8 @@ by seeing how it was [heroically undertaken by Blakadder](https://blakadder.com/
 compared with the [full `hct`-based equivalent](/examples/proscenic_t21.be).
 
 With `hct`, on the other hand, the thorny parts of the initial setup are abstracted away and your final configuration
-can often be shared via a one-liner. Below is a list of some of the tasks that `hct` handles for your:
+can often be shared via a one-liner, or failing that a single script. Below is a list of some of the tasks that `hct`
+handles for your:
 
 * Announcing the entity via MQTT to Home Assistant
 * Generating MQTT/HA-friendly unique IDs
@@ -62,7 +63,7 @@ is likely to change, and only `Sensor`, `Select`, `Button` and `Number` entities
 
 ## Installing
 
-Simply paste the following into you Tasmota Berry Script Console:
+Simply paste the following into your Tasmota Berry Script Console:
 ```be
 tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/master/hct.be','/hct.be')
 ```
@@ -72,7 +73,7 @@ your device.
 
 ## Example Walkthrough
 
-This walkthough is a real-world case of implementing the cookbook pull-down menu for a Proscenic T21 air fryer. It
+This walk-through is a real-world case of implementing the cookbook pull-down menu for a Proscenic T21 air fryer. It
 handles defining a friendly pull-down list of food types on the Home Assistant side and mapping those values to the
 corresponding IDs required by the Tuya driver on the Tasmota side.
 
@@ -114,6 +115,5 @@ hct.Select(
 )
 ```
 
-That's it. Now `hct` will handle everything else - like announcing the entity via MQTT, subscribing to the relevant topics, associating the entity with its parent device, translating Home Assistant to the provided IDs, etc. - for you.
-
-And sharing what you've done just means sharing the above script.
+And that's it. Now `hct` will handle everything else mentioned above - and sharing what you've done just means sharing
+the above script.
