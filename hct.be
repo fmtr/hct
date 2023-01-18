@@ -162,7 +162,10 @@ class Entity
     self.subscribe_out(handle_outgoings)
     self.subscribe_in(handle_incoming)
 
-    self.announce()    
+    var mqtt_count=tasmota.cmd('status 6').find('StatusMQT',{}).find('MqttCount',0)
+    if mqtt_count>0
+        self.announce()    
+    end
 	    
   end
 
@@ -470,6 +473,8 @@ hct.Button=Button
 
 def setup_t21()
 
+    log("Setting up Proscenic T21...")
+
     var options={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
 
     def set_cookbook_entry(value)
@@ -478,7 +483,7 @@ def setup_t21()
 
     var trigger='tuyareceived#dptype4id3'
 
-    var select=Select(   
+    hct.Select(   
         'Air Fryer Cookbook',    # Entity name   
         options,                 # The options we defined above.
         nil,                     # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
@@ -488,7 +493,7 @@ def setup_t21()
     )   
 
 
-    var cook_temp_f=Number(
+    hct.Number(
         'Air Fryer Cooking Temp (F)',
         170,
         399,
@@ -501,7 +506,7 @@ def setup_t21()
         /value->tasmota.cmd('TuyaSend2 103,'+str(value))
     )
 
-    var cook_temp_c=Number(
+    hct.Number(
         'Air Fryer Cooking Temp (C)',
         77,
         204,
@@ -516,7 +521,7 @@ def setup_t21()
         /value->tasmota.cmd('TuyaSend2 103,'+str(int((value*1.8)+32)))
     )
 
-    var cook_time=Number(
+    hct.Number(
         'Air Fryer Cooking Time',
         1,
         60,
@@ -529,7 +534,7 @@ def setup_t21()
         /value->tasmota.cmd('TuyaSend2 7,'+str(value))
     )
 
-    var keep_warm_time=Number(
+    hct.Number(
         'Air Fryer Keep Warm Time',
         5,
         120,
@@ -550,7 +555,7 @@ def setup_t21()
         end 
     )
 
-    var delay_time=Number(
+    hct.Number(
         'Air Fryer Delay Time',
         5,
         720,
@@ -567,7 +572,7 @@ def setup_t21()
         def (value) tasmota.set_power(3,true) tasmota.cmd('TuyaSend2 6,'+str(value)) return nil end 
     )
 
-    var test_sensor=Sensor(        
+    hct.Sensor(        
         'Air Fryer Test Sensor',
         'foos',
         nil,
@@ -575,12 +580,24 @@ def setup_t21()
         {/value->math.rand():'Time#Minute'}
     )
 
-    var upgrade_button=Button(        
-        'Air Fryer Upgrade Button',
+    hct.Button(        
+        'Upgrade Button',
         nil,
         'mdi:update',
         /value->print("Upgrade button pressed.")
     )
+
+    hct.Sensor(        
+        'Free Space',
+        'kB',
+        nil,
+        'mdi:harddisk-plus',
+        {
+            /value->tasmota.cmd('ufsfree').find('UfsFree','Unknown'):
+            'Time#Minute'
+        }
+    )
+
 
 end
 
