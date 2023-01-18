@@ -3,7 +3,7 @@ import json
 import string
 import math
 
-var hct = module("hct")
+
 
 def get_mac()
     var mac_empty='00:00:00:00:00:00'
@@ -466,9 +466,9 @@ class Button : Entity
 
 end
 
+var hct = module("hct")
 hct.Select=Select
 hct.Number=Number
 hct.Sensor=Sensor
 hct.Button=Button
-
 return hct
