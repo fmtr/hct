@@ -82,16 +82,6 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
 
   def handle_outgoing_wrapper(handler, entity, value_raw, trigger, message)
 
-    if type(handler)=='string'
-        print("handler is string.:"+handler)
-        return
-    end
-
-    if type(entity)=='string'
-        print("Entity is string. Entity has gone? "+entity)
-        return
-    end
-
     var value=entity.translate_value_out(value_raw)
     var output_raw=handler(value,entity, value_raw, trigger, message)
     if output_raw==nil 
