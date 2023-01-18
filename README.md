@@ -21,7 +21,7 @@ hct.Button(
 
 Or, more practically, a cookbook pull-down menu, for a Tuya air fryer, might look like this:
 
-```
+```be
 hct.Select(   
     'Air Fryer Cookbook',
     {'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10},
