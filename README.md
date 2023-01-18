@@ -4,7 +4,7 @@ This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simpli
 Assistant controls (e.g. Pull-down Lists, Number Sliders, Sensors, etc.) from a Tasmota device - and handling the
 communication between both sides.
 
-Using `hct` to expose, for example, an "Upgrade Tasmota Fireware" button to Home Assistant is as simple as adding the
+Using `hct` to expose, for example, an "Upgrade Tasmota Firmware" button to Home Assistant is as simple as adding the
 following lines to
 your `autoexec.be`:
 
