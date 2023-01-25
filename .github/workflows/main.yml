@@ -1,0 +1,35 @@
+name: Version and Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version'
+        required: true
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION: ${{ github.event.inputs.version }}
+      NAME: ${{ github.event.repository.name }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Increment Version
+        run: |
+          git config --global user.name 'Frontmatter Actions'
+          git config --global user.email 'actions@frontmatter.ai'
+          sed --in-place --regexp-extended --expression="s/fmtr\/hct\/v[0-9]+\.[0-9]+\.[0-9]/fmtr\/hct\/${VERSION}/" README.md
+          git add README.md          
+          git commit -am "Increment version number to ${VERSION} for release"
+          git push
+          git tag v${VERSION}
+          git push --tags
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          generateReleaseNotes: true
+          tag: v${{ github.event.inputs.version }}
