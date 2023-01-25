@@ -22,8 +22,9 @@ jobs:
         run: |
           git config --global user.name 'Frontmatter Actions'
           git config --global user.email 'actions@frontmatter.ai'
-          sed --in-place --regexp-extended --expression="s/fmtr\/hct\/v[0-9]+\.[0-9]+\.[0-9]/fmtr\/hct\/${VERSION}/" README.md
-          git add README.md          
+          python3 update_version.py ${VERSION}
+          git add hct.be
+          git add README.md
           git commit -am "Increment version number to ${VERSION} for release"
           git push
           git tag v${VERSION}

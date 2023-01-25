@@ -71,10 +71,10 @@ is likely to change, and only `Sensor`, `Select`, `Button` and `Number` entities
 
 Simply paste the following into your Tasmota Berry Script Console:
 ```be
-tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/v0.0.1/hct.be','/hct.be')
+tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/v0.0.2/hct.be','/hct.be')
 ```
 
-Alternatively, manually download [hct.be](https://raw.githubusercontent.com/fmtr/hct/v0.0.1/hct.be) and upload it onto
+Alternatively, manually download [hct.be](https://raw.githubusercontent.com/fmtr/hct/v0.0.2/hct.be) and upload it onto
 your device.
 
 ## Example Walkthrough
