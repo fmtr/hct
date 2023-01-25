@@ -42,9 +42,11 @@ You certainly can.
 
 But in my experience, the process is so fiddly, error-prone and hard to maintain that it's enough to
 deter the casual user (as I am) entirely. Plus, sharing your configuration, once you've finally got it working, can mean
-complex step-by-step guides, setting up triggers, finding MAC addresses and topics (in Tasmota) - and numerious
-Blueprints, Helpers and Templates (on the Home Assistant side). You can see how much work creating such guides involves
-by seeing how it was [heroically undertaken by Blakadder](https://blakadder.com/proscenic-in-home-assistant/), as
+complex step-by-step guides, setting up triggers, finding MAC addresses and topics (in Tasmota) - and numerous
+Blueprints, Helpers and Templates (on the Home Assistant side).
+
+You can see how much work creating such guides involves by seeing how it
+was [heroically undertaken by Blakadder](https://blakadder.com/proscenic-in-home-assistant/), as
 compared with the [full `hct`-based equivalent](/examples/proscenic_t21.be).
 
 With `hct`, on the other hand, the thorny parts of the initial setup are abstracted away and your final configuration
