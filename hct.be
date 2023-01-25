@@ -1,24 +1,29 @@
+var VERSION='v0.0.2'
 import mqtt
 import json
 import string
 import math
 
 
+var TYPES_LITERAL=['string']
+var RULE_MQTT_CONNECTED='Mqtt#Connected'
+var MAC_EMPTY='00:00:00:00:00:00'
 
 def get_mac()
-    var mac_empty='00:00:00:00:00:00'
-    var status_net=tasmota.cmd('status 5').find('StatusNET',{})
-    var mac_wifi=status_net.find('Mac', mac_empty)
-    var mac_ethernet=status_net.find('Ethernet', {}).find('Mac', mac_empty)    
     
-    if [mac_empty,nil].find(mac_ethernet)==nil
+    var status_net=tasmota.cmd('status 5').find('StatusNET',{})
+    var mac_wifi=status_net.find('Mac', MAC_EMPTY)
+    var mac_ethernet=status_net.find('Ethernet', {}).find('Mac', MAC_EMPTY)    
+    
+    if [MAC_EMPTY,nil].find(mac_ethernet)==nil
         return mac_ethernet
-    elif [mac_empty,nil].find(mac_wifi)==nil
+    elif [MAC_EMPTY,nil].find(mac_wifi)==nil
         return mac_wifi
     end
     
     raise "Couldn't get MAC address"
 end
+var MAC=get_mac()
 
 def get_topic()
     var topic=tasmota.cmd('topic').find('Topic')
@@ -27,6 +32,8 @@ def get_topic()
     end
     return topic
 end
+var TOPIC=get_topic()
+var TOPIC_LWT=['tele',TOPIC,'LWT'].concat('/')
 
 def get_device_name()
     var device_name=tasmota.cmd('DeviceName').find('DeviceName')
@@ -35,6 +42,7 @@ def get_device_name()
     end
     return device_name
 end
+var DEVICE_NAME=get_device_name()
 
 def to_chars(s)
     var chars=[]
@@ -43,14 +51,8 @@ def to_chars(s)
     end 
     return chars
 end
-
 var CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789_-')
-var TOPIC=get_topic()
-var DEVICE_NAME=get_device_name()
-var TOPIC_LWT=['tele',TOPIC,'LWT'].concat('/')	
-var MAC=get_mac()
-var TYPES_LITERAL=['string']
-var RULE_MQTT_CONNECTED='Mqtt#Connected'
+
 
 def infer_serialisation(value)    
     if TYPES_LITERAL.find(type(value))==nil
@@ -72,6 +74,8 @@ def sanitize_name(s, sep)
     end 
     return chars.concat()
 end
+
+# End of utility functions.
 
 def handle_incoming_default(value, topic, code, value_raw, value_bytes)    
     var value_str={'value':value,'topic':topic,'code':code,'value_raw':value_raw,'value_bytes':value_bytes}.tostring()
@@ -463,6 +467,7 @@ class Button : Entity
 end
 
 var hct = module("hct")
+hct.VERSION=VERSION
 hct.Select=Select
 hct.Number=Number
 hct.Sensor=Sensor
