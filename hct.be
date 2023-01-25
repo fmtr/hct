@@ -89,7 +89,7 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
     end
     var output=infer_serialisation(output_raw)
     mqtt.publish(entity.topic_state,output)    
-
+    entity.value=output_raw
 end
 
 def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes)
@@ -104,6 +104,8 @@ def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes
     if entity.has_state
         mqtt.publish(entity.topic_state,output)   
     end
+
+    entity.value=output_raw
 
     return true 
 
@@ -124,6 +126,8 @@ class Entity
   static var has_state=true
   static var has_command=true
 
+  var value
+
   var topic_command
   var topic_state
   var topic_announce
@@ -135,6 +139,8 @@ class Entity
   var rule_registry
   
   def init(name, entity_id, icon, handle_outgoings, handle_incoming)
+
+    self.value=nil
   
     self.name=name
 	self.entity_id=entity_id
