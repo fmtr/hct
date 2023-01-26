@@ -95,14 +95,14 @@ hct.Number(
     {
         /v->v:'tuyareceived#DpType2Id6',
         def (value,entity)         
-            print(["Out got value",value,'ent.val is',entity.value])   
+
 
 
             if value==1 
                 var value_cached=entity.value
                 value_cached=value_cached!=nil ? value_cached : 0
                 value_cached=value_cached<5 ? 5 : value_cached
-                print(["Out Tuya sending",value_cached])   
+
                 tasmota.cmd('TuyaSend2 6,'+str(value_cached))
                 return value_cached
             else 
@@ -113,7 +113,7 @@ hct.Number(
 
     },
     def (value,entity)
-        print(["In got value",value])   
+
         if value==0
             tasmota.set_power(3,false)   
             return value     
