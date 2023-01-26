@@ -94,24 +94,46 @@ hct.Number(
     'mdi:timer-pause',
     {
         /v->v:'tuyareceived#DpType2Id6',
-        /->0:'Power4#state=0'
+        def (value,entity)         
+            print(["Out got value",value,'ent.val is',entity.value])   
+
+
+            if value==1 
+                var value_cached=entity.value
+                value_cached=value_cached!=nil ? value_cached : 0
+                value_cached=value_cached<5 ? 5 : value_cached
+                print(["Out Tuya sending",value_cached])   
+                tasmota.cmd('TuyaSend2 6,'+str(value_cached))
+                return value_cached
+            else 
+                return 0
+            end 
+        end:
+        'Power4#state'
 
     },
-    def (value)
+    def (value,entity)
+        print(["In got value",value])   
         if value==0
             tasmota.set_power(3,false)   
-            return nil     
+            return value     
         end
         value=value<5 ? 5 : value
-        tasmota.set_power(3,true) 
-        tasmota.cmd('TuyaSend2 6,'+str(value))
-        return nil 
+        entity.value=value
+
+        if !tasmota.get_power()[3]
+            tasmota.set_power(3,true) 
+        else
+            tasmota.cmd('TuyaSend2 6,'+str(value))
+        end
+
+        return value
     end
 )
 
-# Mode/status sensor. Note: This does not seem to exist on all versions.
 hct.Sensor(   
     'Air Fryer Mode',    
+    nil,
     nil,
     'mdi:chef-hat',
     {
@@ -131,5 +153,17 @@ hct.Select(
     /value->tasmota.cmd('TuyaEnum1 '+str(value))
 )  
 
-  
+hct.Button(        
+    'Upgrade Tasmota',
+    nil,
+    'mdi:update',
+    /value->tasmota.cmd("upgrade 1")
+)
 
+hct.Sensor(   
+    'Air Fryer Time Remaining',    
+    'minutes',
+    nil,
+    'mdi:timer',
+    'tuyareceived#dptype2Id8'
+)
