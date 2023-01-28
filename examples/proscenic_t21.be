@@ -94,40 +94,34 @@ hct.Number(
     'mdi:timer-pause',
     {
         /v->v:'tuyareceived#DpType2Id6',
-        def (value,entity)         
-
-
-
-            if value==1 
-                var value_cached=entity.value
-                value_cached=value_cached!=nil ? value_cached : 0
-                value_cached=value_cached<5 ? 5 : value_cached
-
-                tasmota.cmd('TuyaSend2 6,'+str(value_cached))
-                return value_cached
-            else 
-                return 0
-            end 
-        end:
-        'Power4#state'
+        /->0: 'Power4#state=0',
+        /->5: 'Power4#state=1',
 
     },
-    def (value,entity)
+    def (value)
+
+        value=value!=nil ? value : 0
 
         if value==0
             tasmota.set_power(3,false)   
             return value     
         end
-        value=value<5 ? 5 : value
-        entity.value=value
+        
+        value=value<5 ? 5 : value        
 
         if !tasmota.get_power()[3]
-            tasmota.set_power(3,true) 
+            hct.add_rule_once(
+                'Power4#state=1',
+                /->tasmota.cmd('TuyaSend2 6,'+str(value))
+                
+            )
+            tasmota.set_power(3,true)
         else
             tasmota.cmd('TuyaSend2 6,'+str(value))
         end
 
         return value
+
     end
 )
 
