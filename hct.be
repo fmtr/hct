@@ -466,10 +466,33 @@ class Button : Entity
 
 end
 
+import uuid
+
+
+def add_rule_once(trigger, function)
+
+    var id=uuid.uuid4()
+
+    def wrapper(value, trigger_wrapper, message)        
+        print("Removing rule: "+trigger+id)
+        tasmota.remove_rule(trigger,id)        
+        return function(value, trigger_wrapper, message)
+    end
+
+    print("Adding rule: "+trigger+id)
+    tasmota.add_rule(trigger,wrapper, id)    
+
+end
+
 var hct = module("hct")
+
 hct.VERSION=VERSION
+
+hct.add_rule_once=add_rule_once
+
 hct.Select=Select
 hct.Number=Number
 hct.Sensor=Sensor
 hct.Button=Button
+
 return hct
