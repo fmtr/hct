@@ -152,7 +152,7 @@ class Entity
     self.name_sanitized=sanitize_name(self.name)		
 
     self.rule_registry={}
-    self.register_rule('System#Save',/value->self.close())
+    #self.register_rule('System#Save',/value->self.close())
 
 	self.topic_command=self.get_topic_command()	
 	self.topic_state=self.get_topic_state()
@@ -473,13 +473,11 @@ def add_rule_once(trigger, function)
 
     var id=uuid.uuid4()
 
-    def wrapper(value, trigger_wrapper, message)        
-        print("Removing rule: "+trigger+id)
+    def wrapper(value, trigger_wrapper, message)                
         tasmota.remove_rule(trigger,id)        
         return function(value, trigger_wrapper, message)
     end
-
-    print("Adding rule: "+trigger+id)
+    
     tasmota.add_rule(trigger,wrapper, id)    
 
 end
