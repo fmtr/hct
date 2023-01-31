@@ -125,11 +125,17 @@ hct.Number(
     end
 )
 
+def is_in(item,data)
+    return data.find(item)!=nil
+end
+
+
+
 hct.Sensor(   
-    'Air Fryer Mode',    
+    'Air Fryer Status',    
     nil,
     nil,
-    'mdi:chef-hat',
+    'mdi:playlist-play',
     {
         /value->{0:'Ready',1:'Delayed Cook',2:'Cooking',3:'Keep Warm',4:'Off',5:'Cooking Complete'}.find(value,'Unknown'):
         'tuyareceived#dptype4id5'
