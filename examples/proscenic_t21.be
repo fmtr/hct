@@ -125,12 +125,6 @@ hct.Number(
     end
 )
 
-def is_in(item,data)
-    return data.find(item)!=nil
-end
-
-
-
 hct.Sensor(   
     'Air Fryer Status',    
     nil,
@@ -167,3 +161,76 @@ hct.Sensor(
     'mdi:timer',
     'tuyareceived#dptype2Id8'
 )
+
+# The below is some extra configuration for when pseudo power-monitoring is enabled (i.e. Option A2)
+
+var is_power_mon=tasmota.cmd('voltageset').find('Command')!='Unknown'
+
+if is_power_mon
+
+    log("Setting up Proscenic T21 Power Calibrator...")
+    
+    def apply_calibration(value)
+
+        # Only set to the "Cooking" relay to high power when it is switched on and the "Delayed Cooking" one is not enabled.
+
+        var powers=tasmota.get_power()
+        if powers[1] && !powers[3]
+            log('Applying high power calibration')
+            tasmota.cmd('currentset2 4000')
+            tasmota.cmd('powerset2 960.0')
+        else
+            log('Applying low power calibration')
+            tasmota.cmd('currentset2 1000')
+            tasmota.cmd('powerset2 1.0')
+        end
+    end
+    
+    tasmota.add_rule('Power2',/value->apply_calibration(value),'apply_calibration_power_2')
+    tasmota.add_rule('Power4',/value->apply_calibration(value),'apply_calibration_power_4')
+
+    log("Setting up Proscenic T21 Save Data on Cooking Complete...")
+
+    class DataSaverOnComplete
+
+        # On some versions of the T21, the power to the ESP is cut whenever the drawer is removed from the fryer.
+        # This ungraceful restart wipes out any energy statistics recorded during cooking.
+        # Hence this object monitors for when the "Cooking Complete" status appears, and saves data then.
+
+        static var STATUSES={0:'Ready',1:'Delayed Cook',2:'Cooking',3:'Keep Warm',4:'Off',5:'Cooking Complete'}
+        static var WRITE_LIMIT_SECONDS=60
+        static var SAVE_ON_STATUS='Cooking Complete'
+        static var TRIGGER='tuyareceived#dptype4id5'
+
+        var uptime_last
+
+        def init()
+            self.uptime_last=0
+            var rule_id=classname(self)
+            tasmota.remove_rule(self.TRIGGER,rule_id)
+            tasmota.add_rule(self.TRIGGER,/value->self.run(value),rule_id)
+        end
+
+        def get_uptime()
+            return tasmota.cmd('state')['UptimeSec']
+        end
+
+        def run(value)
+            var uptime=self.get_uptime()
+            value=self.STATUSES[value]
+
+            if uptime-self.uptime_last<self.WRITE_LIMIT_SECONDS
+                return
+            end
+
+            if value==self.SAVE_ON_STATUS
+                tasmota.cmd('savedata')
+                self.uptime_last=uptime
+            end
+
+        end
+    end
+
+    DataSaverOnComplete()
+
+end
