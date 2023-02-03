@@ -5,7 +5,7 @@
 
 import hct
 
-log("Setting up Proscenic T21...")
+log("Setting up Proscenic T21 (using hct version "+hct.VERSION+")...")
 
 # Now we add a Number slider to control cooking temperature in F.
 # Since the fryer MCU uses F natively, this just the process similar to the cookbook pull-down above.
