@@ -58,8 +58,8 @@ def to_chars(s)
     end 
     return chars
 end
-var CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789_-')
-
+var CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
+var SEPS=to_chars('_- ')
 
 def infer_serialisation(value)    
     if TYPES_LITERAL.find(type(value))==nil
@@ -73,9 +73,9 @@ def sanitize_name(s, sep)
     sep= sep ? sep : '-'
     var chars=[]
     for c: to_chars(string.tolower(s))
-        if CHARS_ALLOWED.find(c)==nil
+        if SEPS.find(c)!=nil
             chars.push(sep)
-        else
+        elif CHARS_ALLOWED.find(c)!=nil
             chars.push(c)
         end        
     end 

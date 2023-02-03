@@ -11,7 +11,7 @@ log("Setting up Proscenic T21 (using hct version "+hct.VERSION+")...")
 # Since the fryer MCU uses F natively, this just the process similar to the cookbook pull-down above.
 
 hct.Number(
-    'Cooking Temp (F)',
+    'Cooking Temperature (F)',
     170,                     # Minimum temperature
     399,                     # Maximum temperature
     'slider',                # Input type
@@ -37,7 +37,7 @@ convert_f_to_c_map={
 convert_c_to_f=/value->tasmota.cmd('TuyaSend2 103,'+str(int((value*1.8)+32)))
 
 hct.Number(
-    'Cooking Temp (C)',
+    'Cooking Temperature (C)',
     77,
     204,
     'slider',
