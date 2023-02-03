@@ -11,7 +11,7 @@ log("Setting up Proscenic T21 (using hct version "+hct.VERSION+")...")
 # Since the fryer MCU uses F natively, this just the process similar to the cookbook pull-down above.
 
 hct.Number(
-    'Air Fryer Cooking Temp (F)',
+    'Cooking Temp (F)',
     170,                     # Minimum temperature
     399,                     # Maximum temperature
     'slider',                # Input type
@@ -37,7 +37,7 @@ convert_f_to_c_map={
 convert_c_to_f=/value->tasmota.cmd('TuyaSend2 103,'+str(int((value*1.8)+32)))
 
 hct.Number(
-    'Air Fryer Cooking Temp (C)',
+    'Cooking Temp (C)',
     77,
     204,
     'slider',
@@ -50,7 +50,7 @@ hct.Number(
 )
 
 hct.Number(
-    'Air Fryer Cooking Time',
+    'Cooking Time',
     1,
     60,
     'box',
@@ -63,7 +63,7 @@ hct.Number(
 )
 
 hct.Number(
-    'Air Fryer Keep Warm Time',
+    'Keep Warm Time',
     0,
     120,
     'box',
@@ -105,7 +105,7 @@ hct.Number(
 )
 
 hct.Number(
-    'Air Fryer Delay Time',
+    'Delay Time',
     0,
     720,
     'box',
@@ -147,7 +147,7 @@ hct.Number(
 )
 
 hct.Sensor(   
-    'Air Fryer Status',    
+    'Status',    
     nil,
     nil,
     'mdi:playlist-play',
@@ -160,7 +160,7 @@ hct.Sensor(
 # Lastly we add the cookbook pull-down. This has already been covered in the README: https://github.com/fmtr/hct#example-walkthrough
 
 hct.Select(   
-    'Air Fryer Cookbook',
+    'Cookbook',
     {'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10},
     nil,
     'mdi:chef-hat',
@@ -176,7 +176,7 @@ hct.Button(
 )
 
 hct.Sensor(   
-    'Air Fryer Time Remaining',    
+    'Time Remaining',    
     'minutes',
     nil,
     'mdi:timer',

@@ -4,6 +4,13 @@ import json
 import string
 import math
 
+class Config
+
+    # Module-wide configuration
+    
+    static var USE_LONG_NAMES=false
+    
+end
 
 var TYPES_LITERAL=['string']
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
@@ -145,6 +152,10 @@ class Entity
   def init(name, entity_id, icon, handle_outgoings, handle_incoming)
 
     self.value=nil
+    
+    if Config.USE_LONG_NAMES        
+        name=[DEVICE_NAME,name].concat(' ')
+    end
   
     self.name=name
 	self.entity_id=entity_id
@@ -408,7 +419,7 @@ class Number : Entity
 
       if self.min data['min']=self.min end
       if self.max data['max']=self.max end
-      if self.mode data['mode ']=self.mode end      
+      if self.mode data['mode']=self.mode end      
       if self.step data['step']=self.step end      
       if self.uom data['unit_of_measurement']=self.uom end      
       
@@ -485,6 +496,8 @@ end
 var hct = module("hct")
 
 hct.VERSION=VERSION
+
+hct.Config=Config
 
 hct.add_rule_once=add_rule_once
 
