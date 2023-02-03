@@ -64,7 +64,7 @@ hct.Number(
 
 hct.Number(
     'Air Fryer Keep Warm Time',
-    5,
+    0,
     120,
     'box',
     nil,
@@ -73,13 +73,34 @@ hct.Number(
     'mdi:timer-sync',
     {
         /v->v:'tuyareceived#DpType2Id105',
-        /v->5:'power3#state'
+        /->0: 'Power3#state=0',
+        /->5: 'Power3#state=1',
 
     },
     def (value)
-        tasmota.set_power(2,true)
-        tasmota.cmd('TuyaSend2 105,'+str(value))
-        return nil
+
+        value=value!=nil ? value : 0
+
+        if value==0
+            tasmota.set_power(2,false)   
+            return value     
+        end
+        
+        value=value<5 ? 5 : value        
+
+        if !tasmota.get_power()[2]
+            hct.add_rule_once(
+                'Power3#state=1',
+                /->tasmota.cmd('TuyaSend2 105,'+str(value))
+                
+            )
+            tasmota.set_power(2,true)
+        else
+            tasmota.cmd('TuyaSend2 105,'+str(value))
+        end
+
+        return value
+
     end
 )
 
