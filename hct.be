@@ -501,7 +501,7 @@ end
 class Switch : Entity
 
     static var platform='switch'  
-    
+
   def translate_value_in(value)
 
     return to_bool(value)
@@ -513,6 +513,53 @@ class Switch : Entity
     return from_bool(to_bool(value))
 
   end
+
+  def get_data_announce()
+
+        var data=super(self).get_data_announce()     
+
+        data['payload_on']=ON
+        data['payload_off']=OFF
+        
+        return data
+
+    end
+
+end
+
+class BinarySensor : Sensor
+
+    static var platform='binary_sensor' 
+    
+    
+  def init(name, entity_id, icon, handle_outgoings)    
+
+    super(self).init(name, nil, entity_id, icon, handle_outgoings)      
+
+  end
+
+  def translate_value_in(value)
+
+    return to_bool(value)
+
+  end
+
+  def translate_value_out(value)
+
+    return from_bool(to_bool(value))
+
+  end
+
+  def get_data_announce()
+
+        var data=super(self).get_data_announce()     
+
+        data['payload_on']=ON
+        data['payload_off']=OFF
+        
+        return data
+
+    end
 
 end
 
@@ -545,5 +592,6 @@ hct.Number=Number
 hct.Sensor=Sensor
 hct.Button=Button
 hct.Switch=Switch
+hct.BinarySensor=BinarySensor
 
 return hct
