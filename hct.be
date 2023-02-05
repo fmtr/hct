@@ -12,9 +12,21 @@ class Config
     
 end
 
-var TYPES_LITERAL=['string']
+var TYPES_LITERAL=['string','bool']
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
 var MAC_EMPTY='00:00:00:00:00:00'
+var ON='ON'
+var OFF='OFF'
+
+def to_bool(value)
+    return [str(true),str(1),string.tolower(ON)].find(string.tolower(str(value)))!=nil
+end
+
+def from_bool(value)
+
+    return value ? ON : OFF
+
+end
 
 def get_mac()
     
@@ -93,12 +105,21 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
 
   def handle_outgoing_wrapper(handler, entity, value_raw, trigger, message)
 
+
+    print([classname(entity), 'ogw1', value_raw])
+
     var value=entity.translate_value_out(value_raw)
     var output_raw=handler(value,entity, value_raw, trigger, message)
     if output_raw==nil 
         output_raw=value
     end
+
+    print([classname(entity), 'ogw2', output_raw])
+
     var output=infer_serialisation(output_raw)
+
+    print([classname(entity), 'ogw3', output])
+
     mqtt.publish(entity.topic_state,output)    
     entity.value=output_raw
 end
@@ -477,6 +498,24 @@ class Button : Entity
 
 end
 
+class Switch : Entity
+
+    static var platform='switch'  
+    
+  def translate_value_in(value)
+
+    return to_bool(value)
+
+  end
+
+  def translate_value_out(value)
+
+    return from_bool(to_bool(value))
+
+  end
+
+end
+
 import uuid
 
 
@@ -505,5 +544,6 @@ hct.Select=Select
 hct.Number=Number
 hct.Sensor=Sensor
 hct.Button=Button
+hct.Switch=Switch
 
 return hct
