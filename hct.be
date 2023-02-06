@@ -12,7 +12,6 @@ class Config
     
 end
 
-var TYPES_LITERAL=['string','bool']
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
 var MAC_EMPTY='00:00:00:00:00:00'
 var ON='ON'
@@ -20,12 +19,6 @@ var OFF='OFF'
 
 def to_bool(value)
     return [str(true),str(1),string.tolower(ON)].find(string.tolower(str(value)))!=nil
-end
-
-def from_bool(value)
-
-    return value ? ON : OFF
-
 end
 
 def get_mac()
@@ -73,14 +66,6 @@ end
 var CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
 var SEPS=to_chars('_- ')
 
-def infer_serialisation(value)    
-    if TYPES_LITERAL.find(type(value))==nil
-        return json.dump(value)
-    else
-        return value
-    end
-end
-
 def sanitize_name(s, sep)
     sep= sep ? sep : '-'
     var chars=[]
@@ -94,6 +79,14 @@ def sanitize_name(s, sep)
     return chars.concat()
 end
 
+
+class Publish
+    var value
+
+    def init(value)
+        self.value=value
+    end
+end
 # End of utility functions.
 
 def handle_incoming_default(value, topic, code, value_raw, value_bytes)    
@@ -104,22 +97,14 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
   end
 
   def handle_outgoing_wrapper(handler, entity, value_raw, trigger, message)
-
-
-    print([classname(entity), 'ogw1', value_raw])
-
     var value=entity.translate_value_out(value_raw)
+
     var output_raw=handler(value,entity, value_raw, trigger, message)
     if output_raw==nil 
         output_raw=value
     end
 
-    print([classname(entity), 'ogw2', output_raw])
-
-    var output=infer_serialisation(output_raw)
-
-    print([classname(entity), 'ogw3', output])
-
+    var output=json.dump({'value':output_raw})
     mqtt.publish(entity.topic_state,output)    
     entity.value=output_raw
 end
@@ -128,10 +113,14 @@ def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes
 
     var value=entity.translate_value_in(value_raw)
     var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
-    if output_raw==nil 
+
+    if classname(output_raw)==classname(Publish)
+        output_raw=output_raw.value
+    else
         output_raw=value
     end
-    var output=infer_serialisation(output_raw)
+
+    var output=json.dump({'value':output_raw})
 
     if entity.has_state
         mqtt.publish(entity.topic_state,output)   
@@ -320,6 +309,7 @@ class Entity
 		'payload_available': 'Online',
 		'payload_not_available': 'Offline',
 		'availability_topic': TOPIC_LWT,		
+        'value_template':'{{ value_json.value }}'
     }
 
     if self.topic_command data['command_topic']=self.topic_command end
@@ -438,18 +428,35 @@ class Number : Entity
 
       var data=super(self).get_data_announce()
 
-      if self.min data['min']=self.min end
-      if self.max data['max']=self.max end
-      if self.mode data['mode']=self.mode end      
-      if self.step data['step']=self.step end      
-      if self.uom data['unit_of_measurement']=self.uom end      
-      
+      var data_update={
+        'min':self.min,
+        'max':self.max,
+        'mode':self.mode,
+        'step':self.step,
+        'unit_of_measurement':self.uom
+      }
 
+      for key: data_update.keys()
+        var value=data_update[key]
+        if value!=nil
+            data[key]=value
+        end
+      end
+      
       return data
 
   end
 
   def translate_value_in(value)
+
+    if self.is_int()
+        return int(value)
+    else
+        return real(value)
+    end
+  end
+
+  def translate_value_out(value)
 
     if self.is_int()
         return int(value)
@@ -468,19 +475,19 @@ class Sensor : Entity
 
   def init(name, uom, entity_id, icon, handle_outgoings)    
     
-    self.uom=uom
+    self.uom=uom    
     super(self).init(name, entity_id, icon, handle_outgoings, nil)      
 
   end
 
   def get_data_announce()
 
-      var data=super(self).get_data_announce()     
-      if self.uom data['unit_of_measurement']=self.uom end      
-      return data
+    var data=super(self).get_data_announce()     
+    if self.uom data['unit_of_measurement']=self.uom end     
+       
+    return data
 
   end
-
 
 end
 
@@ -510,7 +517,7 @@ class Switch : Entity
 
   def translate_value_out(value)
 
-    return from_bool(to_bool(value))
+    return to_bool(value)
 
   end
 
@@ -518,8 +525,8 @@ class Switch : Entity
 
         var data=super(self).get_data_announce()     
 
-        data['payload_on']=ON
-        data['payload_off']=OFF
+        data['payload_on']=true
+        data['payload_off']=false
         
         return data
 
@@ -546,7 +553,7 @@ class BinarySensor : Sensor
 
   def translate_value_out(value)
 
-    return from_bool(to_bool(value))
+    return to_bool(value)
 
   end
 
@@ -554,8 +561,8 @@ class BinarySensor : Sensor
 
         var data=super(self).get_data_announce()     
 
-        data['payload_on']=ON
-        data['payload_off']=OFF
+        data['payload_on']=true
+        data['payload_off']=false
         
         return data
 
@@ -593,5 +600,7 @@ hct.Sensor=Sensor
 hct.Button=Button
 hct.Switch=Switch
 hct.BinarySensor=BinarySensor
+
+hct.Publish=Publish
 
 return hct

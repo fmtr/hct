@@ -83,7 +83,7 @@ hct.Number(
 
         if value==0
             tasmota.set_power(2,false)   
-            return value     
+            return hct.Publish(value)
         end
         
         value=value<5 ? 5 : value        
@@ -99,7 +99,7 @@ hct.Number(
             tasmota.cmd('TuyaSend2 105,'+str(value))
         end
 
-        return value
+        return hct.Publish(value)
 
     end
 )
@@ -125,7 +125,7 @@ hct.Number(
 
         if value==0
             tasmota.set_power(3,false)   
-            return value     
+            return hct.Publish(value)     
         end
         
         value=value<5 ? 5 : value        
@@ -141,7 +141,7 @@ hct.Number(
             tasmota.cmd('TuyaSend2 6,'+str(value))
         end
 
-        return value
+        return hct.Publish(value)
 
     end
 )
