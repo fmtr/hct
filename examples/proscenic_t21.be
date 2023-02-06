@@ -182,3 +182,33 @@ hct.Sensor(
     'mdi:timer',
     'tuyareceived#dptype2Id8'
 )
+
+hct.Switch(   
+    'Power',        
+    nil,
+    'mdi:power',
+    'power1#state',    
+    /value->tasmota.set_power(0,value)
+)
+
+hct.Switch(   
+    'Cook/Pause',        
+    nil,
+    'mdi:play-pause',
+    'power2#state',    
+    /value->tasmota.set_power(1,value)
+)
+
+hct.BinarySensor(   
+    'Keep Warm',        
+    nil,
+    'mdi:sync-circle',
+    'power3#state'
+)
+
+hct.BinarySensor(   
+    'Delay',        
+    nil,
+    'mdi:pause-circle',
+    'power4#state'
+)
