@@ -79,6 +79,7 @@ def sanitize_name(s, sep)
     return chars.concat()
 end
 
+# End of utility functions.
 
 class Publish
     var value
@@ -87,7 +88,7 @@ class Publish
         self.value=value
     end
 end
-# End of utility functions.
+
 
 def handle_incoming_default(value, topic, code, value_raw, value_bytes)    
     var value_str={'value':value,'topic':topic,'code':code,'value_raw':value_raw,'value_bytes':value_bytes}.tostring()
