@@ -154,8 +154,6 @@ class Entity
 
   static var platform=nil
   static var mac=string.split(string.tolower(MAC),':').concat()  
-  static var has_state=true
-  static var has_command=true
 
   var value
 
@@ -185,8 +183,7 @@ class Entity
     self.rule_registry={}
     #self.register_rule('System#Save',/value->self.close())
 
-	self.topic_command=self.get_topic_command()	
-	self.topic_state=self.get_topic_state()
+    self.set_topics()
 	self.topic_announce=self.get_topic_announce()
 
     self.subscribe_announce()
@@ -199,6 +196,13 @@ class Entity
     end
 	    
   end
+
+    def set_topics()
+
+        self.topic_command=self.get_topic('command','state')	
+        self.topic_state=self.get_topic('state','state')
+
+    end
 
   def register_rule(trigger,closure)
     var id=[str(classname(self)),str(closure)].concat('_')
@@ -260,23 +264,13 @@ class Entity
 
     end
 
-    def get_topic_command()
+    def get_topic(type_topic, endpoint)
 
-        if !self.has_command # TODO: Replace with map e.g. mode->has_state
-            return
-        end
+        type_topic={'command':'cmnd','state':'stat'}[type_topic]
+        return [type_topic,TOPIC, string.toupper(self.name_sanitized),endpoint].concat('/')	
 
-        return ['cmnd',TOPIC, string.toupper(self.name_sanitized)].concat('/')	
     end
 
-    def get_topic_state()
-
-        if !self.has_state # TODO: Replace with map e.g. mode->has_state
-            return
-        end
-
-        return ['stat',TOPIC,string.toupper(self.name_sanitized)].concat('/')	
-    end
 
     def get_topic_announce()
         return ['homeassistant',self.platform,TOPIC,self.get_unique_id(),'config'].concat('/')    
@@ -479,8 +473,7 @@ end
 
 class Sensor : Entity
 
-    static var platform='sensor'
-    static var has_command=false
+    static var platform='sensor'    
     var uom
 
   def init(name, uom, entity_id, icon, handle_outgoings)    
@@ -489,6 +482,12 @@ class Sensor : Entity
     super(self).init(name, entity_id, icon, handle_outgoings, nil)      
 
   end
+
+    def set_topics()
+        
+        self.topic_state=self.get_topic('state','state')
+
+    end
 
   def get_data_announce()
 
@@ -503,8 +502,7 @@ end
 
 class Button : Entity
 
-    static var platform='button'
-    static var has_state=false
+    static var platform='button'    
     var uom
 
   def init(name, entity_id, icon, handle_incoming)        
@@ -512,6 +510,12 @@ class Button : Entity
     super(self).init(name, entity_id, icon, nil, handle_incoming)      
 
   end
+
+    def set_topics()
+
+        self.topic_command=self.get_topic('command','state')	    
+
+    end
 
 end
 
