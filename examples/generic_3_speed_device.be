@@ -3,13 +3,29 @@
 
 import hct
 
+log('Setting up 3 speed device with hct...')
+
 TRIGGERS_SPEEDS={'Power2#state=1': "Low",'Power3#state=1': "Medium",'Power4#state=1': "High"}
 OPTIONS_RELAY_IDS={'Off':nil, 'Low':2,'Medium':3,'High':4}
 
-def callback_out(value, entity, value_raw, trigger, message)        
-    var trigger_value=[trigger,str(value_raw)].concat('=')
-    var output=TRIGGERS_SPEEDS.find(trigger_value,'Off')
-    return output
+def are_any_speeds_on()
+	var powers=tasmota.get_power()
+	return powers[1] || powers[2] || powers[3]
+end
+
+def callback_out()
+    var powers=tasmota.get_power()
+    var i
+    for key: OPTIONS_RELAY_IDS.keys()        
+        i=OPTIONS_RELAY_IDS[key]
+        if i==nil            
+        else
+            if powers[i-1]
+                return key
+            end
+        end
+    end
+    return 'Off'
 end
 
 def callback_in(value)
@@ -26,6 +42,9 @@ hct.Select(
     OPTIONS_RELAY_IDS,
     nil,
     'mdi:fan-speed-3',
-    {callback_out:['Power2#state','Power3#state','Power4#state']},
-    callback_out
+    {
+        callback_out: ['Power2#state','Power3#state','Power4#state'],
+        /->'Off':'Power1#state=0'
+    },
+    callback_in
 )

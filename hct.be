@@ -89,6 +89,9 @@ class Publish
     end
 end
 
+class NoPublish    
+end
+
 
 def handle_incoming_default(value, topic, code, value_raw, value_bytes)    
     var value_str={'value':value,'topic':topic,'code':code,'value_raw':value_raw,'value_bytes':value_bytes}.tostring()
@@ -97,20 +100,26 @@ def handle_incoming_default(value, topic, code, value_raw, value_bytes)
 
   end
 
-  def handle_outgoing_wrapper(handler, entity, value_raw, trigger, message)
-    var value=entity.translate_value_out(value_raw)
+  def handle_outgoing_wrapper(handler, entity,topic_state, value_raw, trigger, message)   
+
+    var value=entity.translate_value_out(value_raw) 
 
     var output_raw=handler(value,entity, value_raw, trigger, message)
+
+    if classname(output_raw)==classname(NoPublish)
+        return    
+    end
+    
     if output_raw==nil 
         output_raw=value
     end
 
     var output=json.dump({'value':output_raw})
-    mqtt.publish(entity.topic_state,output)    
+    mqtt.publish(topic_state,output)    # topic_state
     entity.value=output_raw
 end
 
-def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes)
+def handle_incoming_wrapper(handler, entity, topic_state, topic, code, value_raw, value_bytes)
 
     var value=entity.translate_value_in(value_raw)
     var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
@@ -123,8 +132,8 @@ def handle_incoming_wrapper(handler, entity, topic, code, value_raw, value_bytes
 
     var output=json.dump({'value':output_raw})
 
-    if entity.has_state
-        mqtt.publish(entity.topic_state,output)   
+    if topic_state
+        mqtt.publish(topic_state,output)   #topic_state
     end
 
     entity.value=output_raw
@@ -181,8 +190,8 @@ class Entity
 	self.topic_announce=self.get_topic_announce()
 
     self.subscribe_announce()
-    self.subscribe_out(handle_outgoings)
-    self.subscribe_in(handle_incoming)
+    self.subscribe_out(handle_outgoings, self.topic_state, self.topic_command)
+    self.subscribe_in(handle_incoming, self.topic_state, self.topic_command)
 
     var mqtt_count=tasmota.cmd('status 6').find('StatusMQT',{}).find('MqttCount',0)
     if mqtt_count>0
@@ -202,7 +211,7 @@ class Entity
     self.register_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())    
   end
 
-    def subscribe_out(handle_outgoings)
+    def subscribe_out(handle_outgoings, topic_state, topic_command)
 
         handle_outgoings= handle_outgoings ? handle_outgoings : {}
 
@@ -227,7 +236,7 @@ class Entity
             for trigger_handler: trigger_handlers
                 closure_outgoing=(
                     / value trigger message -> 
-                    handle_outgoing_wrapper(handler, self, value, trigger, message)
+                    handle_outgoing_wrapper(handler, self, topic_state, value, trigger, message)
                 )
                 self.register_rule(trigger_handler,closure_outgoing)
                 
@@ -235,25 +244,25 @@ class Entity
         end
     end
 
-    def subscribe_in(handle_incoming)
+    def subscribe_in(handle_incoming, topic_state, topic_command)
 
 
-        if !self.has_command
+        if !topic_command
             return
         end
 
         handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
         var closure_incoming=(
             / topic code value value_bytes -> 
-            handle_incoming_wrapper(handle_incoming, self, topic, code, value, value_bytes)      
+            handle_incoming_wrapper(handle_incoming, self,topic_state, topic, code, value, value_bytes)      
         )  
-        mqtt.subscribe(self.topic_command, closure_incoming)
+        mqtt.subscribe(topic_command, closure_incoming) # topic_command
 
     end
 
     def get_topic_command()
 
-        if !self.has_command
+        if !self.has_command # TODO: Replace with map e.g. mode->has_state
             return
         end
 
@@ -262,7 +271,7 @@ class Entity
 
     def get_topic_state()
 
-        if !self.has_state
+        if !self.has_state # TODO: Replace with map e.g. mode->has_state
             return
         end
 
@@ -603,5 +612,6 @@ hct.Switch=Switch
 hct.BinarySensor=BinarySensor
 
 hct.Publish=Publish
+hct.NoPublish=NoPublish
 
 return hct
