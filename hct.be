@@ -1,4 +1,4 @@
-var VERSION='0.0.17'
+var VERSION='0.0.18'
 import mqtt
 import json
 import string
