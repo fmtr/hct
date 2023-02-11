@@ -150,6 +150,7 @@ hct.Sensor(
     'Status',    
     nil,
     nil,
+    nil,
     'mdi:playlist-play',
     {
         /value->{0:'Ready',1:'Delayed Cook',2:'Cooking',3:'Keep Warm',4:'Off',5:'Cooking Complete'}.find(value,'Unknown'):
@@ -159,14 +160,18 @@ hct.Sensor(
 
 # Lastly we add the cookbook pull-down. This has already been covered in the README: https://github.com/fmtr/hct#example-walkthrough
 
+FOODS_INDEXES={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
+INDEXES_FOODS=hct.reverse_map(FOODS_INDEXES)
+FOODS=hct.get_keys(FOODS_INDEXES)
+
 hct.Select(   
     'Cookbook',
-    {'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10},
+    FOODS,
     nil,
     'mdi:chef-hat',
-    'tuyareceived#dptype4id3',
-    /value->tasmota.cmd('TuyaEnum1 '+str(value))
-)  
+    {/value->INDEXES_FOODS[value]:'tuyareceived#dptype4id3'},
+    /value->tasmota.cmd('TuyaEnum1 '+str(FOODS_INDEXES.find(value)))
+)   
 
 hct.Button(        
     'Upgrade Tasmota',
@@ -178,6 +183,7 @@ hct.Button(
 hct.Sensor(   
     'Time Remaining',    
     'minutes',
+    nil,
     nil,
     'mdi:timer',
     'tuyareceived#dptype2Id8'
