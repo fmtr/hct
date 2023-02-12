@@ -114,6 +114,12 @@ def sanitize_name(s, sep)
     return chars.concat()
 end
 
+def set_default(data,key,value)
+    if !data.contains(key)
+        data[key]=value
+    end
+end
+
 def add_rule_once(trigger, function)
 
     var id=uuid.uuid4()
@@ -237,10 +243,7 @@ end
 class Entity
 
     static var platform=nil
-    static var mac=string.split(string.tolower(MAC),':').concat()  
-
-    static var has_in=true
-    static var has_out=true
+    static var mac=string.split(string.tolower(MAC),':').concat()      
 
     var value
 
@@ -253,6 +256,9 @@ class Entity
     var entity_id
     var icon 
     var rule_registry
+
+    var handle_outgoings
+    var handle_incoming
 
     var endpoint_data
 
@@ -267,14 +273,17 @@ class Entity
         self.name=name
         self.entity_id=entity_id
         self.icon=icon	
-        self.name_sanitized=sanitize_name(self.name)		
+        self.name_sanitized=sanitize_name(self.name)	
+        
+        self.handle_incoming=handle_incoming
+        self.handle_outgoings=handle_outgoings
 
         self.rule_registry={}
         #self.register_rule('System#Save',/value->self.close())    
         self.topic_announce=self.get_topic_announce()
         self.subscribe_announce()
 
-        self.endpoint_data=self.extend_endpoint_data(self.get_endpoint_data(handle_outgoings, handle_incoming))    
+        self.endpoint_data=self.extend_endpoint_data(self.get_endpoint_data())    
         for key: self.endpoint_data.keys()
             self.subscribe_out(key)
             self.subscribe_in(key)
@@ -287,26 +296,28 @@ class Entity
         
     end
 
-    def get_endpoint_data(handle_outgoings, handle_incoming)
+    def get_endpoint_data()
 
-        var data={'state':{'in':{},'out':{}}}
+        var data={}
 
-        if self.has_in
+        if self.handle_incoming
+            set_default(data,'state',{})
             data['state']['in']={
                 'topic': self.get_topic('command','state'),
                 'topic_key': 'command_topic',
-                'callbacks': handle_incoming,
+                'callbacks': self.handle_incoming,
                 'converter': /value->self.converter_state_in(value)
                 }
         end
 
-        if self.has_out
+        if self.handle_outgoings
+            set_default(data,'state',{})
             data['state']['out']={
                 'topic': self.get_topic('state','state'),
                 'topic_key': 'state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'value_template',
-                'callbacks': handle_outgoings,
+                'callbacks': self.handle_outgoings,
                 'converter': /value->self.converter_state_out(value)
                 }
         end
@@ -337,7 +348,7 @@ class Entity
 
     def subscribe_out(name)      
 
-        var handle_outgoings=self.endpoint_data[name]['out'].find('callbacks')
+        var handle_outgoings=self.endpoint_data[name].find('out',{}).find('callbacks')
 
         handle_outgoings= handle_outgoings ? handle_outgoings : {}
 
@@ -371,13 +382,14 @@ class Entity
     end
 
     def subscribe_in(name)
+        
+        var handle_incoming=self.endpoint_data[name].find('in',{}).find('callbacks')
 
-        var topic=self.endpoint_data[name]['in'].find('topic')
-        if !topic
+        if !handle_incoming
             return
         end
 
-        var handle_incoming=self.endpoint_data[name]['in'].find('callbacks')
+        var topic=self.endpoint_data[name]['in']['topic']
 
         handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
         var closure_incoming=(
@@ -595,8 +607,7 @@ end
 
 class Sensor : Entity
 
-    static var platform='sensor'    
-    static var has_in=false
+    static var platform='sensor'        
     var uom
     var type
 
@@ -626,19 +637,12 @@ end
 
 class Button : Entity
 
-    static var platform='button'    
-    static var has_out=false
+    static var platform='button'        
     var uom
 
     def init(name, entity_id, icon, handle_incoming)        
 
         super(self).init(name, entity_id, icon, nil, handle_incoming)      
-
-    end
-
-    def set_topics()
-
-        self.topic_command=self.get_topic('command','state')	    
 
     end
 
@@ -671,8 +675,7 @@ end
 
 class BinarySensor : Sensor
 
-    static var platform='binary_sensor'
-    static var has_in=false 
+    static var platform='binary_sensor'    
     
     
     def init(name, entity_id, icon, handle_outgoings)    
