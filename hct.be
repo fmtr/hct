@@ -1,8 +1,10 @@
 var VERSION='0.0.18'
+var NAME='hct'
 import mqtt
 import json
 import string
 import math
+import uuid
 
 class Config
 
@@ -33,7 +35,7 @@ def log_debug(messages)
     log(as_str)
 
 
-    as_str=[str(tasmota.cmd('Time').find('Time')),as_str].concat(':')
+    as_str=[str(tasmota.cmd('Time').find('Time')),as_str].concat(': ')
     print(as_str)
 
 end
@@ -112,6 +114,19 @@ def sanitize_name(s, sep)
     return chars.concat()
 end
 
+def add_rule_once(trigger, function)
+
+    var id=uuid.uuid4()
+
+    def wrapper(value, trigger_wrapper, message)                
+        tasmota.remove_rule(trigger,id)        
+        return function(value, trigger_wrapper, message)
+    end
+    
+    tasmota.add_rule(trigger,wrapper, id)    
+
+end
+
 # End of utility functions.
 
 class Publish
@@ -143,20 +158,20 @@ def handle_outgoing_wrapper(handler, entity,name, value_raw, trigger, message)
 
     log_debug([entity.name,'Outgoing handler output:', output_raw])
 
-      if classname(output_raw)==classname(NoPublish)
-          return    
-      end
-      
-      if output_raw==nil 
-          output_raw=value_raw
-      end    
+    if classname(output_raw)==classname(NoPublish)
+        return    
+    end
+    
+    if output_raw==nil 
+        output_raw=value_raw
+    end    
 
-      var output=json.dump({'value':converter(output_raw)})
+    var output=json.dump({'value':converter(output_raw)})
 
-      log_debug([entity.name,'Outgoing handler publishing:',entity.name, output])
+    log_debug([entity.name,'Outgoing handler publishing:',entity.name, output])
 
-      mqtt.publish(topic,output)    # topic_state
-      entity.value=output_raw
+    mqtt.publish(topic,output)
+    entity.value=output_raw
 end
 
 def handle_incoming_wrapper(handler, entity, name, topic, code, value_raw, value_bytes)
@@ -176,7 +191,7 @@ def handle_incoming_wrapper(handler, entity, name, topic, code, value_raw, value
   var output=json.dump({'value':output_raw})
 
   if topic_out
-      mqtt.publish(topic_out,output)   #topic_state
+      mqtt.publish(topic_out,output)
   end
 
   entity.value=output_raw
@@ -194,7 +209,6 @@ def list_to_map(as_list)
 end
 
 def reverse_map(data)
-
     var reversed={}
     for key: data.keys()
         reversed[data[key]]=key
@@ -203,7 +217,6 @@ def reverse_map(data)
 end
 
 def get_keys(data)
-
     var keys=[]
     for key: data.keys()
         keys.push(key)
@@ -212,129 +225,115 @@ def get_keys(data)
 end
 
 def update_map(data,data_update)
-  for key: data_update.keys()
-    var value=data_update[key]
-    if value!=nil
-        data[key]=value
+    for key: data_update.keys()
+        var value=data_update[key]
+        if value!=nil
+            data[key]=value
+        end
     end
-  end
-  return data
+    return data
 end
 
 class Entity
 
-  static var platform=nil
-  static var mac=string.split(string.tolower(MAC),':').concat()  
+    static var platform=nil
+    static var mac=string.split(string.tolower(MAC),':').concat()  
 
-  static var has_in=true
-  static var has_out=true
+    static var has_in=true
+    static var has_out=true
 
-  var value
+    var value
 
-  var topic_command
-  var topic_state
-  var topic_announce
-  var name  
-  var name_sanitized
-  var unique_id
-  var entity_id
-  var icon 
-  var rule_registry
+    var topic_command
+    var topic_state
+    var topic_announce
+    var name  
+    var name_sanitized
+    var unique_id
+    var entity_id
+    var icon 
+    var rule_registry
 
-  var endpoint_data
-  
-  def init(name, entity_id, icon, handle_outgoings, handle_incoming)
+    var endpoint_data
 
-    self.value=nil
-    
-    if Config.USE_LONG_NAMES        
-        name=[DEVICE_NAME,name].concat(' ')
-    end
-  
-    self.name=name
-    self.entity_id=entity_id
-    self.icon=icon	
-    self.name_sanitized=sanitize_name(self.name)		
+    def init(name, entity_id, icon, handle_outgoings, handle_incoming)
 
-    self.rule_registry={}
-    #self.register_rule('System#Save',/value->self.close())
+        self.value=nil
 
-    #self.set_topics()
-    self.topic_announce=self.get_topic_announce()
+        if Config.USE_LONG_NAMES        
+            name=[DEVICE_NAME,name].concat(' ')
+        end
 
-    self.subscribe_announce()
+        self.name=name
+        self.entity_id=entity_id
+        self.icon=icon	
+        self.name_sanitized=sanitize_name(self.name)		
 
+        self.rule_registry={}
+        #self.register_rule('System#Save',/value->self.close())    
+        self.topic_announce=self.get_topic_announce()
+        self.subscribe_announce()
 
-    self.endpoint_data=self.extend_endpoint_data(self.get_endpoint_data(handle_outgoings, handle_incoming))    
+        self.endpoint_data=self.extend_endpoint_data(self.get_endpoint_data(handle_outgoings, handle_incoming))    
+        for key: self.endpoint_data.keys()
+            self.subscribe_out(key)
+            self.subscribe_in(key)
+        end
 
-    for key: self.endpoint_data.keys()
-      self.subscribe_out(key)
-      self.subscribe_in(key)
-    end
-
-
-
-    var mqtt_count=tasmota.cmd('status 6').find('StatusMQT',{}).find('MqttCount',0)
-    if mqtt_count>0
-        self.announce()    
-    end
+        var mqtt_count=tasmota.cmd('status 6').find('StatusMQT',{}).find('MqttCount',0)
+        if mqtt_count>0
+            self.announce()    
+        end
         
-  end
-
-  def get_endpoint_data(handle_outgoings, handle_incoming)
-
-    var data={'state':{'in':{},'out':{}}}
-
-    if self.has_in
-        data['state']['in']={
-            'topic': self.get_topic('command','state'),
-            'topic_key': 'command_topic',
-            'callbacks': handle_incoming,
-            'converter': /value->self.converter_state_in(value)
-          }
     end
 
-    if self.has_out
-        data['state']['out']={
-            'topic': self.get_topic('state','state'),
-            'topic_key': 'state_topic',
-            'template':VALUE_TEMPLATE,
-            'template_key': 'value_template',
-            'callbacks': handle_outgoings,
-            'converter': /value->self.converter_state_out(value)
-          }
-    end
+    def get_endpoint_data(handle_outgoings, handle_incoming)
 
-    return data
+        var data={'state':{'in':{},'out':{}}}
 
-  end
+        if self.has_in
+            data['state']['in']={
+                'topic': self.get_topic('command','state'),
+                'topic_key': 'command_topic',
+                'callbacks': handle_incoming,
+                'converter': /value->self.converter_state_in(value)
+                }
+        end
 
-  def extend_endpoint_data(data)
+        if self.has_out
+            data['state']['out']={
+                'topic': self.get_topic('state','state'),
+                'topic_key': 'state_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'value_template',
+                'callbacks': handle_outgoings,
+                'converter': /value->self.converter_state_out(value)
+                }
+        end
 
-    return data
-
-  end
-
-    def set_topics()
-
-        self.topic_command=self.get_topic('command','state')	
-        self.topic_state=self.get_topic('state','state')
+        return data
 
     end
 
-  def register_rule(trigger,closure)
-    var id=[str(classname(self)),str(closure)].concat('_')
+    def extend_endpoint_data(data)
 
-    log_debug([self.name,'Adding rule',trigger,closure,id])
+        return data
 
-    tasmota.add_rule(trigger,closure,id)
-    self.rule_registry[id]=trigger
-    return id
-  end
+    end
 
-  def subscribe_announce()
-    self.register_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())    
-  end
+    def register_rule(trigger,closure)
+        var id=[str(classname(self)),str(closure)].concat('_')
+
+        log_debug([self.name,'Adding rule',trigger,closure,id])
+
+        tasmota.add_rule(trigger,closure,id)
+        self.rule_registry[id]=trigger
+        return id
+    end
+
+    def subscribe_announce()
+        self.register_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())    
+    end
 
     def subscribe_out(name)      
 
@@ -373,7 +372,7 @@ class Entity
 
     def subscribe_in(name)
 
-      var topic=self.endpoint_data[name]['in'].find('topic')
+        var topic=self.endpoint_data[name]['in'].find('topic')
         if !topic
             return
         end
@@ -422,66 +421,66 @@ class Entity
 
         return unique_id
 
-  end
-  
-  def get_data_announce()
+    end
+
+    def get_data_announce()
 
     var data
-    data= {
-        'device': {
-            'connections': [['mac', self.mac]],
-            'identifiers': self.mac
-        },
-        'name': self.name,
-        'unique_id': self.get_unique_id(),		
-        'force_update': True,
-        'payload_available': 'Online',
-        'payload_not_available': 'Offline',
-        'availability_topic': TOPIC_LWT,		
-        
-    }
+        data= {
+            'device': {
+                'connections': [['mac', self.mac]],
+                'identifiers': self.mac
+            },
+            'name': self.name,
+            'unique_id': self.get_unique_id(),		
+            'force_update': True,
+            'payload_available': 'Online',
+            'payload_not_available': 'Offline',
+            'availability_topic': TOPIC_LWT,		
+            
+        }
 
-    var data_update={      
-      'icon':self.icon,
-      'object_id':self.entity_id
-    }
+        var data_update={      
+            'icon':self.icon,
+            'object_id':self.entity_id
+        }
 
-    for name: self.endpoint_data.keys()
-      var dir_data=self.endpoint_data[name]
-      for io_data: [dir_data.find('in',{}),dir_data.find('out',{})]
-        for keyfix: ['topic','template']
-          data_update[io_data.find(keyfix+'_key')]=io_data.find(keyfix)
+        for name: self.endpoint_data.keys()
+            var dir_data=self.endpoint_data[name]
+            for io_data: [dir_data.find('in',{}),dir_data.find('out',{})]
+            for keyfix: ['topic','template']
+                data_update[io_data.find(keyfix+'_key')]=io_data.find(keyfix)
+            end
+            end
         end
-      end
+
+        data=update_map(data,data_update)
+
+        return data
+
     end
 
-    data=update_map(data,data_update)
-
-    return data
-
-  end
-  
-  def announce()	
-    return mqtt.publish(self.topic_announce, json.dump(self.get_data_announce()))
-  end
-
-  def close()
-
-    log(['Closing',classname(self),self.name,'...'].concat(' '))
-    var trigger
-    for id: self.rule_registry.keys()
-        trigger=self.rule_registry[id]        
-        tasmota.remove_rule(trigger,id)
+    def announce()	
+        return mqtt.publish(self.topic_announce, json.dump(self.get_data_announce()))
     end
-  end
 
-  def converter_state_in(value)
-    return str(value)
-  end
+    def close()
 
-  def converter_state_out(value)
-    return str(value)
-  end
+        log_debug(['Closing',classname(self),self.name,'...'].concat(' '))
+        var trigger
+        for id: self.rule_registry.keys()
+            trigger=self.rule_registry[id]        
+            tasmota.remove_rule(trigger,id)
+        end
+    end
+
+    def converter_state_in(value)
+        return str(value)
+    end
+
+    def converter_state_out(value)
+        return str(value)
+    end
   
 end
 
@@ -493,48 +492,46 @@ class Select : Entity
     var options_map_in      
     var options_map_out     
 
-  def init(name, options, entity_id, icon, handle_outgoings, handle_incoming)
-    
+    def init(name, options, entity_id, icon, handle_outgoings, handle_incoming)
+        
 
-    if classname(options)=='list'       
-      
-      self.options=options
-      
-      self.options_map_in={} 
-      for option: options
-        self.options_map_in[option]=option		
-      end	  	  
-      
-    else
-      
-      self.options_map_in=options
+        if classname(options)=='list'       
+        
+        self.options=options
+        
+        self.options_map_in={} 
+        for option: options
+            self.options_map_in[option]=option		
+        end	  	  
+        
+        else
+        
+        self.options_map_in=options
 
-      self.options=[] 
-      for option: options.keys()
-        self.options.push(option)
-      end	
-      
+        self.options=[] 
+        for option: options.keys()
+            self.options.push(option)
+        end	
+        
+        end
+
+        self.options_map_out={}
+        for key: self.options_map_in.keys()
+        self.options_map_out[self.options_map_in[key]]=key
+        end
+
+        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+
     end
 
-    self.options_map_out={}
-    for key: self.options_map_in.keys()
-      self.options_map_out[self.options_map_in[key]]=key
+    def get_data_announce()
+
+        var data=super(self).get_data_announce()
+        data['options']=self.options        
+
+        return data
+
     end
-
-    super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
-
-  end
-
-  def get_data_announce()
-
-      var data=super(self).get_data_announce()
-      data['options']=self.options        
-
-      return data
-
-  end
-
-
 
 end
 
@@ -550,51 +547,49 @@ class Number : Entity
     var uom
     var type
 
-  def init(name, min, max, mode, step, uom, entity_id, icon, handle_outgoings, handle_incoming)
-    
-    self.min=min
-    self.max=max
-    self.mode=mode
-    self.step=step
-    self.uom=uom
-    self.type=self.step==nil || self.step==1 ? int : real
-    super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+    def init(name, min, max, mode, step, uom, entity_id, icon, handle_outgoings, handle_incoming)
 
-  end
+        self.min=min
+        self.max=max
+        self.mode=mode
+        self.step=step
+        self.uom=uom
+        self.type=self.step==nil || self.step==1 ? int : real
+        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+
+    end
 
 
-  def get_data_announce()
+    def get_data_announce()
 
-      var data=super(self).get_data_announce()
+        var data=super(self).get_data_announce()
 
-      var data_update={
+        var data_update={
         'min':self.min,
         'max':self.max,
         'mode':self.mode,
         'step':self.step,
         'unit_of_measurement':self.uom
-      }
+        }
 
-      for key: data_update.keys()
-        var value=data_update[key]
-        if value!=nil
-            data[key]=value
+        for key: data_update.keys()
+            var value=data_update[key]
+            if value!=nil
+                data[key]=value
+            end
         end
-      end
-      
-      return data
+        
+        return data
 
-  end
+    end
 
-  def converter_state_in(value)
+    def converter_state_in(value)
+        return self.type(value)
+    end
 
-    return self.type(value)
-  end
-
-  def converter_state_out(value)
-
-    return self.type(value)
-  end
+    def converter_state_out(value)
+        return self.type(value)
+    end
 
 end
 
@@ -605,32 +600,27 @@ class Sensor : Entity
     var uom
     var type
 
-  def init(name, uom, data_type, entity_id, icon, handle_outgoings)    
-    
-    self.uom=uom    
-    self.type=data_type==nil ? /value->value : data_type
-    super(self).init(name, entity_id, icon, handle_outgoings, nil)      
+    def init(name, uom, data_type, entity_id, icon, handle_outgoings)    
 
-  end
+        self.uom=uom    
+        self.type=data_type==nil ? /value->value : data_type
+        super(self).init(name, entity_id, icon, handle_outgoings, nil)      
 
-  def converter_state_in(value)
+    end
 
-    return self.type(value)
-  end
+    def converter_state_in(value)
+        return self.type(value)
+    end
 
-  def converter_state_out(value)
+    def converter_state_out(value)
+        return self.type(value)
+    end
 
-    return self.type(value)
-  end
-
-  def get_data_announce()
-
-    var data=super(self).get_data_announce()     
-    if self.uom data['unit_of_measurement']=self.uom end     
-       
-    return data
-
-  end
+    def get_data_announce()
+        var data=super(self).get_data_announce()     
+        if self.uom data['unit_of_measurement']=self.uom end
+        return data
+    end
 
 end
 
@@ -640,11 +630,11 @@ class Button : Entity
     static var has_out=false
     var uom
 
-  def init(name, entity_id, icon, handle_incoming)        
-    
-    super(self).init(name, entity_id, icon, nil, handle_incoming)      
+    def init(name, entity_id, icon, handle_incoming)        
 
-  end
+        super(self).init(name, entity_id, icon, nil, handle_incoming)      
+
+    end
 
     def set_topics()
 
@@ -658,19 +648,15 @@ class Switch : Entity
 
     static var platform='switch'  
 
-  def converter_state_in(value)
+    def converter_state_in(value)
+        return to_bool(value)
+    end
 
-    return to_bool(value)
+    def converter_state_out(value)
+        return from_bool(value)
+    end
 
-  end
-
-  def converter_state_out(value)
-
-    return from_bool(value)
-
-  end
-
-  def get_data_announce()
+    def get_data_announce()
 
         var data=super(self).get_data_announce()     
 
@@ -689,26 +675,22 @@ class BinarySensor : Sensor
     static var has_in=false 
     
     
-  def init(name, entity_id, icon, handle_outgoings)    
+    def init(name, entity_id, icon, handle_outgoings)    
 
-    super(self).init(name, nil, nil ,entity_id, icon, handle_outgoings)      
+        super(self).init(name, nil, nil ,entity_id, icon, handle_outgoings)      
 
-  end
+    end
 
 
-  def converter_state_in(value)
+    def converter_state_in(value)
+        return to_bool(value)
+    end
 
-    return to_bool(value)
+    def converter_state_out(value)
+        return from_bool(value)
+    end
 
-  end
-
-  def converter_state_out(value)
-
-    return from_bool(value)
-
-  end
-
-  def get_data_announce()
+    def get_data_announce()
 
         var data=super(self).get_data_announce()     
 
@@ -721,29 +703,12 @@ class BinarySensor : Sensor
 
 end
 
-import uuid
 
-
-def add_rule_once(trigger, function)
-
-    var id=uuid.uuid4()
-
-    def wrapper(value, trigger_wrapper, message)                
-        tasmota.remove_rule(trigger,id)        
-        return function(value, trigger_wrapper, message)
-    end
-    
-    tasmota.add_rule(trigger,wrapper, id)    
-
-end
-
-var hct = module("hct")
+var hct = module(NAME)
 
 hct.VERSION=VERSION
-
 hct.Config=Config
 
-hct.add_rule_once=add_rule_once
 
 hct.Select=Select
 hct.Number=Number
@@ -754,9 +719,9 @@ hct.BinarySensor=BinarySensor
 
 hct.Publish=Publish
 hct.NoPublish=NoPublish
+hct.add_rule_once=add_rule_once
 hct.reverse_map=reverse_map
 hct.get_keys=get_keys
-
 
 log_debug("hct.be compiled OK.")
 
