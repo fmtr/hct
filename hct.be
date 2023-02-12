@@ -182,27 +182,32 @@ end
 
 def handle_incoming_wrapper(handler, entity, name, topic, code, value_raw, value_bytes)
 
-  var converter=entity.endpoint_data[name].find('in',{}).find('converter',/value->value)
-  var topic_out=entity.endpoint_data[name].find('out',{}).find('topic')
-  
-  var value=converter(value_raw)
-  var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
+    log_debug([entity.name,'Incoming input:', handler, entity, name, topic, code, value_raw, value_bytes])
 
-  if classname(output_raw)==classname(Publish)
-      output_raw=output_raw.value
-  else
-      output_raw=value
-  end
+    var converter=entity.endpoint_data[name].find('in',{}).find('converter',/value->value)
+    var converter_out=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
+    var topic_out=entity.endpoint_data[name].find('out',{}).find('topic')
 
-  var output=json.dump({'value':output_raw})
+    var value=converter(value_raw)
+    var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
 
-  if topic_out
-      mqtt.publish(topic_out,output)
-  end
+    if classname(output_raw)==classname(Publish)
+        output_raw=output_raw.value
+    else
+        output_raw=value
+    end
 
-  entity.value=output_raw
+    var output=json.dump({'value':converter_out(output_raw)})
 
-  return true 
+    log_debug([entity.name,'Incoming publishing to state topic:', output])
+
+    if topic_out
+        mqtt.publish(topic_out,output)
+    end
+
+    entity.value=output_raw
+
+    return true 
 
 end
 
@@ -473,7 +478,9 @@ class Entity
     end
 
     def announce()	
-        return mqtt.publish(self.topic_announce, json.dump(self.get_data_announce()))
+        var data=self.get_data_announce()
+        log_debug([self.name, 'Doing announce', data])
+        return mqtt.publish(self.topic_announce, json.dump(data))
     end
 
     def close()
@@ -705,6 +712,8 @@ class BinarySensor : Sensor
     end
 
 end
+
+
 
 
 var hct = module(NAME)
