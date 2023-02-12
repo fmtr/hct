@@ -9,8 +9,36 @@ class Config
     # Module-wide configuration
     
     static var USE_LONG_NAMES=false
+    static var IS_DEBUG=false
     
 end
+
+def log_debug(messages)
+
+    if !Config.IS_DEBUG
+        return
+    end
+
+    if classname(messages)!='list'
+        messages=[messages]
+    end
+
+    var as_strs=[]
+
+    for message: messages
+        as_strs.push(str(message))
+    end
+
+    var as_str=as_strs.concat(', ')
+    log(as_str)
+
+
+    as_str=[str(tasmota.cmd('Time').find('Time')),as_str].concat(':')
+    print(as_str)
+
+end
+
+log_debug("hct.be compiling...")
 
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
 var MAC_EMPTY='00:00:00:00:00:00'
@@ -109,11 +137,11 @@ def handle_outgoing_wrapper(handler, entity,name, value_raw, trigger, message)
     var converter=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
     var topic=entity.endpoint_data[name].find('out',{}).find('topic')
 
-    print(['ogw',entity.name, handler, entity,name, value_raw, trigger, message])
+    log_debug([entity.name,'Outgoing input:', handler, entity,name, value_raw, trigger, message])
 
     var output_raw=handler(value_raw,entity, value_raw, trigger, message)
 
-    print(['ogw_raw',entity.name, output_raw])
+    log_debug([entity.name,'Outgoing handler output:', output_raw])
 
       if classname(output_raw)==classname(NoPublish)
           return    
@@ -125,7 +153,7 @@ def handle_outgoing_wrapper(handler, entity,name, value_raw, trigger, message)
 
       var output=json.dump({'value':converter(output_raw)})
 
-      print(['ogw_output',entity.name, output])
+      log_debug([entity.name,'Outgoing handler publishing:',entity.name, output])
 
       mqtt.publish(topic,output)    # topic_state
       entity.value=output_raw
@@ -297,7 +325,7 @@ class Entity
   def register_rule(trigger,closure)
     var id=[str(classname(self)),str(closure)].concat('_')
 
-    #print(['Adding rule',trigger,closure,id])
+    log_debug([self.name,'Adding rule',trigger,closure,id])
 
     tasmota.add_rule(trigger,closure,id)
     self.rule_registry[id]=trigger
@@ -730,6 +758,6 @@ hct.reverse_map=reverse_map
 hct.get_keys=get_keys
 
 
-print("hct.be compiled OK.")
+log_debug("hct.be compiled OK.")
 
 return hct
