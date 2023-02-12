@@ -394,6 +394,7 @@ class Entity
             return
         end
 
+        assert self.endpoint_data[name].contains('in')
         var topic=self.endpoint_data[name]['in']['topic']
 
         handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
@@ -714,7 +715,115 @@ class BinarySensor : Sensor
 end
 
 
+class Humidifier : Entity
 
+    static var platform='humidifier'
+    static var device_class='humidifier'
+    var modes
+    var min_humidity
+    var max_humidity
+
+    var handle_outgoings_mode
+    var handle_incoming_mode
+    var handle_outgoings_target_humidity
+    var handle_incoming_target_humidity
+
+    def init(name, modes, min_humidity, max_humidity, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_mode, handle_incoming_mode, handle_outgoings_target_humidity, handle_incoming_target_humidity)
+        
+        self.modes=modes
+        self.min_humidity=min_humidity
+        self.max_humidity=max_humidity
+
+        self.handle_outgoings_mode=handle_outgoings_mode
+        self.handle_incoming_mode=handle_incoming_mode
+        self.handle_outgoings_target_humidity=handle_outgoings_target_humidity
+        self.handle_incoming_target_humidity=handle_incoming_target_humidity
+
+        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+
+    end
+
+    def extend_endpoint_data(data)
+
+        data['state']['in']['converter']=to_bool
+        data['state']['out']['converter']=from_bool
+
+        if self.handle_outgoings_mode
+            set_default(data,'mode',{})
+            data['mode']['out']={
+                'topic': self.get_topic('state','mode'),
+                'topic_key': 'mode_state_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'mode_state_template',
+                'callbacks': self.handle_outgoings_mode                
+                }
+        end
+
+        if self.handle_incoming_mode
+            set_default(data,'mode',{})
+            data['mode']['in']={
+                'topic': self.get_topic('command','mode'),
+                'topic_key': 'mode_command_topic',
+                'callbacks': self.handle_incoming_mode,
+                }
+        else
+            raise 'hct_config_error', [classname(self),'requires incoming callback for', 'mode'].concat(' ')
+        end
+
+        if self.handle_outgoings_target_humidity
+            set_default(data,'target_humidity',{})
+            data['target_humidity']['out']={
+                'topic': self.get_topic('state','target_humidity'),
+                'topic_key': 'target_humidity_state_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'target_humidity_state_template',
+                'callbacks': self.handle_outgoings_target_humidity,
+                'converter': int
+                }
+        end
+
+        if self.handle_incoming_target_humidity
+            set_default(data,'target_humidity',{})
+            data['target_humidity']['in']={
+                'topic': self.get_topic('command','target_humidity'),
+                'topic_key': 'target_humidity_command_topic',
+                'callbacks': self.handle_incoming_target_humidity,
+                'converter': int
+                }
+        else
+            raise 'hct_config_error', [classname(self),'requires incoming callback for', 'target humidity'].concat(' ')
+        end
+
+        return data
+
+    end
+
+    def get_data_announce()
+
+        var data=super(self).get_data_announce()
+        var data_update={
+            'modes':self.modes,
+            'device_class':self.device_class,
+            'payload_on':ON,
+            'payload_off':OFF,
+            'min_humidity':self.min_humidity,
+            'max_humidity':self.max_humidity
+
+        }
+
+        data=update_map(data,data_update)
+
+        return data
+
+    end
+
+end
+
+class Dehumidifier : Humidifier
+    
+    static var device_class='dehumidifier'
+
+end
 
 var hct = module(NAME)
 
@@ -728,6 +837,9 @@ hct.Sensor=Sensor
 hct.Button=Button
 hct.Switch=Switch
 hct.BinarySensor=BinarySensor
+
+hct.Humidifier=Humidifier
+hct.Dehumidifier=Dehumidifier
 
 hct.Publish=Publish
 hct.NoPublish=NoPublish
