@@ -24,9 +24,14 @@ jobs:
         run: |
           git config --global user.name 'Frontmatter Actions'
           git config --global user.email 'actions@frontmatter.ai'
+          
+          echo -n ${VERSION} > version
           python3 update_version.py ${VERSION}
+          
+          git add version
           git add hct.be
           git add README.md
+          
           git commit -am "Increment version number to ${VERSION} for release"
           git push          
           git tag -a v${VERSION} -m "Release version ${VERSION}"
