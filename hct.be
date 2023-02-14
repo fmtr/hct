@@ -1,4 +1,4 @@
-var VERSION='0.1.2'
+var VERSION='0.1.3'
 var NAME='hct'
 import mqtt
 import json
