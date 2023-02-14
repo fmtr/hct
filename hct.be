@@ -422,10 +422,22 @@ class Entity
     def register_rule(trigger,closure)
         var id=[str(classname(self)),str(closure)].concat('_')
 
-        log_debug([self.name,'Adding rule',trigger,closure,id])
+        var entry
+        if string.find(trigger,'cron:')!=0
+            entry={'type': 'trigger', 'trigger':trigger}            
+        else
+            entry={'type': 'cron', 'trigger':string.replace(trigger,'cron:','')}
+        end
 
-        tasmota.add_rule(trigger,closure,id)
-        self.rule_registry[id]=trigger
+        log_debug([self.name,'Adding rule',entry,id])
+
+        if entry['type']=='trigger'
+            tasmota.add_rule(entry['trigger'],closure,id)
+        else
+            tasmota.add_cron(entry['trigger'],closure,id)
+        end
+        
+        self.rule_registry[id]=entry
         return id
     end
 
@@ -569,10 +581,14 @@ class Entity
     def close()
 
         log_debug(['Closing',classname(self),self.name,'...'].concat(' '))
-        var trigger
+        var entry
         for id: self.rule_registry.keys()
-            trigger=self.rule_registry[id]        
-            tasmota.remove_rule(trigger,id)
+            entry=self.rule_registry[id]                
+            if entry['type']=='trigger'
+                tasmota.remove_rule(entry['trigger'],id)
+            else
+                tasmota.remove_cron(id)
+            end
         end
     end
 
@@ -968,7 +984,7 @@ end
 
 def expose_updater(trigger)
     
-    var trigger_default='Time#Minute=0'
+    var trigger_default='cron:* */12 * * * *'
     trigger=trigger==nil?trigger_default:trigger
 
     Update(
