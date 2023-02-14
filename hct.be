@@ -48,6 +48,41 @@ var ON='ON'
 var OFF='OFF'
 var VALUE_TEMPLATE='{{ value_json.value }}'
 
+def read_url(url, retries)
+
+    var client = webclient()
+    client.begin(url)
+    var status=client.GET()
+    if status==200
+        return client.get_string()
+    else
+        log(['Error reading',str(url),'Code',str(status)].concat(' '))
+        return false
+    end
+    
+end
+
+def download_url(url, file_path, retries)
+
+    retries=retries==nil?10:retries
+
+    try
+        tasmota.urlfetch(url,file_path)
+        return true
+    except .. as exception
+
+        log(['Error downloading URL',str(url),':',str(exception),'.','retries remaining:',str(retries)].concat(' '))      
+
+        retries-=1
+        if !retries
+            return false
+        else
+            return download_url(url,file_path,retries)
+        end
+
+    end
+end
+
 def to_bool(value)
   return [str(true),str(1),string.tolower(ON)].find(string.tolower(str(value)))!=nil
 end
@@ -193,6 +228,8 @@ def handle_incoming_wrapper(handler, entity, name, topic, code, value_raw, value
 
     if classname(output_raw)==classname(Publish)
         output_raw=output_raw.value
+    elif classname(output_raw)==classname(NoPublish)
+        return
     else
         output_raw=value
     end
@@ -585,11 +622,11 @@ class Number : Entity
         var data=super(self).get_data_announce()
 
         var data_update={
-        'min':self.min,
-        'max':self.max,
-        'mode':self.mode,
-        'step':self.step,
-        'unit_of_measurement':self.uom
+            'min':self.min,
+            'max':self.max,
+            'mode':self.mode,
+            'step':self.step,
+            'unit_of_measurement':self.uom
         }
 
         for key: data_update.keys()
@@ -825,11 +862,68 @@ class Dehumidifier : Humidifier
 
 end
 
+class Update : Entity
+
+    static var platform='update'    
+    var entity_picture
+    var release_url
+    var handle_outgoings_latest_version        
+
+    def init(name, release_url, entity_picture, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_latest_version)
+        
+        self.entity_picture=entity_picture
+        self.release_url=release_url
+        self.handle_outgoings_latest_version=handle_outgoings_latest_version
+        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+
+    end
+
+    def extend_endpoint_data(data)
+
+        data['state']['in']['converter']=str
+        data['state']['out']['converter']=str
+
+        var name
+
+        name='latest_version'
+        if self.handle_outgoings_latest_version            
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': 'latest_version_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'latest_version_template',
+                'callbacks': self.handle_outgoings_latest_version                
+                }
+        else
+            raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
+        end
+
+        return data
+
+    end
+
+    def get_data_announce()
+
+        var data=super(self).get_data_announce()
+        var data_update={
+            'entity_picture':self.entity_picture,            
+            'payload_install':'INSTALL',
+            'release_url':self.release_url
+        }
+
+        data=update_map(data,data_update)
+
+        return data
+
+    end
+
+end
+
 var hct = module(NAME)
 
 hct.VERSION=VERSION
 hct.Config=Config
-
 
 hct.Select=Select
 hct.Number=Number
@@ -841,11 +935,16 @@ hct.BinarySensor=BinarySensor
 hct.Humidifier=Humidifier
 hct.Dehumidifier=Dehumidifier
 
+hct.Update=Update
+
 hct.Publish=Publish
 hct.NoPublish=NoPublish
 hct.add_rule_once=add_rule_once
 hct.reverse_map=reverse_map
 hct.get_keys=get_keys
+hct.download_url=download_url
+hct.read_url=read_url
+hct.log_debug=log_debug
 
 log_debug("hct.be compiled OK.")
 
