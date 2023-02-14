@@ -12,6 +12,10 @@ class Config
     
     static var USE_LONG_NAMES=false
     static var IS_DEBUG=false
+    static var URL_VERSION='https://raw.githubusercontent.com/fmtr/hct/release/version'
+    static var PATH_MODULE='/hct.be'
+    static var URL_MODULE='https://raw.githubusercontent.com/fmtr/hct/release/hct.be'
+
     
 end
 
@@ -34,8 +38,9 @@ def log_debug(messages)
     var as_str=as_strs.concat(', ')
     log(as_str)
 
+    var timestamp=str(tasmota.cmd('Time').find('Time'))
 
-    as_str=[str(tasmota.cmd('Time').find('Time')),as_str].concat(': ')
+    as_str=[timestamp,as_str].concat(': ')
     print(as_str)
 
 end
@@ -159,94 +164,18 @@ def add_rule_once(trigger, function)
 
     var id=uuid.uuid4()
 
-    def wrapper(value, trigger_wrapper, message)                
+    def wrapper(value, trigger_wrapper, message)      
+        log_debug(['Removing rule-once', trigger, id])          
         tasmota.remove_rule(trigger,id)        
         return function(value, trigger_wrapper, message)
     end
     
+    log_debug(['Adding rule-once', trigger, id])          
     tasmota.add_rule(trigger,wrapper, id)    
 
 end
 
-# End of utility functions.
 
-class Publish
-    var value
-
-    def init(value)
-        self.value=value
-    end
-end
-
-class NoPublish    
-end
-
-
-def handle_incoming_default(value, topic, code, value_raw, value_bytes)    
-    var value_str={'value':value,'topic':topic,'code':code,'value_raw':value_raw,'value_bytes':value_bytes}.tostring()
-    print('Command Handler got '+value_str)
-    print('Either provide a function/closure as a `handle_incoming` parameter, or override the `handle_incoming` method')
-
-  end
-
-def handle_outgoing_wrapper(handler, entity,name, value_raw, trigger, message)   
-    var converter=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
-    var topic=entity.endpoint_data[name].find('out',{}).find('topic')
-
-    log_debug([entity.name,'Outgoing input:', handler, entity,name, value_raw, trigger, message])
-
-    var output_raw=handler(value_raw,entity, value_raw, trigger, message)
-
-    log_debug([entity.name,'Outgoing handler output:', output_raw])
-
-    if classname(output_raw)==classname(NoPublish)
-        return    
-    end
-    
-    if output_raw==nil 
-        output_raw=value_raw
-    end    
-
-    var output=json.dump({'value':converter(output_raw)})
-
-    log_debug([entity.name,'Outgoing handler publishing:',entity.name, output])
-
-    mqtt.publish(topic,output)
-    entity.value=output_raw
-end
-
-def handle_incoming_wrapper(handler, entity, name, topic, code, value_raw, value_bytes)
-
-    log_debug([entity.name,'Incoming input:', handler, entity, name, topic, code, value_raw, value_bytes])
-
-    var converter=entity.endpoint_data[name].find('in',{}).find('converter',/value->value)
-    var converter_out=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
-    var topic_out=entity.endpoint_data[name].find('out',{}).find('topic')
-
-    var value=converter(value_raw)
-    var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
-
-    if classname(output_raw)==classname(Publish)
-        output_raw=output_raw.value
-    elif classname(output_raw)==classname(NoPublish)
-        return
-    else
-        output_raw=value
-    end
-
-    var output=json.dump({'value':converter_out(output_raw)})
-
-    log_debug([entity.name,'Incoming publishing to state topic:', output])
-
-    if topic_out
-        mqtt.publish(topic_out,output)
-    end
-
-    entity.value=output_raw
-
-    return true 
-
-end
 
 def list_to_map(as_list)
     var as_map={}
@@ -281,6 +210,122 @@ def update_map(data,data_update)
     end
     return data
 end
+
+class Publish
+    var value
+
+    def init(value)
+        self.value=value
+    end
+end
+
+class NoPublish    
+end
+
+def update_hct(value)
+
+    if value!='INSTALL'
+        return false
+    end
+
+    log('Starting hct update...')
+
+    var is_download_success=download_url(Config.URL_MODULE,Config.PATH_MODULE)
+    if is_download_success
+        log('Download succeeded. Restarting...')
+        tasmota.cmd('restart 1')        
+        return true
+    else
+        log('Download failed.')
+        return false
+    end
+    
+
+end
+
+def get_latest_version(value)
+
+    log('Fetching hct latest version...')
+
+    var version=read_url(Config.URL_VERSION)
+    if version
+        return version
+    else
+        log('Reading URL failed.')
+        return false
+    end
+
+end
+
+# End of utility functions.
+
+
+def handle_incoming_default(value, topic, code, value_raw, value_bytes)    
+    var value_str={'value':value,'topic':topic,'code':code,'value_raw':value_raw,'value_bytes':value_bytes}.tostring()
+    print('Command Handler got '+value_str)
+    print('Either provide a function/closure as a `handle_incoming` parameter, or override the `handle_incoming` method')
+
+  end
+
+def handle_outgoing_wrapper(handler, entity,name, value_raw, trigger, message)   
+    var converter=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
+    var topic=entity.endpoint_data[name].find('out',{}).find('topic')
+
+    log_debug([entity.name,'Outgoing input:', handler, entity,name, value_raw, trigger, message])
+
+    var output_raw=handler(value_raw,entity, value_raw, trigger, message)
+
+    log_debug([entity.name,'Outgoing handler output:',name, output_raw])
+
+    if classname(output_raw)==classname(NoPublish)
+        return    
+    end
+    
+    if output_raw==nil 
+        output_raw=value_raw
+    end    
+
+    var output=json.dump({'value':converter(output_raw)})
+
+    log_debug([entity.name,'Outgoing handler publishing:',entity.name,name, output])
+
+    mqtt.publish(topic,output)
+    entity.value=output_raw
+end
+
+def handle_incoming_wrapper(handler, entity, name, topic, code, value_raw, value_bytes)
+
+    log_debug([entity.name,'Incoming input:', handler, entity, name, topic, code, value_raw, value_bytes])
+
+    var converter=entity.endpoint_data[name].find('in',{}).find('converter',/value->value)
+    var converter_out=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
+    var topic_out=entity.endpoint_data[name].find('out',{}).find('topic')
+
+    var value=converter(value_raw)
+    var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
+
+    if classname(output_raw)==classname(Publish)
+        output_raw=output_raw.value
+    elif classname(output_raw)==classname(NoPublish)
+        return
+    else
+        output_raw=value
+    end
+
+    var output=json.dump({'value':converter_out(output_raw)})
+
+    log_debug([entity.name,name,'Incoming publishing to state topic:', output])
+
+    if topic_out
+        mqtt.publish(topic_out,output)
+    end
+
+    entity.value=output_raw
+
+    return true 
+
+end
+
 
 class Entity
 
@@ -920,6 +965,25 @@ class Update : Entity
 
 end
 
+
+def expose_updater(trigger)
+    
+    var trigger_default='Time#Minute=0'
+    trigger=trigger==nil?trigger_default:trigger
+
+    Update(
+        'Update (hct)',
+        'https://github.com/fmtr/hct/releases/latest',
+        nil,
+        nil,
+        nil,
+        {/value->VERSION:['Mqtt#Connected',trigger]},
+        /value->NoPublish(update_hct(value)),
+        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected',trigger]}
+    )
+
+end
+
 var hct = module(NAME)
 
 hct.VERSION=VERSION
@@ -945,6 +1009,8 @@ hct.get_keys=get_keys
 hct.download_url=download_url
 hct.read_url=read_url
 hct.log_debug=log_debug
+
+hct.expose_updater=expose_updater
 
 log_debug("hct.be compiled OK.")
 
