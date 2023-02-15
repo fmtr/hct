@@ -160,6 +160,30 @@ def set_default(data,key,value)
     end
 end
 
+def add_rule(id,trigger,closure)   
+    
+    var entry
+    if string.find(trigger,'cron:')!=0
+        entry={'type': 'trigger', 'trigger':trigger} 
+        tasmota.add_rule(entry['trigger'],closure,id)           
+    else
+        entry={'type': 'cron', 'trigger':string.replace(trigger,'cron:','')}
+        tasmota.add_cron(entry['trigger'],closure,id)
+    end
+
+    return entry
+end
+
+def remove_rule(id, entry)   
+            
+    if entry['type']=='trigger'
+        tasmota.remove_rule(entry['trigger'],id)
+    else
+        tasmota.remove_cron(id)
+    end
+
+end
+
 def add_rule_once(trigger, function)
 
     var id=uuid.uuid4()
@@ -421,22 +445,8 @@ class Entity
 
     def register_rule(trigger,closure)
         var id=[str(classname(self)),str(closure)].concat('_')
-
-        var entry
-        if string.find(trigger,'cron:')!=0
-            entry={'type': 'trigger', 'trigger':trigger}            
-        else
-            entry={'type': 'cron', 'trigger':string.replace(trigger,'cron:','')}
-        end
-
-        log_debug([self.name,'Adding rule',entry,id])
-
-        if entry['type']=='trigger'
-            tasmota.add_rule(entry['trigger'],closure,id)
-        else
-            tasmota.add_cron(entry['trigger'],closure,id)
-        end
-        
+        var entry=add_rule(id,trigger,closure)        
+        log_debug([self.name,'Adding rule',entry,id])        
         self.rule_registry[id]=entry
         return id
     end
@@ -583,12 +593,8 @@ class Entity
         log_debug(['Closing',classname(self),self.name,'...'].concat(' '))
         var entry
         for id: self.rule_registry.keys()
-            entry=self.rule_registry[id]                
-            if entry['type']=='trigger'
-                tasmota.remove_rule(entry['trigger'],id)
-            else
-                tasmota.remove_cron(id)
-            end
+            entry=self.rule_registry[id]    
+            remove_rule(id, entry)
         end
     end
 
