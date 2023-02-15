@@ -832,9 +832,15 @@ class Humidifier : Entity
     var handle_outgoings_target_humidity
     var handle_incoming_target_humidity
 
-    def init(name, modes, min_humidity, max_humidity, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_mode, handle_incoming_mode, handle_outgoings_target_humidity, handle_incoming_target_humidity)
+    def init(name, modes, humidity_range, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_mode, handle_incoming_mode, handle_outgoings_target_humidity, handle_incoming_target_humidity)
         
         self.modes=modes
+
+        if humidity_range
+            self.min_humidity=humidity_range.lower()
+            self.max_humidity=humidity_range.upper()
+        end  
+
         self.min_humidity=min_humidity
         self.max_humidity=max_humidity
 
