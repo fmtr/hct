@@ -164,10 +164,10 @@ def add_rule(id,trigger,closure)
     
     var entry
     if string.find(trigger,'cron:')!=0
-        entry={'type': 'trigger', 'trigger':trigger} 
+        entry={'type': 'trigger', 'trigger':trigger, 'function':closure} 
         tasmota.add_rule(entry['trigger'],closure,id)           
     else
-        entry={'type': 'cron', 'trigger':string.replace(trigger,'cron:','')}
+        entry={'type': 'cron', 'trigger':string.replace(trigger,'cron:',''), 'function':closure}
         tasmota.add_cron(entry['trigger'],closure,id)
     end
 
@@ -1001,7 +1001,7 @@ class Fan : Entity
                 'topic': self.get_topic('state',name),
                 'topic_key': 'percentage_state_topic',
                 'template':VALUE_TEMPLATE,
-                'template_key': 'percentage_state_template',
+                'template_key': 'percentage_value_template',
                 'callbacks': self.handle_outgoings_percentage,
                 'converter': int
                 }
@@ -1024,7 +1024,7 @@ class Fan : Entity
                 'topic': self.get_topic('state',name),
                 'topic_key': 'oscillation_state_topic',
                 'template':VALUE_TEMPLATE,
-                'template_key': 'oscillation_state_template',
+                'template_key': 'oscillation_value_template',
                 'callbacks': self.handle_outgoings_oscillation,
                 'converter': from_bool
                 }
