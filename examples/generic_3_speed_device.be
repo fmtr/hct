@@ -1,50 +1,49 @@
-# Config for generic 3 speed (i.e. power plus low/medium/high) devices. Provides speed pull-down menu.
+# Config for generic 3 speed (i.e. power plus low/medium/high) fan.
 # See the following for additional relay config: https://gist.github.com/ejohb/07484e1a158baca4c7d33ffa8787699b
 
 import hct
 
-log('Setting up 3 speed device with hct...')
+log('Setting up 3 speed fan with hct...')
 
-TRIGGERS_SPEEDS={'Power2#state=1': "Low",'Power3#state=1': "Medium",'Power4#state=1': "High"}
-OPTIONS_RELAY_IDS={'Off':nil, 'Low':2,'Medium':3,'High':4}
+POWER_TRIGGERS=['Power1#state','Power2#state','Power3#state','Power4#state']
 
 def are_any_speeds_on()
 	var powers=tasmota.get_power()
 	return powers[1] || powers[2] || powers[3]
 end
 
-def callback_out()
-    var powers=tasmota.get_power()
-    var i
-    for key: OPTIONS_RELAY_IDS.keys()        
-        i=OPTIONS_RELAY_IDS[key]
-        if i==nil            
-        else
-            if powers[i-1]
-                return key
-            end
-        end
+def callback_out_percentage()
+    var powers=tasmota.get_power()    
+    for i : 1..size(powers)-1
+        if powers[i]
+            return i
+        end        
     end
-    return 'Off'
+    return 0
 end
 
-def callback_in(value)
-    if !value 
-        tasmota.cmd('Power1 0') 
+def callback_in_percentage(value)
+    
+    if value==0 
+        tasmota.set_power(0,false)
     else
-        tasmota.cmd('Power'+str(value)+" 1")     
+        tasmota.set_power(value,true)  
     end
 
 end
 
-hct.Select(
-    'Speed',
-    OPTIONS_RELAY_IDS,
+fan=hct.Fan(
+    'Fan',
     nil,
-    'mdi:fan-speed-3',
-    {
-        callback_out: ['Power2#state','Power3#state','Power4#state'],
-        /->'Off':'Power1#state=0'
-    },
-    callback_in
+    1..3,
+    nil,
+    'mdi:fan',
+    {are_any_speeds_on: POWER_TRIGGERS},
+    /value->tasmota.set_power(0,value),
+    nil,
+    nil,
+    {callback_out_percentage: POWER_TRIGGERS},
+    callback_in_percentage,
+    nil,
+    nil
 )
