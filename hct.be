@@ -984,10 +984,10 @@ end
 
 def expose_updater(trigger)
     
-    var trigger_default='cron:* */12 * * * *'
+    var trigger_default='cron:* * */12 * * *'
     trigger=trigger==nil?trigger_default:trigger
 
-    Update(
+    return Update(
         'Update (hct)',
         'https://github.com/fmtr/hct/releases/latest',
         nil,
