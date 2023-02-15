@@ -1,4 +1,4 @@
-var VERSION='0.1.4'
+var VERSION='0.1.3'
 var NAME='hct'
 import mqtt
 import json
@@ -570,7 +570,7 @@ class Entity
         for name: self.endpoint_data.keys()
             var dir_data=self.endpoint_data[name]
             for io_data: [dir_data.find('in',{}),dir_data.find('out',{})]
-            for keyfix: ['topic','template']
+            for keyfix: ['topic','template','payload_on','payload_off']
                 data_update[io_data.find(keyfix+'_key')]=io_data.find(keyfix)
             end
             end
@@ -988,6 +988,8 @@ class Update : Entity
 end
 
 
+
+
 def expose_updater(trigger)
     
     var trigger_default='cron:* * */12 * * *'
@@ -1006,6 +1008,143 @@ def expose_updater(trigger)
 
 end
 
+
+class Fan : Entity
+
+    static var platform='fan'
+    
+    var modes
+    var min_speed
+    var max_speed
+
+    var handle_outgoings_mode
+    var handle_incoming_mode
+    var handle_outgoings_percentage
+    var handle_incoming_percentage
+    var handle_outgoings_oscillation
+    var handle_incoming_oscillation
+
+    def init(name, modes, speed_range, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_mode, handle_incoming_mode, handle_outgoings_percentage, handle_incoming_percentage, handle_outgoings_oscillation, handle_incoming_oscillation)
+        
+        self.modes=modes
+        
+        if speed_range
+            self.min_speed=speed_range.lower()
+            self.max_speed=speed_range.upper()
+        end        
+
+        self.handle_outgoings_mode=handle_outgoings_mode
+        self.handle_incoming_mode=handle_incoming_mode
+        self.handle_outgoings_percentage=handle_outgoings_percentage
+        self.handle_incoming_percentage=handle_incoming_percentage
+        self.handle_outgoings_oscillation=handle_outgoings_oscillation
+        self.handle_incoming_oscillation=handle_incoming_oscillation
+
+        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+
+    end
+
+    def extend_endpoint_data(data)
+
+        data['state']['in']['converter']=to_bool
+        data['state']['out']['converter']=from_bool
+
+        var name
+
+        name='preset_mode'
+        if self.handle_outgoings_mode            
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': 'preset_mode_state_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'preset_mode_state_template',
+                'callbacks': self.handle_outgoings_mode                
+                }
+        end
+        
+        if self.handle_incoming_mode
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': 'preset_mode_command_topic',
+                'callbacks': self.handle_incoming_mode,
+                }
+        end
+
+        name='percentage'
+        if self.handle_outgoings_percentage
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': 'percentage_state_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'percentage_state_template',
+                'callbacks': self.handle_outgoings_percentage,
+                'converter': int
+                }
+        end
+
+        if self.handle_incoming_percentage
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': 'percentage_command_topic',
+                'callbacks': self.handle_incoming_percentage,
+                'converter': int
+                }
+        end
+
+        name='oscillation'
+        if self.handle_outgoings_oscillation
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': 'oscillation_state_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'oscillation_state_template',
+                'callbacks': self.handle_outgoings_oscillation,
+                'converter': from_bool
+                }
+        end
+
+        if self.handle_incoming_oscillation
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': 'oscillation_command_topic',
+                'payload_on': ON,
+                'payload_on_key': 'payload_oscillation_on',
+                'payload_off': OFF,
+                'payload_off_key': 'payload_oscillation_off',
+                'callbacks': self.handle_incoming_oscillation,
+                'converter': to_bool
+                }
+        end
+
+        return data
+
+    end
+
+    def get_data_announce()
+
+        var data=super(self).get_data_announce()
+        var data_update={
+            'preset_modes':self.modes,            
+            'payload_on':ON,
+            'payload_off':OFF,
+            'speed_range_min':self.min_speed,
+            'speed_range_max':self.max_speed
+        }
+
+        data=update_map(data,data_update)
+
+        return data
+
+    end
+
+end
+
 var hct = module(NAME)
 
 hct.VERSION=VERSION
@@ -1020,6 +1159,8 @@ hct.BinarySensor=BinarySensor
 
 hct.Humidifier=Humidifier
 hct.Dehumidifier=Dehumidifier
+
+hct.Fan=Fan
 
 hct.Update=Update
 
