@@ -930,86 +930,6 @@ class Dehumidifier : Humidifier
 
 end
 
-class Update : Entity
-
-    static var platform='update'    
-    var entity_picture
-    var release_url
-    var handle_outgoings_latest_version        
-
-    def init(name, release_url, entity_picture, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_latest_version)
-        
-        self.entity_picture=entity_picture
-        self.release_url=release_url
-        self.handle_outgoings_latest_version=handle_outgoings_latest_version
-        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
-
-    end
-
-    def extend_endpoint_data(data)
-
-        data['state']['in']['converter']=str
-        data['state']['out']['converter']=str
-
-        var name
-
-        name='latest_version'
-        if self.handle_outgoings_latest_version            
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': 'latest_version_topic',
-                'template':VALUE_TEMPLATE,
-                'template_key': 'latest_version_template',
-                'callbacks': self.handle_outgoings_latest_version                
-                }
-        else
-            raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
-        end
-
-        return data
-
-    end
-
-    def get_data_announce()
-
-        var data=super(self).get_data_announce()
-        var data_update={
-            'entity_picture':self.entity_picture,            
-            'payload_install':'INSTALL',
-            'release_url':self.release_url
-        }
-
-        data=update_map(data,data_update)
-
-        return data
-
-    end
-
-end
-
-
-
-
-def expose_updater(trigger)
-    
-    var trigger_default='cron:* * */12 * * *'
-    trigger=trigger==nil?trigger_default:trigger
-
-    return Update(
-        'Update (hct)',
-        'https://github.com/fmtr/hct/releases/latest',
-        nil,
-        nil,
-        nil,
-        {/value->VERSION:['Mqtt#Connected',trigger]},
-        /value->NoPublish(update_hct(value)),
-        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected',trigger]}
-    )
-
-end
-
-
 class Fan : Entity
 
     static var platform='fan'
@@ -1146,6 +1066,85 @@ class Fan : Entity
     end
 
 end
+
+class Update : Entity
+
+    static var platform='update'    
+    var entity_picture
+    var release_url
+    var handle_outgoings_latest_version        
+
+    def init(name, release_url, entity_picture, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_latest_version)
+        
+        self.entity_picture=entity_picture
+        self.release_url=release_url
+        self.handle_outgoings_latest_version=handle_outgoings_latest_version
+        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+
+    end
+
+    def extend_endpoint_data(data)
+
+        data['state']['in']['converter']=str
+        data['state']['out']['converter']=str
+
+        var name
+
+        name='latest_version'
+        if self.handle_outgoings_latest_version            
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': 'latest_version_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'latest_version_template',
+                'callbacks': self.handle_outgoings_latest_version                
+                }
+        else
+            raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
+        end
+
+        return data
+
+    end
+
+    def get_data_announce()
+
+        var data=super(self).get_data_announce()
+        var data_update={
+            'entity_picture':self.entity_picture,            
+            'payload_install':'INSTALL',
+            'release_url':self.release_url
+        }
+
+        data=update_map(data,data_update)
+
+        return data
+
+    end
+
+end
+
+def expose_updater(trigger)
+    
+    var trigger_default='cron:* * */12 * * *'
+    trigger=trigger==nil?trigger_default:trigger
+
+    return Update(
+        'Update (hct)',
+        'https://github.com/fmtr/hct/releases/latest',
+        nil,
+        nil,
+        nil,
+        {/value->VERSION:['Mqtt#Connected',trigger]},
+        /value->NoPublish(update_hct(value)),
+        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected',trigger]}
+    )
+
+end
+
+
+
 
 var hct = module(NAME)
 
