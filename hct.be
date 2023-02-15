@@ -851,6 +851,7 @@ class Humidifier : Entity
 
         data['state']['in']['converter']=to_bool
         data['state']['out']['converter']=from_bool
+        data['state']['out']['template_key']='state_value_template'
 
         if self.handle_outgoings_mode
             set_default(data,'mode',{})
@@ -1048,6 +1049,7 @@ class Fan : Entity
 
         data['state']['in']['converter']=to_bool
         data['state']['out']['converter']=from_bool
+        data['state']['out']['template_key']='state_value_template'
 
         var name
 
