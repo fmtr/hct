@@ -855,9 +855,14 @@ class Humidifier : Entity
 
     def extend_endpoint_data(data)
 
-        data['state']['in']['converter']=to_bool
-        data['state']['out']['converter']=from_bool
-        data['state']['out']['template_key']='state_value_template'
+        if self.handle_incoming
+            data['state']['in']['converter']=to_bool
+        end
+
+        if self.handle_outgoings
+            data['state']['out']['converter']=from_bool
+            data['state']['out']['template_key']='state_value_template'
+        end
 
         if self.handle_outgoings_mode
             set_default(data,'mode',{})
@@ -973,9 +978,14 @@ class Fan : Entity
 
     def extend_endpoint_data(data)
 
-        data['state']['in']['converter']=to_bool
-        data['state']['out']['converter']=from_bool
-        data['state']['out']['template_key']='state_value_template'
+        if self.handle_incoming
+            data['state']['in']['converter']=to_bool
+        end
+
+        if self.handle_outgoings
+            data['state']['out']['converter']=from_bool
+            data['state']['out']['template_key']='state_value_template'
+        end
 
         var name
 
