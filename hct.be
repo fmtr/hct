@@ -841,9 +841,6 @@ class Humidifier : Entity
             self.max_humidity=humidity_range.upper()
         end  
 
-        self.min_humidity=min_humidity
-        self.max_humidity=max_humidity
-
         self.handle_outgoings_mode=handle_outgoings_mode
         self.handle_incoming_mode=handle_incoming_mode
         self.handle_outgoings_target_humidity=handle_outgoings_target_humidity
