@@ -288,7 +288,7 @@ class Entity
     static var platform=nil
     static var mac=string.split(string.tolower(MAC),':').concat()      
 
-    var value
+    var values
 
     var topic_command
     var topic_state
@@ -307,7 +307,7 @@ class Entity
 
     def init(name, entity_id, icon, handle_outgoings, handle_incoming)
 
-        self.value=nil
+        self.values={}
 
         if Config.USE_LONG_NAMES        
             name=[DEVICE_NAME,name].concat(' ')
@@ -439,13 +439,9 @@ class Entity
         if output_raw==nil 
             output_raw=value_raw
         end    
-    
-        var output=json.dump({'value':converter(output_raw)})
-    
-        log_debug([self.name,'Outgoing handler publishing:',self.name,name, output])
-    
-        mqtt.publish(topic,output)
-        self.value=output_raw
+
+        self.publish(name,output_raw)
+
     end
 
     def subscribe_in(name)
@@ -468,15 +464,12 @@ class Entity
 
     end
 
-    def handle_incoming_wrapper(handler, name, topic, code, value_raw, value_bytes)
-        
+    def handle_incoming_wrapper(handler, name, topic, code, value_raw, value_bytes)        
 
         log_debug([self.name,'Incoming input:', handler, self, name, topic, code, value_raw, value_bytes])
     
         var converter=self.endpoint_data[name].find('in',{}).find('converter',/value->value)
-        var converter_out=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
-        var topic_out=self.endpoint_data[name].find('out',{}).find('topic')
-    
+
         var value=converter(value_raw)
         var output_raw=handler(value,self, topic, code, value_raw, value_bytes)
     
@@ -488,18 +481,23 @@ class Entity
             output_raw=value
         end
     
-        var output=json.dump({'value':converter_out(output_raw)})
+        return self.publish(name, output_raw) 
     
-        log_debug([self.name,name,'Incoming publishing to state topic:', output])
-    
-        if topic_out
-            mqtt.publish(topic_out,output)
+    end
+
+    def publish(name, value)
+
+        var topic=self.endpoint_data[name].find('out',{}).find('topic')
+        
+        if topic
+            var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
+            var output=json.dump({'value':converter(value)})
+            log_debug([self.name,name,'Incoming publishing to state topic:', output, topic])        
+            mqtt.publish(topic,output)
         end
     
-        self.value=output_raw
-    
-        return true 
-    
+        self.values[name]=value
+        
     end
 
     def get_topic(type_topic, endpoint)
