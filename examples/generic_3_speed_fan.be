@@ -3,7 +3,7 @@
 
 import hct
 
-log('Setting up 3 speed fan with hct...')
+log("Setting up Home Assistant controls (using hct version "+hct.VERSION+")...")
 
 POWER_TRIGGERS=['Power1#state','Power2#state','Power3#state','Power4#state']
 
