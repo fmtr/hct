@@ -283,74 +283,6 @@ end
 
 # End of utility functions.
 
-
-def handle_incoming_default(value, topic, code, value_raw, value_bytes)    
-    var value_str={'value':value,'topic':topic,'code':code,'value_raw':value_raw,'value_bytes':value_bytes}.tostring()
-    print('Command Handler got '+value_str)
-    print('Either provide a function/closure as a `handle_incoming` parameter, or override the `handle_incoming` method')
-
-  end
-
-def handle_outgoing_wrapper(handler, entity,name, value_raw, trigger, message)   
-    var converter=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
-    var topic=entity.endpoint_data[name].find('out',{}).find('topic')
-
-    log_debug([entity.name,'Outgoing input:', handler, entity,name, value_raw, trigger, message])
-
-    var output_raw=handler(value_raw,entity, value_raw, trigger, message)
-
-    log_debug([entity.name,'Outgoing handler output:',name, output_raw])
-
-    if classname(output_raw)==classname(NoPublish)
-        return    
-    end
-    
-    if output_raw==nil 
-        output_raw=value_raw
-    end    
-
-    var output=json.dump({'value':converter(output_raw)})
-
-    log_debug([entity.name,'Outgoing handler publishing:',entity.name,name, output])
-
-    mqtt.publish(topic,output)
-    entity.value=output_raw
-end
-
-def handle_incoming_wrapper(handler, entity, name, topic, code, value_raw, value_bytes)
-
-    log_debug([entity.name,'Incoming input:', handler, entity, name, topic, code, value_raw, value_bytes])
-
-    var converter=entity.endpoint_data[name].find('in',{}).find('converter',/value->value)
-    var converter_out=entity.endpoint_data[name].find('out',{}).find('converter',/value->value)
-    var topic_out=entity.endpoint_data[name].find('out',{}).find('topic')
-
-    var value=converter(value_raw)
-    var output_raw=handler(value,entity, topic, code, value_raw, value_bytes)
-
-    if classname(output_raw)==classname(Publish)
-        output_raw=output_raw.value
-    elif classname(output_raw)==classname(NoPublish)
-        return
-    else
-        output_raw=value
-    end
-
-    var output=json.dump({'value':converter_out(output_raw)})
-
-    log_debug([entity.name,name,'Incoming publishing to state topic:', output])
-
-    if topic_out
-        mqtt.publish(topic_out,output)
-    end
-
-    entity.value=output_raw
-
-    return true 
-
-end
-
-
 class Entity
 
     static var platform=nil
@@ -482,12 +414,38 @@ class Entity
             for trigger_handler: trigger_handlers
                 closure_outgoing=(
                     / value trigger message -> 
-                    handle_outgoing_wrapper(handler, self, name, value, trigger, message)
+                    self.handle_outgoing_wrapper(handler, name, value, trigger, message)
                 )
                 self.register_rule(trigger_handler,closure_outgoing)
                 
             end
         end
+    end
+
+    def handle_outgoing_wrapper(handler, name, value_raw, trigger, message)   
+        var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
+        var topic=self.endpoint_data[name].find('out',{}).find('topic')
+    
+        log_debug([self.name,'Outgoing input:', handler, self,name, value_raw, trigger, message])
+    
+        var output_raw=handler(value_raw,self, value_raw, trigger, message)
+    
+        log_debug([self.name,'Outgoing handler output:',name, output_raw])
+    
+        if classname(output_raw)==classname(NoPublish)
+            return    
+        end
+        
+        if output_raw==nil 
+            output_raw=value_raw
+        end    
+    
+        var output=json.dump({'value':converter(output_raw)})
+    
+        log_debug([self.name,'Outgoing handler publishing:',self.name,name, output])
+    
+        mqtt.publish(topic,output)
+        self.value=output_raw
     end
 
     def subscribe_in(name)
@@ -504,10 +462,44 @@ class Entity
         handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
         var closure_incoming=(
             / topic code value value_bytes -> 
-            handle_incoming_wrapper(handle_incoming, self,name, topic, code, value, value_bytes)      
+            self.handle_incoming_wrapper(handle_incoming, name, topic, code, value, value_bytes)      
         )  
         mqtt.subscribe(topic, closure_incoming) # topic_command
 
+    end
+
+    def handle_incoming_wrapper(handler, name, topic, code, value_raw, value_bytes)
+        
+
+        log_debug([self.name,'Incoming input:', handler, self, name, topic, code, value_raw, value_bytes])
+    
+        var converter=self.endpoint_data[name].find('in',{}).find('converter',/value->value)
+        var converter_out=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
+        var topic_out=self.endpoint_data[name].find('out',{}).find('topic')
+    
+        var value=converter(value_raw)
+        var output_raw=handler(value,self, topic, code, value_raw, value_bytes)
+    
+        if classname(output_raw)==classname(Publish)
+            output_raw=output_raw.value
+        elif classname(output_raw)==classname(NoPublish)
+            return
+        else
+            output_raw=value
+        end
+    
+        var output=json.dump({'value':converter_out(output_raw)})
+    
+        log_debug([self.name,name,'Incoming publishing to state topic:', output])
+    
+        if topic_out
+            mqtt.publish(topic_out,output)
+        end
+    
+        self.value=output_raw
+    
+        return true 
+    
     end
 
     def get_topic(type_topic, endpoint)
