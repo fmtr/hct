@@ -406,31 +406,31 @@ class Entity
         end
 
         var closure_outgoing         
-        for handler: handle_outgoings.keys()
-            var trigger_handlers=handle_outgoings[handler]        
-            if type(trigger_handlers)=='string'
-                trigger_handlers=[trigger_handlers]
+        for callback: handle_outgoings.keys()
+            var trigger_callbacks=handle_outgoings[callback]        
+            if type(trigger_callbacks)=='string'
+                trigger_callbacks=[trigger_callbacks]
             end
-            for trigger_handler: trigger_handlers
+            for trigger_callback: trigger_callbacks
                 closure_outgoing=(
                     / value trigger message -> 
-                    self.handle_outgoing_wrapper(handler, name, value, trigger, message)
+                    self.handle_outgoing_wrapper(callback, name, value, trigger, message)
                 )
-                self.register_rule(trigger_handler,closure_outgoing)
+                self.register_rule(trigger_callback,closure_outgoing)
                 
             end
         end
     end
 
-    def handle_outgoing_wrapper(handler, name, value_raw, trigger, message)   
+    def handle_outgoing_wrapper(callback, name, value_raw, trigger, message)   
         var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
         var topic=self.endpoint_data[name].find('out',{}).find('topic')
     
-        log_debug([self.name,'Outgoing input:', handler, self,name, value_raw, trigger, message])
+        log_debug([self.name,'Outgoing input:', callback, self,name, value_raw, trigger, message])
     
-        var output_raw=handler(value_raw,self, value_raw, trigger, message)
+        var output_raw=callback(value_raw,self, value_raw, trigger, message)
     
-        log_debug([self.name,'Outgoing handler output:',name, output_raw])
+        log_debug([self.name,'Outgoing callback output:',name, output_raw])
     
         if classname(output_raw)==classname(NoPublish)
             return    
@@ -464,14 +464,14 @@ class Entity
 
     end
 
-    def handle_incoming_wrapper(handler, name, topic, code, value_raw, value_bytes)        
+    def handle_incoming_wrapper(callback, name, topic, code, value_raw, value_bytes)        
 
-        log_debug([self.name,'Incoming input:', handler, self, name, topic, code, value_raw, value_bytes])
+        log_debug([self.name,'Incoming input:', callback, self, name, topic, code, value_raw, value_bytes])
     
         var converter=self.endpoint_data[name].find('in',{}).find('converter',/value->value)
 
         var value=converter(value_raw)
-        var output_raw=handler(value,self, topic, code, value_raw, value_bytes)
+        var output_raw=callback(value,self, topic, code, value_raw, value_bytes)
     
         if classname(output_raw)==classname(Publish)
             output_raw=output_raw.value
@@ -497,7 +497,7 @@ class Entity
         end
     
         self.values[name]=value
-        
+
     end
 
     def get_topic(type_topic, endpoint)
