@@ -300,12 +300,12 @@ class Entity
     var icon 
     var rule_registry
 
-    var handle_outgoings
-    var handle_incoming
+    var callback_outgoings
+    var callback_incoming
 
     var endpoint_data
 
-    def init(name, entity_id, icon, handle_outgoings, handle_incoming)
+    def init(name, entity_id, icon, callback_outgoings, callback_incoming)
 
         self.values={}
 
@@ -318,8 +318,8 @@ class Entity
         self.icon=icon	
         self.name_sanitized=sanitize_name(self.name)	
         
-        self.handle_incoming=handle_incoming
-        self.handle_outgoings=handle_outgoings
+        self.callback_incoming=callback_incoming
+        self.callback_outgoings=callback_outgoings
 
         self.rule_registry={}
         #self.register_rule('System#Save',/value->self.close())    
@@ -343,24 +343,24 @@ class Entity
 
         var data={}
 
-        if self.handle_incoming
+        if self.callback_incoming
             set_default(data,'state',{})
             data['state']['in']={
                 'topic': self.get_topic('command','state'),
                 'topic_key': 'command_topic',
-                'callbacks': self.handle_incoming,
+                'callbacks': self.callback_incoming,
                 'converter': /value->self.converter_state_in(value)
                 }
         end
 
-        if self.handle_outgoings
+        if self.callback_outgoings
             set_default(data,'state',{})
             data['state']['out']={
                 'topic': self.get_topic('state','state'),
                 'topic_key': 'state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'value_template',
-                'callbacks': self.handle_outgoings,
+                'callbacks': self.callback_outgoings,
                 'converter': /value->self.converter_state_out(value)
                 }
         end
@@ -389,32 +389,32 @@ class Entity
 
     def subscribe_out(name)      
 
-        var handle_outgoings=self.endpoint_data[name].find('out',{}).find('callbacks')
+        var callback_outgoings=self.endpoint_data[name].find('out',{}).find('callbacks')
 
-        handle_outgoings= handle_outgoings ? handle_outgoings : {}
+        callback_outgoings= callback_outgoings ? callback_outgoings : {}
 
-        if !handle_outgoings
-            handle_outgoings={}
+        if !callback_outgoings
+            callback_outgoings={}
         end
 
-        if type(handle_outgoings)=='string'
-            handle_outgoings=[handle_outgoings]
+        if type(callback_outgoings)=='string'
+            callback_outgoings=[callback_outgoings]
         end
 
-        if classname(handle_outgoings)=='list'
-            handle_outgoings=list_to_map(handle_outgoings)
+        if classname(callback_outgoings)=='list'
+            callback_outgoings=list_to_map(callback_outgoings)
         end
 
         var closure_outgoing         
-        for callback: handle_outgoings.keys()
-            var trigger_callbacks=handle_outgoings[callback]        
+        for callback: callback_outgoings.keys()
+            var trigger_callbacks=callback_outgoings[callback]        
             if type(trigger_callbacks)=='string'
                 trigger_callbacks=[trigger_callbacks]
             end
             for trigger_callback: trigger_callbacks
                 closure_outgoing=(
                     / value trigger message -> 
-                    self.handle_outgoing_wrapper(callback, name, value, trigger, message)
+                    self.callback_outgoing_wrapper(callback, name, value, trigger, message)
                 )
                 self.register_rule(trigger_callback,closure_outgoing)
                 
@@ -422,7 +422,7 @@ class Entity
         end
     end
 
-    def handle_outgoing_wrapper(callback, name, value_raw, trigger, message)   
+    def callback_outgoing_wrapper(callback, name, value_raw, trigger, message)   
         var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
         var topic=self.endpoint_data[name].find('out',{}).find('topic')
     
@@ -446,25 +446,25 @@ class Entity
 
     def subscribe_in(name)
         
-        var handle_incoming=self.endpoint_data[name].find('in',{}).find('callbacks')
+        var callback_incoming=self.endpoint_data[name].find('in',{}).find('callbacks')
 
-        if !handle_incoming
+        if !callback_incoming
             return
         end
 
         assert self.endpoint_data[name].contains('in')
         var topic=self.endpoint_data[name]['in']['topic']
 
-        handle_incoming= handle_incoming ? handle_incoming : (/ value -> value)    
+        callback_incoming= callback_incoming ? callback_incoming : (/ value -> value)    
         var closure_incoming=(
             / topic code value value_bytes -> 
-            self.handle_incoming_wrapper(handle_incoming, name, topic, code, value, value_bytes)      
+            self.callback_incoming_wrapper(callback_incoming, name, topic, code, value, value_bytes)      
         )  
         mqtt.subscribe(topic, closure_incoming) # topic_command
 
     end
 
-    def handle_incoming_wrapper(callback, name, topic, code, value_raw, value_bytes)        
+    def callback_incoming_wrapper(callback, name, topic, code, value_raw, value_bytes)        
 
         log_debug([self.name,'Incoming input:', callback, self, name, topic, code, value_raw, value_bytes])
     
@@ -606,7 +606,7 @@ class Select : Entity
     var options_map_in      
     var options_map_out     
 
-    def init(name, options, entity_id, icon, handle_outgoings, handle_incoming)
+    def init(name, options, entity_id, icon, callback_outgoings, callback_incoming)
         
 
         if classname(options)=='list'       
@@ -634,7 +634,7 @@ class Select : Entity
         self.options_map_out[self.options_map_in[key]]=key
         end
 
-        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+        super(self).init(name, entity_id, icon, callback_outgoings, callback_incoming)      
 
     end
 
@@ -661,7 +661,7 @@ class Number : Entity
     var uom
     var type
 
-    def init(name, min, max, mode, step, uom, entity_id, icon, handle_outgoings, handle_incoming)
+    def init(name, min, max, mode, step, uom, entity_id, icon, callback_outgoings, callback_incoming)
 
         self.min=min
         self.max=max
@@ -669,7 +669,7 @@ class Number : Entity
         self.step=step
         self.uom=uom
         self.type=self.step==nil || self.step==1 ? int : real
-        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+        super(self).init(name, entity_id, icon, callback_outgoings, callback_incoming)      
 
     end
 
@@ -713,11 +713,11 @@ class Sensor : Entity
     var uom
     var type
 
-    def init(name, uom, data_type, entity_id, icon, handle_outgoings)    
+    def init(name, uom, data_type, entity_id, icon, callback_outgoings)    
 
         self.uom=uom    
         self.type=data_type==nil ? /value->value : data_type
-        super(self).init(name, entity_id, icon, handle_outgoings, nil)      
+        super(self).init(name, entity_id, icon, callback_outgoings, nil)      
 
     end
 
@@ -742,9 +742,9 @@ class Button : Entity
     static var platform='button'        
     var uom
 
-    def init(name, entity_id, icon, handle_incoming)        
+    def init(name, entity_id, icon, callback_incoming)        
 
-        super(self).init(name, entity_id, icon, nil, handle_incoming)      
+        super(self).init(name, entity_id, icon, nil, callback_incoming)      
 
     end
 
@@ -780,9 +780,9 @@ class BinarySensor : Sensor
     static var platform='binary_sensor'    
     
     
-    def init(name, entity_id, icon, handle_outgoings)    
+    def init(name, entity_id, icon, callback_outgoings)    
 
-        super(self).init(name, nil, nil ,entity_id, icon, handle_outgoings)      
+        super(self).init(name, nil, nil ,entity_id, icon, callback_outgoings)      
 
     end
 
@@ -817,12 +817,12 @@ class Humidifier : Entity
     var min_humidity
     var max_humidity
 
-    var handle_outgoings_mode
-    var handle_incoming_mode
-    var handle_outgoings_target_humidity
-    var handle_incoming_target_humidity
+    var callback_outgoings_mode
+    var callback_incoming_mode
+    var callback_outgoings_target_humidity
+    var callback_incoming_target_humidity
 
-    def init(name, modes, humidity_range, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_mode, handle_incoming_mode, handle_outgoings_target_humidity, handle_incoming_target_humidity)
+    def init(name, modes, humidity_range, entity_id, icon, callback_outgoings, callback_incoming, callback_outgoings_mode, callback_incoming_mode, callback_outgoings_target_humidity, callback_incoming_target_humidity)
         
         self.modes=modes
 
@@ -831,66 +831,66 @@ class Humidifier : Entity
             self.max_humidity=humidity_range.upper()
         end  
 
-        self.handle_outgoings_mode=handle_outgoings_mode
-        self.handle_incoming_mode=handle_incoming_mode
-        self.handle_outgoings_target_humidity=handle_outgoings_target_humidity
-        self.handle_incoming_target_humidity=handle_incoming_target_humidity
+        self.callback_outgoings_mode=callback_outgoings_mode
+        self.callback_incoming_mode=callback_incoming_mode
+        self.callback_outgoings_target_humidity=callback_outgoings_target_humidity
+        self.callback_incoming_target_humidity=callback_incoming_target_humidity
 
-        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+        super(self).init(name, entity_id, icon, callback_outgoings, callback_incoming)      
 
     end
 
     def extend_endpoint_data(data)
 
-        if self.handle_incoming
+        if self.callback_incoming
             data['state']['in']['converter']=to_bool
         end
 
-        if self.handle_outgoings
+        if self.callback_outgoings
             data['state']['out']['converter']=from_bool
             data['state']['out']['template_key']='state_value_template'
         end
 
-        if self.handle_outgoings_mode
+        if self.callback_outgoings_mode
             set_default(data,'mode',{})
             data['mode']['out']={
                 'topic': self.get_topic('state','mode'),
                 'topic_key': 'mode_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'mode_state_template',
-                'callbacks': self.handle_outgoings_mode                
+                'callbacks': self.callback_outgoings_mode                
                 }
         end
 
-        if self.handle_incoming_mode
+        if self.callback_incoming_mode
             set_default(data,'mode',{})
             data['mode']['in']={
                 'topic': self.get_topic('command','mode'),
                 'topic_key': 'mode_command_topic',
-                'callbacks': self.handle_incoming_mode,
+                'callbacks': self.callback_incoming_mode,
                 }
         else
             raise 'hct_config_error', [classname(self),'requires incoming callback for', 'mode'].concat(' ')
         end
 
-        if self.handle_outgoings_target_humidity
+        if self.callback_outgoings_target_humidity
             set_default(data,'target_humidity',{})
             data['target_humidity']['out']={
                 'topic': self.get_topic('state','target_humidity'),
                 'topic_key': 'target_humidity_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'target_humidity_state_template',
-                'callbacks': self.handle_outgoings_target_humidity,
+                'callbacks': self.callback_outgoings_target_humidity,
                 'converter': int
                 }
         end
 
-        if self.handle_incoming_target_humidity
+        if self.callback_incoming_target_humidity
             set_default(data,'target_humidity',{})
             data['target_humidity']['in']={
                 'topic': self.get_topic('command','target_humidity'),
                 'topic_key': 'target_humidity_command_topic',
-                'callbacks': self.handle_incoming_target_humidity,
+                'callbacks': self.callback_incoming_target_humidity,
                 'converter': int
                 }
         else
@@ -936,14 +936,14 @@ class Fan : Entity
     var min_speed
     var max_speed
 
-    var handle_outgoings_mode
-    var handle_incoming_mode
-    var handle_outgoings_percentage
-    var handle_incoming_percentage
-    var handle_outgoings_oscillation
-    var handle_incoming_oscillation
+    var callback_outgoings_mode
+    var callback_incoming_mode
+    var callback_outgoings_percentage
+    var callback_incoming_percentage
+    var callback_outgoings_oscillation
+    var callback_incoming_oscillation
 
-    def init(name, modes, speed_range, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_mode, handle_incoming_mode, handle_outgoings_percentage, handle_incoming_percentage, handle_outgoings_oscillation, handle_incoming_oscillation)
+    def init(name, modes, speed_range, entity_id, icon, callback_outgoings, callback_incoming, callback_outgoings_mode, callback_incoming_mode, callback_outgoings_percentage, callback_incoming_percentage, callback_outgoings_oscillation, callback_incoming_oscillation)
         
         self.modes=modes
         
@@ -952,24 +952,24 @@ class Fan : Entity
             self.max_speed=speed_range.upper()
         end        
 
-        self.handle_outgoings_mode=handle_outgoings_mode
-        self.handle_incoming_mode=handle_incoming_mode
-        self.handle_outgoings_percentage=handle_outgoings_percentage
-        self.handle_incoming_percentage=handle_incoming_percentage
-        self.handle_outgoings_oscillation=handle_outgoings_oscillation
-        self.handle_incoming_oscillation=handle_incoming_oscillation
+        self.callback_outgoings_mode=callback_outgoings_mode
+        self.callback_incoming_mode=callback_incoming_mode
+        self.callback_outgoings_percentage=callback_outgoings_percentage
+        self.callback_incoming_percentage=callback_incoming_percentage
+        self.callback_outgoings_oscillation=callback_outgoings_oscillation
+        self.callback_incoming_oscillation=callback_incoming_oscillation
 
-        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+        super(self).init(name, entity_id, icon, callback_outgoings, callback_incoming)      
 
     end
 
     def extend_endpoint_data(data)
 
-        if self.handle_incoming
+        if self.callback_incoming
             data['state']['in']['converter']=to_bool
         end
 
-        if self.handle_outgoings
+        if self.callback_outgoings
             data['state']['out']['converter']=from_bool
             data['state']['out']['template_key']='state_value_template'
         end
@@ -977,63 +977,63 @@ class Fan : Entity
         var name
 
         name='preset_mode'
-        if self.handle_outgoings_mode            
+        if self.callback_outgoings_mode            
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'preset_mode_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'preset_mode_state_template',
-                'callbacks': self.handle_outgoings_mode                
+                'callbacks': self.callback_outgoings_mode                
                 }
         end
         
-        if self.handle_incoming_mode
+        if self.callback_incoming_mode
             set_default(data,name,{})
             data[name]['in']={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'preset_mode_command_topic',
-                'callbacks': self.handle_incoming_mode,
+                'callbacks': self.callback_incoming_mode,
                 }
         end
 
         name='percentage'
-        if self.handle_outgoings_percentage
+        if self.callback_outgoings_percentage
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'percentage_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'percentage_value_template',
-                'callbacks': self.handle_outgoings_percentage,
+                'callbacks': self.callback_outgoings_percentage,
                 'converter': int
                 }
         end
 
-        if self.handle_incoming_percentage
+        if self.callback_incoming_percentage
             set_default(data,name,{})
             data[name]['in']={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'percentage_command_topic',
-                'callbacks': self.handle_incoming_percentage,
+                'callbacks': self.callback_incoming_percentage,
                 'converter': int
                 }
         end
 
         name='oscillation'
-        if self.handle_outgoings_oscillation
+        if self.callback_outgoings_oscillation
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'oscillation_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'oscillation_value_template',
-                'callbacks': self.handle_outgoings_oscillation,
+                'callbacks': self.callback_outgoings_oscillation,
                 'converter': from_bool
                 }
         end
 
-        if self.handle_incoming_oscillation
+        if self.callback_incoming_oscillation
             set_default(data,name,{})
             data[name]['in']={
                 'topic': self.get_topic('command',name),
@@ -1042,7 +1042,7 @@ class Fan : Entity
                 'payload_on_key': 'payload_oscillation_on',
                 'payload_off': OFF,
                 'payload_off_key': 'payload_oscillation_off',
-                'callbacks': self.handle_incoming_oscillation,
+                'callbacks': self.callback_incoming_oscillation,
                 'converter': to_bool
                 }
         end
@@ -1075,14 +1075,14 @@ class Update : Entity
     static var platform='update'    
     var entity_picture
     var release_url
-    var handle_outgoings_latest_version        
+    var callback_outgoings_latest_version        
 
-    def init(name, release_url, entity_picture, entity_id, icon, handle_outgoings, handle_incoming, handle_outgoings_latest_version)
+    def init(name, release_url, entity_picture, entity_id, icon, callback_outgoings, callback_incoming, callback_outgoings_latest_version)
         
         self.entity_picture=entity_picture
         self.release_url=release_url
-        self.handle_outgoings_latest_version=handle_outgoings_latest_version
-        super(self).init(name, entity_id, icon, handle_outgoings, handle_incoming)      
+        self.callback_outgoings_latest_version=callback_outgoings_latest_version
+        super(self).init(name, entity_id, icon, callback_outgoings, callback_incoming)      
 
     end
 
@@ -1094,14 +1094,14 @@ class Update : Entity
         var name
 
         name='latest_version'
-        if self.handle_outgoings_latest_version            
+        if self.callback_outgoings_latest_version            
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'latest_version_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'latest_version_template',
-                'callbacks': self.handle_outgoings_latest_version                
+                'callbacks': self.callback_outgoings_latest_version                
                 }
         else
             raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
