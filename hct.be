@@ -423,9 +423,7 @@ class Entity
     end
 
     def callback_out_wrapper(callback, name, value_raw, trigger, message)   
-        var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
-        var topic=self.endpoint_data[name].find('out',{}).find('topic')
-    
+  
         log_debug([self.name,'Outgoing input:', callback, self,name, value_raw, trigger, message])
     
         var output_raw=callback(value_raw,self, value_raw, trigger, message)
@@ -1139,9 +1137,9 @@ def expose_updater(trigger)
         nil,
         nil,
         nil,
-        {/value->VERSION:['Mqtt#Connected',trigger]},
+        {/value->VERSION:['Mqtt#Connected']},
         /value->NoPublish(update_hct(value)),
-        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected',trigger]}
+        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected']}
     )
 
 end
