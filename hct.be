@@ -1583,7 +1583,7 @@ end
 
 def expose_updater(trigger)
     
-    var trigger_default='cron:* * */12 * * *'
+    var trigger_default='cron:0 0 */12 * * *'
     trigger=trigger==nil?trigger_default:trigger
 
     return Update(
@@ -1592,9 +1592,9 @@ def expose_updater(trigger)
         nil,
         nil,
         nil,
-        {/value->VERSION:['Mqtt#Connected']},
+        {/value->VERSION:['Mqtt#Connected', trigger]},
         /value->NoPublish(update_hct(value)),
-        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected']}
+        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected', trigger]}
     )
 
 end
