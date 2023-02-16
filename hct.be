@@ -806,6 +806,60 @@ class BinarySensor : Sensor
 
 end
 
+class Text : Entity
+
+    static var platform='text' 
+    static var mode='text' 
+    
+    var size_min
+    var size_max
+    var pattern
+    
+    
+    def init(name,entity_id, icon, size_range, pattern,callback_outs, callback_in)
+
+        if size_range
+            self.size_min=size_range.lower()
+            self.size_max=size_range.upper()
+        end
+        
+        super(self).init(name, entity_id, icon, callback_outs, callback_in)      
+
+    end
+
+
+    def converter_state_in(value)
+        return str(value)
+    end
+
+    def converter_state_out(value)
+        return str(value)
+    end
+
+    def get_data_announce()
+
+        var data=super(self).get_data_announce() 
+        
+        var data_update={
+            'min':self.size_min,
+            'max': self.size_max,
+            'pattern': self.pattern,
+            'mode': self.mode
+
+        }
+
+        data=update_map(data,data_update)
+
+        
+        return data
+
+    end
+
+end
+
+class Password : Text
+    static var mode='password' 
+end
 
 class Humidifier : Entity
 
@@ -1555,6 +1609,8 @@ hct.Config=Config
 
 hct.Select=Select
 hct.Number=Number
+hct.Text=Text
+hct.Password=Password
 hct.Sensor=Sensor
 hct.Button=Button
 hct.Switch=Switch
