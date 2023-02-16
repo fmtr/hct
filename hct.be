@@ -1126,6 +1126,407 @@ class Update : Entity
 
 end
 
+class Climate : Entity
+
+    static var platform='climate'
+    
+    var modes
+    var preset_modes
+    var fan_modes
+    var swing_modes
+    var precision 
+    var type
+
+    var temperature_unit
+    var temperature_min
+    var temperature_max
+
+    var humidity_min
+    var humidity_max
+
+    var callback_outs_target_humidity
+    var callback_in_target_humidity
+
+    var callback_outs_temperature
+    var callback_in_temperature
+
+    var callback_outs_aux
+    var callback_in_aux
+
+    var callback_outs_current_humidity
+
+    var callback_outs_current_temperature
+    
+    var callback_outs_fan_mode
+    var callback_in_fan_mode
+
+    var callback_outs_mode
+    var callback_in_mode
+
+    var callback_outs_preset_mode
+    var callback_in_preset_mode
+
+    var callback_outs_swing_mode
+    var callback_in_swing_mode
+
+    var callback_outs_temperature_high
+    var callback_in_temperature_high
+
+    var callback_outs_temperature_low
+    var callback_in_temperature_low
+
+
+    def init(name, entity_id, icon, temperature_unit, temperature_range, humidity_range, modes, preset_modes, fan_modes, swing_modes, precision ,callback_outs_temperature, callback_in_temperature, callback_outs_target_humidity, callback_in_target_humidity, callback_outs_aux, callback_in_aux, callback_outs_current_temperature,callback_outs_current_humidity , callback_outs_fan_mode, callback_in_fan_mode, callback_outs_mode, callback_in_mode, callback_outs_preset_mode, callback_in_preset_mode, callback_outs_swing_mode, callback_in_swing_mode, callback_outs_temperature_high, callback_in_temperature_high, callback_outs_temperature_low, callback_in_temperature_low)
+        
+        self.temperature_unit=temperature_unit
+
+        if temperature_range
+            self.temperature_min=temperature_range.lower()
+            self.temperature_max=temperature_range.upper()
+        end   
+
+        if humidity_range
+            self.humidity_min=humidity_range.lower()
+            self.humidity_max=humidity_range.upper()
+        end
+
+        self.precision=precision
+        self.type=self.precision==nil?(self.temperature_unit=='C'?real:int): (self.precision==1?int:real)        
+        
+        self.fan_modes=fan_modes
+        self.modes=modes
+        self.preset_modes=preset_modes
+        self.swing_modes=swing_modes
+        self.callback_outs_aux=callback_outs_aux
+        self.callback_in_aux=callback_in_aux
+
+        self.callback_outs_current_temperature=callback_outs_current_temperature
+        self.callback_outs_current_humidity=callback_outs_current_humidity
+        self.callback_outs_fan_mode=callback_outs_fan_mode
+        self.callback_in_fan_mode=callback_in_fan_mode
+        self.callback_outs_mode=callback_outs_mode
+        self.callback_in_mode=callback_in_mode
+        self.callback_outs_preset_mode=callback_outs_preset_mode
+        self.callback_in_preset_mode=callback_in_preset_mode
+        self.callback_outs_swing_mode=callback_outs_swing_mode
+        self.callback_in_swing_mode=callback_in_swing_mode
+        self.callback_outs_temperature=callback_outs_temperature
+        self.callback_in_temperature=callback_in_temperature
+        self.callback_outs_target_humidity=callback_outs_target_humidity
+        self.callback_in_target_humidity=callback_in_target_humidity
+
+        self.callback_outs_temperature_high=callback_outs_temperature_high
+        self.callback_in_temperature_high=callback_in_temperature_high
+
+        self.callback_outs_temperature_low=callback_outs_temperature_low
+        self.callback_in_temperature_low=callback_in_temperature_low        
+
+        super(self).init(name, entity_id, icon, nil, nil)      
+
+    end
+
+    def extend_endpoint_data(data)
+
+        var name
+        var callbacks
+
+        name='temperature'
+        if self.callback_outs_temperature            
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': 'temperature_state_topic',
+                'template':VALUE_TEMPLATE,
+                'template_key': 'temperature_state_template',
+                'callbacks': self.callback_outs_temperature,
+                'converter': /value->self.type(value)
+                }
+        end
+        
+        if self.callback_in_temperature
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': 'temperature_command_topic',
+                'callbacks': self.callback_in_temperature,
+                'converter': /value->self.type(value)  
+                }
+        end
+
+        name='target_humidity'
+        callbacks=self.callback_outs_target_humidity
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': callbacks,
+                'converter': /value->self.type(value)               
+                }
+        end
+
+        callbacks=self.callback_in_target_humidity
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks,
+                'converter': /value->self.type(value)
+                }
+        end
+
+        name='aux'
+        if self.callback_outs_aux         
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': self.callback_outs_aux,
+                'converter': from_bool
+                }
+        end
+        
+        if self.callback_in_aux
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': self.callback_in_aux,
+                'converter': to_bool
+                }
+        end
+
+        name='current_humidity'
+        callbacks=self.callback_outs_current_humidity
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'template'].concat('_'),
+                'callbacks': callbacks,
+                'converter': int
+                }
+        end
+
+        name='current_temperature'
+        callbacks=self.callback_outs_current_temperature
+        if self.callback_outs_current_humidity         
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'template'].concat('_'),
+                'callbacks': callbacks,
+                'converter': /value->self.type(value)
+                }
+        end
+
+        name='fan_mode'
+        callbacks=self.callback_outs_fan_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': callbacks                
+                }
+        end
+
+        callbacks=self.callback_in_fan_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks
+                }
+        end
+
+        name='mode'
+        callbacks=self.callback_outs_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': callbacks                
+                }
+        end
+
+        callbacks=self.callback_in_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks
+                }
+        end
+
+        name='preset_mode'
+        callbacks=self.callback_outs_preset_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'value_template'].concat('_'),
+                'callbacks': callbacks                
+                }
+        end
+
+        callbacks=self.callback_in_preset_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks
+                }
+        end
+
+        name='swing_mode'
+        callbacks=self.callback_outs_swing_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': callbacks                
+                }
+        end
+
+        callbacks=self.callback_in_swing_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks
+                }
+        end
+
+        name='swing_mode'
+        callbacks=self.callback_outs_swing_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': callbacks                
+                }
+        end
+
+        callbacks=self.callback_in_swing_mode
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks
+                }
+        end
+
+        name='temperature_high'
+        callbacks=self.callback_outs_temperature_high
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': callbacks,
+                'converter': /value->self.type(value)               
+                }
+        end
+
+        callbacks=self.callback_in_temperature_high
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks,
+                'converter': /value->self.type(value)
+                }
+        end
+
+        name='temperature_low'
+        callbacks=self.callback_outs_temperature_low
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
+                'topic_key': [name,'state_topic'].concat('_'),
+                'template':VALUE_TEMPLATE,
+                'template_key': [name,'state_template'].concat('_'),
+                'callbacks': callbacks,
+                'converter': /value->self.type(value)               
+                }
+        end
+
+        callbacks=self.callback_in_temperature_low
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
+                'topic_key': [name,'command_topic'].concat('_'),
+                'callbacks': callbacks,
+                'converter': /value->self.type(value)
+                }
+        end
+
+
+        return data
+
+    end
+
+    def get_data_announce()
+
+        var data=super(self).get_data_announce()
+        var data_update={
+                 
+            'payload_on':ON,
+            'payload_off':OFF,
+            'fan_modes':self.fan_modes,
+            'preset_modes':self.preset_modes,
+            'swing_modes':self.swing_modes,
+            'modes':self.modes,
+            'min_temp':self.temperature_min,
+            'max_temp':self.temperature_max,
+            'min_humidity':self.humidity_min,
+            'max_humidity':self.humidity_max,
+            'precision': self.precision,
+            'temperature_unit':self.temperature_unit
+            
+        }
+
+        data=update_map(data,data_update)
+
+        return data
+
+    end
+
+end
+
 def expose_updater(trigger)
     
     var trigger_default='cron:* * */12 * * *'
@@ -1161,6 +1562,7 @@ hct.BinarySensor=BinarySensor
 
 hct.Humidifier=Humidifier
 hct.Dehumidifier=Dehumidifier
+hct.Climate=Climate
 
 hct.Fan=Fan
 
