@@ -299,6 +299,7 @@ class Entity
     var entity_id
     var icon 
     var rule_registry
+    var callbacks_wrappeds
 
     var callback_outs
     var callback_in
@@ -308,6 +309,8 @@ class Entity
     def init(name, entity_id, icon, callback_outs, callback_in)
 
         self.values={}
+        self.rule_registry={}
+        self.callbacks_wrappeds={}
 
         if Config.USE_LONG_NAMES        
             name=[DEVICE_NAME,name].concat(' ')
@@ -417,7 +420,8 @@ class Entity
                     self.callback_out_wrapper(callback, name, value, trigger, message)
                 )
                 self.register_rule(trigger_callback,closure_outgoing)
-                
+                self.callbacks_wrappeds[callback]=closure_outgoing
+
             end
         end
     end
@@ -1586,7 +1590,12 @@ def expose_updater(trigger)
     var trigger_default='cron:0 0 */12 * * *'
     trigger=trigger==nil?trigger_default:trigger
 
-    return Update(
+    def callback_latest(value)
+        var version=get_latest_version()
+        return version?version:NoPublish()
+    end
+
+    var updater=Update(
         'Update (hct)',
         'https://github.com/fmtr/hct/releases/latest',
         nil,
@@ -1594,8 +1603,17 @@ def expose_updater(trigger)
         nil,
         {/value->VERSION:['Mqtt#Connected', trigger]},
         /value->NoPublish(update_hct(value)),
-        {def (value) var version=get_latest_version() return version?version:NoPublish() end:['Mqtt#Connected', trigger]}
+        {callback_latest:['Mqtt#Connected',trigger]}
     )
+
+    var button_check=Button(
+        'Update (hct) Check',
+        nil,
+        'mdi:source-branch-sync',
+        /value->updater.callbacks_wrappeds[callback_latest]()
+    )
+
+    return updater
 
 end
 
