@@ -1184,31 +1184,36 @@ class Update : Entity
     var release_url
     var callback_outs_latest_version
 
-    def init(name, release_url, entity_picture, entity_id, icon, callbacks, callback_outs_latest_version)
+    def init(name, release_url, entity_picture, entity_id, icon, callbacks)
 
         self.entity_picture=entity_picture
-        self.release_url=release_url
-        self.callback_outs_latest_version=callback_outs_latest_version
+        self.release_url=release_url        
         super(self).init(name, entity_id, icon, callbacks)
 
     end
 
     def extend_endpoint_data(data)
 
-        data['state']['in']['converter']=str
-        data['state']['out']['converter']=str
+
+        data['state']['in']['converter']=str # Required?
+        data['state']['out']['converter']=str     # Required?
 
         var name
+        var direction
+        var callbacks
 
         name='latest_version'
-        if self.callback_outs_latest_version
+
+        direction='out'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
             set_default(data,name,{})
-            data[name]['out']={
+            data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'latest_version_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'latest_version_template',
-                'callbacks': self.callback_outs_latest_version
+                'callbacks': callbacks
                 }
         else
             raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
@@ -1654,9 +1659,10 @@ def expose_updater(trigger)
         nil,
         [
             CallbackOut(trigger, /value->VERSION),
-            CallbackIn(/value->NoPublish(update_hct(value)))
-        ],        
-        CallbackOut(trigger, callback_latest)
+            CallbackIn(/value->NoPublish(update_hct(value))),
+            CallbackOut(trigger, callback_latest, 'latest_version')
+        ]
+        
     )
 
     var button_check=Button(
