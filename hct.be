@@ -283,6 +283,37 @@ end
 
 # End of utility functions.
 
+# Helper objects
+
+class Callback
+    static var direction
+    var endpoint
+    var callback
+    var id
+    var name_endpoint
+    def init(callback, endpoint, id)
+        import uuid
+        self.id=id?id:callback
+        self.callback=callback?callback:/value->value
+        self.endpoint=endpoint?endpoint:'state'
+    end
+end
+
+class CallbackIn: Callback
+    static var direction='in'
+    
+end
+
+class CallbackOut: Callback
+    static var direction='out'
+    var triggers
+    def init(triggers, callback, endpoint, id)
+        super(self).init(callback, endpoint, id)        
+        self.triggers=classname(triggers)=='list'?triggers:[triggers]
+        
+    end
+end
+
 class Entity
 
     static var platform=nil
@@ -301,12 +332,13 @@ class Entity
     var rule_registry
     var callbacks_wrappeds
 
-    var callback_outs
-    var callback_in
+
+
+    var callback_data
 
     var endpoint_data
 
-    def init(name, entity_id, icon, callback_outs, callback_in)
+    def init(name, entity_id, icon, callbacks)
 
         self.values={}
         self.rule_registry={}
@@ -320,9 +352,23 @@ class Entity
         self.entity_id=entity_id
         self.icon=icon	
         self.name_sanitized=sanitize_name(self.name)	
+
+
         
-        self.callback_in=callback_in
-        self.callback_outs=callback_outs
+
+
+        self.callback_data={}
+
+
+
+        for cb : callbacks
+
+            set_default(self.callback_data, cb.endpoint,{})
+            set_default(self.callback_data[cb.endpoint], cb.direction,[])
+            self.callback_data[cb.endpoint][cb.direction].push(cb)
+        end
+
+        log_debug([self.name, 'got callback data', self.callback_data])
 
         self.rule_registry={}
         #self.register_rule('System#Save',/value->self.close())    
@@ -346,24 +392,34 @@ class Entity
 
         var data={}
 
-        if self.callback_in
-            set_default(data,'state',{})
-            data['state']['in']={
-                'topic': self.get_topic('command','state'),
+        var name
+        var direction
+        var callbacks
+
+        name='state'
+
+        direction='in'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
+            set_default(data,name,{})
+            data[name]['in']={
+                'topic': self.get_topic('command',name),
                 'topic_key': 'command_topic',
-                'callbacks': self.callback_in,
+                'callbacks': callbacks,
                 'converter': /value->self.converter_state_in(value)
                 }
         end
 
-        if self.callback_outs
-            set_default(data,'state',{})
-            data['state']['out']={
-                'topic': self.get_topic('state','state'),
+        direction='out'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
+            set_default(data,name,{})
+            data[name]['out']={
+                'topic': self.get_topic('state',name),
                 'topic_key': 'state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'value_template',
-                'callbacks': self.callback_outs,
+                'callbacks': callbacks,
                 'converter': /value->self.converter_state_out(value)
                 }
         end
@@ -394,43 +450,36 @@ class Entity
 
         var callback_outs=self.endpoint_data[name].find('out',{}).find('callbacks')
 
-        callback_outs= callback_outs ? callback_outs : {}
-
         if !callback_outs
-            callback_outs={}
+            return
         end
 
-        if type(callback_outs)=='string'
+        if classname(callback_outs)!='list'
             callback_outs=[callback_outs]
-        end
-
-        if classname(callback_outs)=='list'
-            callback_outs=list_to_map(callback_outs)
-        end
+        end        
 
         var closure_outgoing         
-        for callback: callback_outs.keys()
-            var trigger_callbacks=callback_outs[callback]        
-            if type(trigger_callbacks)=='string'
-                trigger_callbacks=[trigger_callbacks]
-            end
-            for trigger_callback: trigger_callbacks
+        for callback_obj: callback_outs
+
+            log_debug(['Loop got callback_obj',callback_obj])
+
+            for trigger_callback: callback_obj.triggers
                 closure_outgoing=(
                     / value trigger message -> 
-                    self.callback_out_wrapper(callback, name, value, trigger, message)
+                    self.callback_out_wrapper(callback_obj, name, value, trigger, message)
                 )
                 self.register_rule(trigger_callback,closure_outgoing)
-                self.callbacks_wrappeds[callback]=closure_outgoing
+                self.callbacks_wrappeds[callback_obj.id]=closure_outgoing
 
             end
         end
     end
 
-    def callback_out_wrapper(callback, name, value_raw, trigger, message)   
+    def callback_out_wrapper(cbo, name, value_raw, trigger, message)   
   
-        log_debug([self.name,'Outgoing input:', callback, self,name, value_raw, trigger, message])
+        log_debug([self.name,'Outgoing input:', cbo, self,name, value_raw, trigger, message])
     
-        var output_raw=callback(value_raw,self, value_raw, trigger, message)
+        var output_raw=cbo.callback(value_raw,self, value_raw, trigger, message)
     
         log_debug([self.name,'Outgoing callback output:',name, output_raw])
     
@@ -448,32 +497,38 @@ class Entity
 
     def subscribe_in(name)
         
-        var callback_in=self.endpoint_data[name].find('in',{}).find('callbacks')
+        var callback_ins=self.endpoint_data[name].find('in',{}).find('callbacks')
 
-        if !callback_in
+        if !callback_ins
             return
         end
 
         assert self.endpoint_data[name].contains('in')
         var topic=self.endpoint_data[name]['in']['topic']
 
-        callback_in= callback_in ? callback_in : (/ value -> value)    
-        var closure_incoming=(
-            / topic code value value_bytes -> 
-            self.callback_in_wrapper(callback_in, name, topic, code, value, value_bytes)      
-        )  
-        mqtt.subscribe(topic, closure_incoming) # topic_command
+        if classname(callback_ins)!='list'
+            callback_ins=[callback_ins]
+        end
+
+        for callback_obj: callback_ins
+            var closure_incoming=(
+                / topic code value value_bytes -> 
+                self.callback_in_wrapper(callback_obj, name, topic, code, value, value_bytes)      
+            )  
+            mqtt.subscribe(topic, closure_incoming) # topic_command
+
+        end
 
     end
 
-    def callback_in_wrapper(callback, name, topic, code, value_raw, value_bytes)        
+    def callback_in_wrapper(cbo, name, topic, code, value_raw, value_bytes)        
 
-        log_debug([self.name,'Incoming input:', callback, self, name, topic, code, value_raw, value_bytes])
+        log_debug([self.name,'Incoming input:', cbo, self, name, topic, code, value_raw, value_bytes])
     
         var converter=self.endpoint_data[name].find('in',{}).find('converter',/value->value)
 
         var value=converter(value_raw)
-        var output_raw=callback(value,self, topic, code, value_raw, value_bytes)
+        var output_raw=cbo.callback(value,self, topic, code, value_raw, value_bytes)
     
         if classname(output_raw)==classname(Publish)
             output_raw=output_raw.value
@@ -605,45 +660,20 @@ class Select : Entity
 
     static var platform='select'
     var options
-    var options_map_in      
-    var options_map_out     
+    var options_map_in
+    var options_map_out
 
-    def init(name, options, entity_id, icon, callback_outs, callback_in)
-        
-
-        if classname(options)=='list'       
+    def init(name, options, entity_id, icon, callbacks)
         
         self.options=options
-        
-        self.options_map_in={} 
-        for option: options
-            self.options_map_in[option]=option		
-        end	  	  
-        
-        else
-        
-        self.options_map_in=options
-
-        self.options=[] 
-        for option: options.keys()
-            self.options.push(option)
-        end	
-        
-        end
-
-        self.options_map_out={}
-        for key: self.options_map_in.keys()
-        self.options_map_out[self.options_map_in[key]]=key
-        end
-
-        super(self).init(name, entity_id, icon, callback_outs, callback_in)      
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
     def get_data_announce()
 
         var data=super(self).get_data_announce()
-        data['options']=self.options        
+        data['options']=self.options
 
         return data
 
@@ -663,15 +693,18 @@ class Number : Entity
     var uom
     var type
 
-    def init(name, min, max, mode, step, uom, entity_id, icon, callback_outs, callback_in)
+    def init(name, number_range, mode, step, uom, entity_id, icon, callbacks)
 
-        self.min=min
-        self.max=max
+        if number_range
+            self.min=number_range.lower()
+            self.max=number_range.upper()
+        end
+
         self.mode=mode
         self.step=step
         self.uom=uom
         self.type=self.step==nil || self.step==1 ? int : real
-        super(self).init(name, entity_id, icon, callback_outs, callback_in)      
+        super(self).init(name, entity_id, icon, callbacks)      
 
     end
 
@@ -711,15 +744,15 @@ end
 
 class Sensor : Entity
 
-    static var platform='sensor'        
+    static var platform='sensor'
     var uom
     var type
 
-    def init(name, uom, data_type, entity_id, icon, callback_outs)    
+    def init(name, uom, data_type, entity_id, icon, callbacks)
 
-        self.uom=uom    
+        self.uom=uom
         self.type=data_type==nil ? /value->value : data_type
-        super(self).init(name, entity_id, icon, callback_outs, nil)      
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
@@ -732,7 +765,7 @@ class Sensor : Entity
     end
 
     def get_data_announce()
-        var data=super(self).get_data_announce()     
+        var data=super(self).get_data_announce()
         if self.uom data['unit_of_measurement']=self.uom end
         return data
     end
@@ -741,12 +774,12 @@ end
 
 class Button : Entity
 
-    static var platform='button'        
+    static var platform='button'
     var uom
 
-    def init(name, entity_id, icon, callback_in)        
+    def init(name, entity_id, icon, callbacks)
 
-        super(self).init(name, entity_id, icon, nil, callback_in)      
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
@@ -754,7 +787,7 @@ end
 
 class Switch : Entity
 
-    static var platform='switch'  
+    static var platform='switch'
 
     def converter_state_in(value)
         return to_bool(value)
@@ -766,11 +799,11 @@ class Switch : Entity
 
     def get_data_announce()
 
-        var data=super(self).get_data_announce()     
+        var data=super(self).get_data_announce()
 
         data['payload_on']=ON
         data['payload_off']=OFF
-        
+
         return data
 
     end
@@ -779,12 +812,12 @@ end
 
 class BinarySensor : Sensor
 
-    static var platform='binary_sensor'    
-    
-    
-    def init(name, entity_id, icon, callback_outs)    
+    static var platform='binary_sensor'
 
-        super(self).init(name, nil, nil ,entity_id, icon, callback_outs)      
+
+    def init(name, entity_id, icon, callbacks)
+
+        super(self).init(name, nil, nil ,entity_id, icon, callbacks)
 
     end
 
@@ -799,11 +832,11 @@ class BinarySensor : Sensor
 
     def get_data_announce()
 
-        var data=super(self).get_data_announce()     
+        var data=super(self).get_data_announce()
 
         data['payload_on']=ON
         data['payload_off']=OFF
-        
+
         return data
 
     end
@@ -812,22 +845,22 @@ end
 
 class Text : Entity
 
-    static var platform='text' 
-    static var mode='text' 
-    
+    static var platform='text'
+    static var mode='text'
+
     var size_min
     var size_max
     var pattern
-    
-    
-    def init(name,entity_id, icon, size_range, pattern,callback_outs, callback_in)
+
+
+    def init(name,entity_id, icon, size_range, pattern,callbacks)
 
         if size_range
             self.size_min=size_range.lower()
             self.size_max=size_range.upper()
         end
-        
-        super(self).init(name, entity_id, icon, callback_outs, callback_in)      
+
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
@@ -842,19 +875,18 @@ class Text : Entity
 
     def get_data_announce()
 
-        var data=super(self).get_data_announce() 
-        
+        var data=super(self).get_data_announce()
+
         var data_update={
             'min':self.size_min,
             'max': self.size_max,
             'pattern': self.pattern,
             'mode': self.mode
-
         }
 
         data=update_map(data,data_update)
 
-        
+
         return data
 
     end
@@ -862,8 +894,9 @@ class Text : Entity
 end
 
 class Password : Text
-    static var mode='password' 
+    static var mode='password'
 end
+
 
 class Humidifier : Entity
 
@@ -878,79 +911,97 @@ class Humidifier : Entity
     var callback_outs_target_humidity
     var callback_in_target_humidity
 
-    def init(name, modes, humidity_range, entity_id, icon, callback_outs, callback_in, callback_outs_mode, callback_in_mode, callback_outs_target_humidity, callback_in_target_humidity)
-        
+    def init(name, modes, humidity_range, entity_id, icon, callbacks, callback_outs_mode, callback_in_mode, callback_outs_target_humidity, callback_in_target_humidity)
+
         self.modes=modes
 
         if humidity_range
             self.min_humidity=humidity_range.lower()
             self.max_humidity=humidity_range.upper()
-        end  
+        end
 
         self.callback_outs_mode=callback_outs_mode
         self.callback_in_mode=callback_in_mode
         self.callback_outs_target_humidity=callback_outs_target_humidity
         self.callback_in_target_humidity=callback_in_target_humidity
 
-        super(self).init(name, entity_id, icon, callback_outs, callback_in)      
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
     def extend_endpoint_data(data)
 
-        if self.callback_in
+        var name
+        var direction
+        var callbacks
+
+
+
+        if self.callback_data.find('state',{}).find('in')
             data['state']['in']['converter']=to_bool
         end
 
-        if self.callback_outs
+        if self.callback_data.find('state',{}).find('out')
             data['state']['out']['converter']=from_bool
             data['state']['out']['template_key']='state_value_template'
         end
 
-        if self.callback_outs_mode
-            set_default(data,'mode',{})
-            data['mode']['out']={
-                'topic': self.get_topic('state','mode'),
+        name='mode'
+
+        direction='out'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
+            set_default(data,name,{})
+            data[name][direction]={
+                'topic': self.get_topic('state',name),
                 'topic_key': 'mode_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'mode_state_template',
-                'callbacks': self.callback_outs_mode                
+                'callbacks': callbacks
                 }
         end
-
-        if self.callback_in_mode
-            set_default(data,'mode',{})
-            data['mode']['in']={
-                'topic': self.get_topic('command','mode'),
+        
+        direction='in'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
+            set_default(data,name,{})
+            data[name][direction]={
+                'topic': self.get_topic('command',name),
                 'topic_key': 'mode_command_topic',
-                'callbacks': self.callback_in_mode,
+                'callbacks': callbacks,
                 }
         else
-            raise 'hct_config_error', [classname(self),'requires incoming callback for', 'mode'].concat(' ')
+            raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
         end
 
-        if self.callback_outs_target_humidity
-            set_default(data,'target_humidity',{})
-            data['target_humidity']['out']={
-                'topic': self.get_topic('state','target_humidity'),
+        name='target_humidity'
+
+        direction='out'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
+            set_default(data,name,{})
+            data[name][direction]={
+                'topic': self.get_topic('state',name),
                 'topic_key': 'target_humidity_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'target_humidity_state_template',
-                'callbacks': self.callback_outs_target_humidity,
+                'callbacks': callbacks,
                 'converter': int
                 }
         end
 
-        if self.callback_in_target_humidity
-            set_default(data,'target_humidity',{})
-            data['target_humidity']['in']={
-                'topic': self.get_topic('command','target_humidity'),
+        direction='in'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
+            set_default(data,name,{})
+            data[name][direction]={
+                'topic': self.get_topic('command',name),
                 'topic_key': 'target_humidity_command_topic',
-                'callbacks': self.callback_in_target_humidity,
+                'callbacks': callbacks,
                 'converter': int
                 }
         else
-            raise 'hct_config_error', [classname(self),'requires incoming callback for', 'target humidity'].concat(' ')
+            raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
         end
 
         return data
@@ -979,7 +1030,7 @@ class Humidifier : Entity
 end
 
 class Dehumidifier : Humidifier
-    
+
     static var device_class='dehumidifier'
 
 end
@@ -987,7 +1038,7 @@ end
 class Fan : Entity
 
     static var platform='fan'
-    
+
     var modes
     var min_speed
     var max_speed
@@ -999,14 +1050,14 @@ class Fan : Entity
     var callback_outs_oscillation
     var callback_in_oscillation
 
-    def init(name, modes, speed_range, entity_id, icon, callback_outs, callback_in, callback_outs_mode, callback_in_mode, callback_outs_percentage, callback_in_percentage, callback_outs_oscillation, callback_in_oscillation)
-        
+    def init(name, modes, speed_range, entity_id, icon, callbacks, callback_outs_mode, callback_in_mode, callback_outs_percentage, callback_in_percentage, callback_outs_oscillation, callback_in_oscillation)
+
         self.modes=modes
-        
+
         if speed_range
             self.min_speed=speed_range.lower()
             self.max_speed=speed_range.upper()
-        end        
+        end
 
         self.callback_outs_mode=callback_outs_mode
         self.callback_in_mode=callback_in_mode
@@ -1015,7 +1066,7 @@ class Fan : Entity
         self.callback_outs_oscillation=callback_outs_oscillation
         self.callback_in_oscillation=callback_in_oscillation
 
-        super(self).init(name, entity_id, icon, callback_outs, callback_in)      
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
@@ -1033,17 +1084,17 @@ class Fan : Entity
         var name
 
         name='preset_mode'
-        if self.callback_outs_mode            
+        if self.callback_outs_mode
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'preset_mode_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'preset_mode_state_template',
-                'callbacks': self.callback_outs_mode                
+                'callbacks': self.callback_outs_mode
                 }
         end
-        
+
         if self.callback_in_mode
             set_default(data,name,{})
             data[name]['in']={
@@ -1111,7 +1162,7 @@ class Fan : Entity
 
         var data=super(self).get_data_announce()
         var data_update={
-            'preset_modes':self.modes,            
+            'preset_modes':self.modes,
             'payload_on':ON,
             'payload_off':OFF,
             'speed_range_min':self.min_speed,
@@ -1128,17 +1179,17 @@ end
 
 class Update : Entity
 
-    static var platform='update'    
+    static var platform='update'
     var entity_picture
     var release_url
-    var callback_outs_latest_version        
+    var callback_outs_latest_version
 
-    def init(name, release_url, entity_picture, entity_id, icon, callback_outs, callback_in, callback_outs_latest_version)
-        
+    def init(name, release_url, entity_picture, entity_id, icon, callbacks, callback_outs_latest_version)
+
         self.entity_picture=entity_picture
         self.release_url=release_url
         self.callback_outs_latest_version=callback_outs_latest_version
-        super(self).init(name, entity_id, icon, callback_outs, callback_in)      
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
@@ -1150,14 +1201,14 @@ class Update : Entity
         var name
 
         name='latest_version'
-        if self.callback_outs_latest_version            
+        if self.callback_outs_latest_version
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'latest_version_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'latest_version_template',
-                'callbacks': self.callback_outs_latest_version                
+                'callbacks': self.callback_outs_latest_version
                 }
         else
             raise 'hct_config_error', [classname(self),'requires incoming callback for', name].concat(' ')
@@ -1171,7 +1222,7 @@ class Update : Entity
 
         var data=super(self).get_data_announce()
         var data_update={
-            'entity_picture':self.entity_picture,            
+            'entity_picture':self.entity_picture,
             'payload_install':'INSTALL',
             'release_url':self.release_url
         }
@@ -1187,12 +1238,12 @@ end
 class Climate : Entity
 
     static var platform='climate'
-    
+
     var modes
     var preset_modes
     var fan_modes
     var swing_modes
-    var precision 
+    var precision
     var type
 
     var temperature_unit
@@ -1214,7 +1265,7 @@ class Climate : Entity
     var callback_outs_current_humidity
 
     var callback_outs_current_temperature
-    
+
     var callback_outs_fan_mode
     var callback_in_fan_mode
 
@@ -1235,13 +1286,13 @@ class Climate : Entity
 
 
     def init(name, entity_id, icon, temperature_unit, temperature_range, humidity_range, modes, preset_modes, fan_modes, swing_modes, precision ,callback_outs_temperature, callback_in_temperature, callback_outs_target_humidity, callback_in_target_humidity, callback_outs_aux, callback_in_aux, callback_outs_current_temperature,callback_outs_current_humidity , callback_outs_fan_mode, callback_in_fan_mode, callback_outs_mode, callback_in_mode, callback_outs_preset_mode, callback_in_preset_mode, callback_outs_swing_mode, callback_in_swing_mode, callback_outs_temperature_high, callback_in_temperature_high, callback_outs_temperature_low, callback_in_temperature_low)
-        
+
         self.temperature_unit=temperature_unit
 
         if temperature_range
             self.temperature_min=temperature_range.lower()
             self.temperature_max=temperature_range.upper()
-        end   
+        end
 
         if humidity_range
             self.humidity_min=humidity_range.lower()
@@ -1249,8 +1300,8 @@ class Climate : Entity
         end
 
         self.precision=precision
-        self.type=self.precision==nil?(self.temperature_unit=='C'?real:int): (self.precision==1?int:real)        
-        
+        self.type=self.precision==nil?(self.temperature_unit=='C'?real:int): (self.precision==1?int:real)
+
         self.fan_modes=fan_modes
         self.modes=modes
         self.preset_modes=preset_modes
@@ -1277,9 +1328,9 @@ class Climate : Entity
         self.callback_in_temperature_high=callback_in_temperature_high
 
         self.callback_outs_temperature_low=callback_outs_temperature_low
-        self.callback_in_temperature_low=callback_in_temperature_low        
+        self.callback_in_temperature_low=callback_in_temperature_low
 
-        super(self).init(name, entity_id, icon, nil, nil)      
+        super(self).init(name, entity_id, icon, nil, nil)
 
     end
 
@@ -1289,7 +1340,7 @@ class Climate : Entity
         var callbacks
 
         name='temperature'
-        if self.callback_outs_temperature            
+        if self.callback_outs_temperature
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
@@ -1300,14 +1351,14 @@ class Climate : Entity
                 'converter': /value->self.type(value)
                 }
         end
-        
+
         if self.callback_in_temperature
             set_default(data,name,{})
             data[name]['in']={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'temperature_command_topic',
                 'callbacks': self.callback_in_temperature,
-                'converter': /value->self.type(value)  
+                'converter': /value->self.type(value)
                 }
         end
 
@@ -1321,7 +1372,7 @@ class Climate : Entity
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'state_template'].concat('_'),
                 'callbacks': callbacks,
-                'converter': /value->self.type(value)               
+                'converter': /value->self.type(value)
                 }
         end
 
@@ -1337,7 +1388,7 @@ class Climate : Entity
         end
 
         name='aux'
-        if self.callback_outs_aux         
+        if self.callback_outs_aux
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
@@ -1348,7 +1399,7 @@ class Climate : Entity
                 'converter': from_bool
                 }
         end
-        
+
         if self.callback_in_aux
             set_default(data,name,{})
             data[name]['in']={
@@ -1375,7 +1426,7 @@ class Climate : Entity
 
         name='current_temperature'
         callbacks=self.callback_outs_current_temperature
-        if self.callback_outs_current_humidity         
+        if self.callback_outs_current_humidity
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
@@ -1396,7 +1447,7 @@ class Climate : Entity
                 'topic_key': [name,'state_topic'].concat('_'),
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks                
+                'callbacks': callbacks
                 }
         end
 
@@ -1419,7 +1470,7 @@ class Climate : Entity
                 'topic_key': [name,'state_topic'].concat('_'),
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks                
+                'callbacks': callbacks
                 }
         end
 
@@ -1442,7 +1493,7 @@ class Climate : Entity
                 'topic_key': [name,'state_topic'].concat('_'),
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'value_template'].concat('_'),
-                'callbacks': callbacks                
+                'callbacks': callbacks
                 }
         end
 
@@ -1465,7 +1516,7 @@ class Climate : Entity
                 'topic_key': [name,'state_topic'].concat('_'),
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks                
+                'callbacks': callbacks
                 }
         end
 
@@ -1488,7 +1539,7 @@ class Climate : Entity
                 'topic_key': [name,'state_topic'].concat('_'),
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks                
+                'callbacks': callbacks
                 }
         end
 
@@ -1512,7 +1563,7 @@ class Climate : Entity
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'state_template'].concat('_'),
                 'callbacks': callbacks,
-                'converter': /value->self.type(value)               
+                'converter': /value->self.type(value)
                 }
         end
 
@@ -1537,7 +1588,7 @@ class Climate : Entity
                 'template':VALUE_TEMPLATE,
                 'template_key': [name,'state_template'].concat('_'),
                 'callbacks': callbacks,
-                'converter': /value->self.type(value)               
+                'converter': /value->self.type(value)
                 }
         end
 
@@ -1561,7 +1612,7 @@ class Climate : Entity
 
         var data=super(self).get_data_announce()
         var data_update={
-                 
+
             'payload_on':ON,
             'payload_off':OFF,
             'fan_modes':self.fan_modes,
@@ -1574,7 +1625,7 @@ class Climate : Entity
             'max_humidity':self.humidity_max,
             'precision': self.precision,
             'temperature_unit':self.temperature_unit
-            
+
         }
 
         data=update_map(data,data_update)
@@ -1586,9 +1637,9 @@ class Climate : Entity
 end
 
 def expose_updater(trigger)
-    
+
     var trigger_default='cron:0 0 */12 * * *'
-    trigger=trigger==nil?trigger_default:trigger
+    trigger=trigger_default
 
     def callback_latest(value)
         var version=get_latest_version()
@@ -1601,24 +1652,27 @@ def expose_updater(trigger)
         nil,
         nil,
         nil,
-        {/value->VERSION:['Mqtt#Connected', trigger]},
-        /value->NoPublish(update_hct(value)),
-        {callback_latest:['Mqtt#Connected',trigger]}
+        [
+            CallbackOut(trigger, /value->VERSION),
+            CallbackIn(/value->NoPublish(update_hct(value)))
+        ],        
+        CallbackOut(trigger, callback_latest)
     )
 
     var button_check=Button(
         'Update (hct) Check',
         nil,
         'mdi:source-branch-sync',
-        /value->updater.callbacks_wrappeds[callback_latest]()
+        [
+            CallbackIn(/value->updater.callbacks_wrappeds[callback_latest]())
+        ]
     )
-
+    
     return updater
 
 end
 
-
-
+# Start module definition.
 
 var hct = module(NAME)
 
@@ -1644,12 +1698,17 @@ hct.Update=Update
 
 hct.Publish=Publish
 hct.NoPublish=NoPublish
+hct.CallbackOut=CallbackOut
+hct.CallbackIn=CallbackIn
+
 hct.add_rule_once=add_rule_once
 hct.reverse_map=reverse_map
 hct.get_keys=get_keys
 hct.download_url=download_url
 hct.read_url=read_url
 hct.log_debug=log_debug
+
+hct.get_latest_version=get_latest_version
 
 hct.expose_updater=expose_updater
 
