@@ -297,6 +297,10 @@ class Callback
         self.callback=callback?callback:/value->value
         self.endpoint=endpoint?endpoint:'state'
     end
+
+    def get_desc()
+        return [self.endpoint, self.direction].concat(', ')
+    end
 end
 
 class CallbackIn: Callback
@@ -362,6 +366,8 @@ class Entity
 
 
         for cb : callbacks
+
+            
 
             set_default(self.callback_data, cb.endpoint,{})
             set_default(self.callback_data[cb.endpoint], cb.direction,[])
@@ -515,7 +521,8 @@ class Entity
                 / topic code value value_bytes -> 
                 self.callback_in_wrapper(callback_obj, name, topic, code, value, value_bytes)      
             )  
-            mqtt.subscribe(topic, closure_incoming) # topic_command
+            mqtt.subscribe(topic, closure_incoming)
+            self.callbacks_wrappeds[callback_obj.id]=closure_incoming
 
         end
 
@@ -1043,14 +1050,8 @@ class Fan : Entity
     var min_speed
     var max_speed
 
-    var callback_outs_mode
-    var callback_in_mode
-    var callback_outs_percentage
-    var callback_in_percentage
-    var callback_outs_oscillation
-    var callback_in_oscillation
 
-    def init(name, modes, speed_range, entity_id, icon, callbacks, callback_outs_mode, callback_in_mode, callback_outs_percentage, callback_in_percentage, callback_outs_oscillation, callback_in_oscillation)
+    def init(name, modes, speed_range, entity_id, icon, callbacks)
 
         self.modes=modes
 
@@ -1059,97 +1060,110 @@ class Fan : Entity
             self.max_speed=speed_range.upper()
         end
 
-        self.callback_outs_mode=callback_outs_mode
-        self.callback_in_mode=callback_in_mode
-        self.callback_outs_percentage=callback_outs_percentage
-        self.callback_in_percentage=callback_in_percentage
-        self.callback_outs_oscillation=callback_outs_oscillation
-        self.callback_in_oscillation=callback_in_oscillation
-
         super(self).init(name, entity_id, icon, callbacks)
 
     end
 
     def extend_endpoint_data(data)
 
-        if self.callback_in
-            data['state']['in']['converter']=to_bool
-        end
-
-        if self.callback_outs
-            data['state']['out']['converter']=from_bool
-            data['state']['out']['template_key']='state_value_template'
-        end
-
         var name
+        var callbacks
+        var direction
+
+        name='state'
+        direction='in'
+
+        if self.callback_data.find(name,{}).find(direction)
+            data[name][direction]['converter']=to_bool
+        end
+
+        direction='out'
+        if self.callback_data.find(name,{}).find(direction)
+            data[name][direction]['converter']=from_bool
+            data[name][direction]['template_key']='state_value_template'
+        end
+
+        
 
         name='preset_mode'
-        if self.callback_outs_mode
+        direction='out'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
             set_default(data,name,{})
-            data[name]['out']={
+            data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'preset_mode_state_topic',
                 'template':VALUE_TEMPLATE,
                 'template_key': 'preset_mode_state_template',
-                'callbacks': self.callback_outs_mode
+                'callbacks': callbacks
                 }
         end
 
-        if self.callback_in_mode
+        direction='in'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
             set_default(data,name,{})
-            data[name]['in']={
+            data[name][direction]={
                 'topic': self.get_topic('command',name),
-                'topic_key': 'preset_mode_command_topic',
-                'callbacks': self.callback_in_mode,
+                'topic_key': name+'_command_topic',
+                'callbacks': callbacks,
                 }
         end
 
-        name='percentage'
-        if self.callback_outs_percentage
+        name='percentage'        
+        direction='out'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
             set_default(data,name,{})
-            data[name]['out']={
+            data[name][direction]={
                 'topic': self.get_topic('state',name),
-                'topic_key': 'percentage_state_topic',
+                'topic_key': name+'_state_topic',
                 'template':VALUE_TEMPLATE,
-                'template_key': 'percentage_value_template',
-                'callbacks': self.callback_outs_percentage,
+                'template_key': name+'_value_template',
+                'callbacks': callbacks,
                 'converter': int
                 }
         end
 
-        if self.callback_in_percentage
+        direction='in'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
             set_default(data,name,{})
-            data[name]['in']={
+            data[name][direction]={
                 'topic': self.get_topic('command',name),
-                'topic_key': 'percentage_command_topic',
-                'callbacks': self.callback_in_percentage,
+                'topic_key': name+'_command_topic',
+                'callbacks': callbacks,
                 'converter': int
                 }
         end
 
         name='oscillation'
-        if self.callback_outs_oscillation
+        direction='out'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
             set_default(data,name,{})
-            data[name]['out']={
+            data[name][direction]={
                 'topic': self.get_topic('state',name),
-                'topic_key': 'oscillation_state_topic',
+                'topic_key': name+'_state_topic',
                 'template':VALUE_TEMPLATE,
-                'template_key': 'oscillation_value_template',
-                'callbacks': self.callback_outs_oscillation,
+                'template_key': name+'_value_template',
+                'callbacks': callbacks,
                 'converter': from_bool
                 }
         end
 
-        if self.callback_in_oscillation
+        direction='in'
+        callbacks=self.callback_data.find(name,{}).find(direction)
+        if callbacks
             set_default(data,name,{})
-            data[name]['in']={
+            data[name][direction]={
                 'topic': self.get_topic('command',name),
-                'topic_key': 'oscillation_command_topic',
+                'topic_key': name+'_command_topic',
                 'payload_on': ON,
                 'payload_on_key': 'payload_oscillation_on',
                 'payload_off': OFF,
                 'payload_off_key': 'payload_oscillation_off',
-                'callbacks': self.callback_in_oscillation,
+                'callbacks': callbacks,
                 'converter': to_bool
                 }
         end
@@ -1181,8 +1195,7 @@ class Update : Entity
 
     static var platform='update'
     var entity_picture
-    var release_url
-    var callback_outs_latest_version
+    var release_url    
 
     def init(name, release_url, entity_picture, entity_id, icon, callbacks)
 
