@@ -6,6 +6,8 @@ import string
 import math
 import uuid
 
+
+
 class Config
 
     # Module-wide configuration
@@ -158,6 +160,7 @@ def set_default(data,key,value)
     if !data.contains(key)
         data[key]=value
     end
+    return data
 end
 
 def add_rule(id,trigger,closure)   
@@ -235,6 +238,8 @@ def update_map(data,data_update)
     return data
 end
 
+
+
 class Publish
     var value
 
@@ -267,11 +272,18 @@ def update_hct(value)
 
 end
 
-def get_latest_version(value)
+def get_latest_version(org,repo)
 
-    log('Fetching hct latest version...')
+    log(['Fetching', org, repo, 'latest version...'].concat(' '))
 
-    var version=read_url(Config.URL_VERSION)
+    var url=[
+        'https://europe-west2-extreme-flux-351112.cloudfunctions.net/get_github_latest_release_version?org=',
+        org,
+        '&repo=',
+        repo
+        ].concat()
+
+    var version=read_url(url)
     if version
         return version
     else
@@ -434,9 +446,44 @@ class Entity
 
     end
 
+
     def extend_endpoint_data(data)
 
         return data
+
+    end
+
+    def add_endpoint_data(data,name,dir,converter)
+
+        var callbacks=self.callback_data.find(name,{}).find(dir)
+        if !callbacks
+            return
+        end
+
+        var dir_mqtt={'in':'command','out':'state'}[dir]
+
+        var data_update={
+                'topic': self.get_topic(dir_mqtt,name),
+                'topic_key': [name,dir_mqtt,'topic'].concat('_'),
+                'callbacks': callbacks,
+                (converter?'converter':converter):converter
+            }
+
+        if dir=='out'
+            data_update=update_map(
+                data_update,
+                {
+                    'template':VALUE_TEMPLATE,
+                    'template_key': [name,dir_mqtt,'template'].concat('_')                        
+                }
+            )
+        end
+
+        data=set_default(data,name,{})
+        data[name][dir]=data_update
+
+        return data
+        
 
     end
 
@@ -466,8 +513,6 @@ class Entity
 
         var closure_outgoing         
         for callback_obj: callback_outs
-
-            log_debug(['Loop got callback_obj',callback_obj])
 
             for trigger_callback: callback_obj.triggers
                 closure_outgoing=(
@@ -1083,90 +1128,23 @@ class Fan : Entity
             data[name][direction]['template_key']='state_value_template'
         end
 
-        
+        data=self.add_endpoint_data(data,'preset_mode','out')
+        data=self.add_endpoint_data(data,'preset_mode','in')
+        data=self.add_endpoint_data(data,'percentage','out',int)
+        data=self.add_endpoint_data(data,'percentage','in',int)
+        data=self.add_endpoint_data(data,'oscillation','out',from_bool)
+        data['oscillation']['out']['template_key']='oscillation_value_template'
+        data=self.add_endpoint_data(data,'oscillation','in',to_bool)
 
-        name='preset_mode'
-        direction='out'
-        callbacks=self.callback_data.find(name,{}).find(direction)
-        if callbacks
-            set_default(data,name,{})
-            data[name][direction]={
-                'topic': self.get_topic('state',name),
-                'topic_key': 'preset_mode_state_topic',
-                'template':VALUE_TEMPLATE,
-                'template_key': 'preset_mode_state_template',
-                'callbacks': callbacks
-                }
-        end
-
-        direction='in'
-        callbacks=self.callback_data.find(name,{}).find(direction)
-        if callbacks
-            set_default(data,name,{})
-            data[name][direction]={
-                'topic': self.get_topic('command',name),
-                'topic_key': name+'_command_topic',
-                'callbacks': callbacks,
-                }
-        end
-
-        name='percentage'        
-        direction='out'
-        callbacks=self.callback_data.find(name,{}).find(direction)
-        if callbacks
-            set_default(data,name,{})
-            data[name][direction]={
-                'topic': self.get_topic('state',name),
-                'topic_key': name+'_state_topic',
-                'template':VALUE_TEMPLATE,
-                'template_key': name+'_value_template',
-                'callbacks': callbacks,
-                'converter': int
-                }
-        end
-
-        direction='in'
-        callbacks=self.callback_data.find(name,{}).find(direction)
-        if callbacks
-            set_default(data,name,{})
-            data[name][direction]={
-                'topic': self.get_topic('command',name),
-                'topic_key': name+'_command_topic',
-                'callbacks': callbacks,
-                'converter': int
-                }
-        end
-
-        name='oscillation'
-        direction='out'
-        callbacks=self.callback_data.find(name,{}).find(direction)
-        if callbacks
-            set_default(data,name,{})
-            data[name][direction]={
-                'topic': self.get_topic('state',name),
-                'topic_key': name+'_state_topic',
-                'template':VALUE_TEMPLATE,
-                'template_key': name+'_value_template',
-                'callbacks': callbacks,
-                'converter': from_bool
-                }
-        end
-
-        direction='in'
-        callbacks=self.callback_data.find(name,{}).find(direction)
-        if callbacks
-            set_default(data,name,{})
-            data[name][direction]={
-                'topic': self.get_topic('command',name),
-                'topic_key': name+'_command_topic',
+        update_map(
+            data['oscillation']['in'],
+            {
                 'payload_on': ON,
                 'payload_on_key': 'payload_oscillation_on',
                 'payload_off': OFF,
-                'payload_off_key': 'payload_oscillation_off',
-                'callbacks': callbacks,
-                'converter': to_bool
-                }
-        end
+                'payload_off_key': 'payload_oscillation_off'
+            }
+        )
 
         return data
 
@@ -1356,6 +1334,7 @@ class Climate : Entity
 
         var name
         var callbacks
+        var direction
 
         name='temperature'
         if self.callback_outs_temperature
@@ -1393,6 +1372,10 @@ class Climate : Entity
                 'converter': /value->self.type(value)
                 }
         end
+
+
+        
+
 
         callbacks=self.callback_in_target_humidity
         if callbacks
@@ -1434,9 +1417,9 @@ class Climate : Entity
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
-                'topic_key': [name,'topic'].concat('_'),
+                'topic_key': [name,'topic'].concat('_'), #NON STANDARD
                 'template':VALUE_TEMPLATE,
-                'template_key': [name,'template'].concat('_'),
+                'template_key': [name,'template'].concat('_'), #NON STANDARD
                 'callbacks': callbacks,
                 'converter': int
                 }
@@ -1448,9 +1431,9 @@ class Climate : Entity
             set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
-                'topic_key': [name,'topic'].concat('_'),
+                'topic_key': [name,'topic'].concat('_'), #NON STANDARD
                 'template':VALUE_TEMPLATE,
-                'template_key': [name,'template'].concat('_'),
+                'template_key': [name,'template'].concat('_'), #NON STANDARD
                 'callbacks': callbacks,
                 'converter': /value->self.type(value)
                 }
@@ -1654,40 +1637,64 @@ class Climate : Entity
 
 end
 
-def expose_updater(trigger)
+def expose_updater(org,repo,version_current,callback_update)
 
-    var trigger_default='cron:0 0 */12 * * *'
-    trigger=trigger_default
+    org=org?org:'fmtr'
+    repo=repo?repo:'hct'
+    version_current=version_current?version_current:VERSION
+    callback_update=callback_update?callback_update:/value->NoPublish(update_hct(value))
+    
+    
+    var trigger='cron:0 0 */12 * * *'
 
     def callback_latest(value)
-        var version=get_latest_version()
+        var version=get_latest_version(org,repo)
         return version?version:NoPublish()
     end
 
+    def callback_current(value)
+        return version_current
+    end
+
     var updater=Update(
-        'Update (hct)',
-        'https://github.com/fmtr/hct/releases/latest',
+        ['Update (',repo,')'].concat(),
+        ['https://github.com',org,repo,'releases/latest'].concat('/'),
         nil,
         nil,
         nil,
         [
-            CallbackOut(trigger, /value->VERSION),
-            CallbackIn(/value->NoPublish(update_hct(value))),
-            CallbackOut(trigger, callback_latest, 'latest_version')
+            CallbackOut(trigger, callback_current),
+            CallbackIn(callback_update),
+            CallbackOut(trigger, callback_latest,'latest_version')
         ]
         
     )
 
+    def callback_force_publish(value)
+        updater.callbacks_wrappeds[callback_current]()
+        updater.callbacks_wrappeds[callback_latest]()
+        return version_current
+    end
+
     var button_check=Button(
-        'Update (hct) Check',
+        ['Update (',repo,') Check'].concat(),
         nil,
         'mdi:source-branch-sync',
         [
-            CallbackIn(/value->updater.callbacks_wrappeds[callback_latest]())
+            CallbackIn(callback_force_publish)
         ]
     )
     
     return updater
+
+end
+
+def expose_updater_tasmota()
+    
+    var version_current=tasmota.cmd('status 2').find('StatusFWR',{}).find('Version','Unknown')
+    version_current=string.replace(version_current,'(tasmota)','')
+    
+    return expose_updater('arendst','Tasmota',version_current,/value->tasmota.cmd('upgrade 1'))   
 
 end
 
@@ -1730,6 +1737,7 @@ hct.log_debug=log_debug
 hct.get_latest_version=get_latest_version
 
 hct.expose_updater=expose_updater
+hct.expose_updater_tasmota=expose_updater_tasmota
 
 log_debug("hct.be compiled OK.")
 
