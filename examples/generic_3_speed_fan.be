@@ -38,12 +38,10 @@ fan=hct.Fan(
     1..3,
     nil,
     'mdi:fan',
-    {are_any_speeds_on: POWER_TRIGGERS},
-    /value->tasmota.set_power(0,value),
-    nil,
-    nil,
-    {callback_out_percentage: POWER_TRIGGERS},
-    callback_in_percentage,
-    nil,
-    nil
+    [
+        hct.CallbackOut(POWER_TRIGGERS,are_any_speeds_on),
+        hct.CallbackIn(/value->tasmota.set_power(0,value)),
+        hct.CallbackOut(POWER_TRIGGERS, callback_out_percentage,'percentage'),
+        hct.CallbackIn(callback_in_percentage,'percentage')
+    ]
 )
