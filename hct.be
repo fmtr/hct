@@ -386,8 +386,6 @@ class Entity
             self.callback_data[cb.endpoint][cb.direction].push(cb)
         end
 
-        log_debug([self.name, 'got callback data', self.callback_data])
-
         self.rule_registry={}
         #self.register_rule('System#Save',/value->self.close())    
         self.topic_announce=self.get_topic_announce()
@@ -1267,39 +1265,7 @@ class Climate : Entity
     var humidity_min
     var humidity_max
 
-    var callback_outs_target_humidity
-    var callback_in_target_humidity
-
-    var callback_outs_temperature
-    var callback_in_temperature
-
-    var callback_outs_aux
-    var callback_in_aux
-
-    var callback_outs_current_humidity
-
-    var callback_outs_current_temperature
-
-    var callback_outs_fan_mode
-    var callback_in_fan_mode
-
-    var callback_outs_mode
-    var callback_in_mode
-
-    var callback_outs_preset_mode
-    var callback_in_preset_mode
-
-    var callback_outs_swing_mode
-    var callback_in_swing_mode
-
-    var callback_outs_temperature_high
-    var callback_in_temperature_high
-
-    var callback_outs_temperature_low
-    var callback_in_temperature_low
-
-
-    def init(name, entity_id, icon, temperature_unit, temperature_range, humidity_range, modes, preset_modes, fan_modes, swing_modes, precision ,callback_outs_temperature, callback_in_temperature, callback_outs_target_humidity, callback_in_target_humidity, callback_outs_aux, callback_in_aux, callback_outs_current_temperature,callback_outs_current_humidity , callback_outs_fan_mode, callback_in_fan_mode, callback_outs_mode, callback_in_mode, callback_outs_preset_mode, callback_in_preset_mode, callback_outs_swing_mode, callback_in_swing_mode, callback_outs_temperature_high, callback_in_temperature_high, callback_outs_temperature_low, callback_in_temperature_low)
+    def init(name, entity_id, icon, temperature_unit, temperature_range, humidity_range, modes, preset_modes, fan_modes, swing_modes, precision, callbacks)
 
         self.temperature_unit=temperature_unit
 
@@ -1320,307 +1286,86 @@ class Climate : Entity
         self.modes=modes
         self.preset_modes=preset_modes
         self.swing_modes=swing_modes
-        self.callback_outs_aux=callback_outs_aux
-        self.callback_in_aux=callback_in_aux
+        
 
-        self.callback_outs_current_temperature=callback_outs_current_temperature
-        self.callback_outs_current_humidity=callback_outs_current_humidity
-        self.callback_outs_fan_mode=callback_outs_fan_mode
-        self.callback_in_fan_mode=callback_in_fan_mode
-        self.callback_outs_mode=callback_outs_mode
-        self.callback_in_mode=callback_in_mode
-        self.callback_outs_preset_mode=callback_outs_preset_mode
-        self.callback_in_preset_mode=callback_in_preset_mode
-        self.callback_outs_swing_mode=callback_outs_swing_mode
-        self.callback_in_swing_mode=callback_in_swing_mode
-        self.callback_outs_temperature=callback_outs_temperature
-        self.callback_in_temperature=callback_in_temperature
-        self.callback_outs_target_humidity=callback_outs_target_humidity
-        self.callback_in_target_humidity=callback_in_target_humidity
-
-        self.callback_outs_temperature_high=callback_outs_temperature_high
-        self.callback_in_temperature_high=callback_in_temperature_high
-
-        self.callback_outs_temperature_low=callback_outs_temperature_low
-        self.callback_in_temperature_low=callback_in_temperature_low
-
-        super(self).init(name, entity_id, icon, nil, nil)
+        super(self).init(name, entity_id, icon, callbacks)
 
     end
 
     def extend_endpoint_data(data)
 
-        var name
-        var callbacks
-        var direction
+        var numeric_converter=/value->self.type(value)
 
-        name='temperature'
-        if self.callback_outs_temperature
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': 'temperature_state_topic',
-                'template':VALUE_TEMPLATE,
-                'template_key': 'temperature_state_template',
-                'callbacks': self.callback_outs_temperature,
-                'converter': /value->self.type(value)
-                }
-        end
+        self.add_endpoint_data(data,'temperature','out',numeric_converter)
+        self.add_endpoint_data(data,'temperature','in',numeric_converter)
 
-        if self.callback_in_temperature
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': 'temperature_command_topic',
-                'callbacks': self.callback_in_temperature,
-                'converter': /value->self.type(value)
-                }
-        end
+        self.add_endpoint_data(data,'target_humidity','out',numeric_converter)
+        self.add_endpoint_data(data,'target_humidity','in',numeric_converter)
 
-        name='target_humidity'
-        callbacks=self.callback_outs_target_humidity
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks,
-                'converter': /value->self.type(value)
-                }
-        end
+        self.add_endpoint_data(data,'aux','out',from_bool)
+        self.add_endpoint_data(data,'aux','in',to_bool)
 
+        self.add_endpoint_data(
+            data,
+            'current_humidity',
+            'out',
+            numeric_converter,
+            {
+                'topic_key': 'current_humidity_topic',
+                'template_key': 'current_humidity_template'
+            }
+        )
 
+        self.add_endpoint_data(
+            data,
+            'current_temperature',
+            'out',
+            numeric_converter,
+            {
+                'topic_key': 'current_temperature_topic',
+                'template_key': 'current_temperature_template'
+            }
+        )
+
+        self.add_endpoint_data(
+            data,
+            'action',
+            'out',
+            nil,
+            {
+                'topic_key': 'action_topic',
+                'template_key': 'action_template'
+            }
+        )
         
 
+        self.add_endpoint_data(data,'fan_mode','out')
+        self.add_endpoint_data(data,'fan_mode','in')
 
-        callbacks=self.callback_in_target_humidity
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks,
-                'converter': /value->self.type(value)
-                }
-        end
+        self.add_endpoint_data(data,'mode','out')
+        self.add_endpoint_data(data,'mode','in')
+        
+        self.add_endpoint_data(
+            data,
+            'preset_mode',
+            'out',
+            nil,
+            {
+                'template_key': 'preset_mode_value_template'
+            }
+        )
 
-        name='aux'
-        if self.callback_outs_aux
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': self.callback_outs_aux,
-                'converter': from_bool
-                }
-        end
+        self.add_endpoint_data(data,'preset_mode','in')
 
-        if self.callback_in_aux
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': self.callback_in_aux,
-                'converter': to_bool
-                }
-        end
+        self.add_endpoint_data(data,'swing_mode','out')
+        self.add_endpoint_data(data,'swing_mode','in')
 
-        name='current_humidity'
-        callbacks=self.callback_outs_current_humidity
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'topic'].concat('_'), #NON STANDARD
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'template'].concat('_'), #NON STANDARD
-                'callbacks': callbacks,
-                'converter': int
-                }
-        end
+        self.add_endpoint_data(data,'temperature_high','out',numeric_converter)
+        self.add_endpoint_data(data,'temperature_high','in',numeric_converter)
 
-        name='current_temperature'
-        callbacks=self.callback_outs_current_temperature
-        if self.callback_outs_current_humidity
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'topic'].concat('_'), #NON STANDARD
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'template'].concat('_'), #NON STANDARD
-                'callbacks': callbacks,
-                'converter': /value->self.type(value)
-                }
-        end
+        self.add_endpoint_data(data,'temperature_low','out',numeric_converter)
+        self.add_endpoint_data(data,'temperature_low','in',numeric_converter)
 
-        name='fan_mode'
-        callbacks=self.callback_outs_fan_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        callbacks=self.callback_in_fan_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        name='mode'
-        callbacks=self.callback_outs_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        callbacks=self.callback_in_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        name='preset_mode'
-        callbacks=self.callback_outs_preset_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'value_template'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        callbacks=self.callback_in_preset_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        name='swing_mode'
-        callbacks=self.callback_outs_swing_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        callbacks=self.callback_in_swing_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        name='swing_mode'
-        callbacks=self.callback_outs_swing_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        callbacks=self.callback_in_swing_mode
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks
-                }
-        end
-
-        name='temperature_high'
-        callbacks=self.callback_outs_temperature_high
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks,
-                'converter': /value->self.type(value)
-                }
-        end
-
-        callbacks=self.callback_in_temperature_high
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks,
-                'converter': /value->self.type(value)
-                }
-        end
-
-        name='temperature_low'
-        callbacks=self.callback_outs_temperature_low
-        if callbacks
-            set_default(data,name,{})
-            data[name]['out']={
-                'topic': self.get_topic('state',name),
-                'topic_key': [name,'state_topic'].concat('_'),
-                'template':VALUE_TEMPLATE,
-                'template_key': [name,'state_template'].concat('_'),
-                'callbacks': callbacks,
-                'converter': /value->self.type(value)
-                }
-        end
-
-        callbacks=self.callback_in_temperature_low
-        if callbacks
-            set_default(data,name,{})
-            data[name]['in']={
-                'topic': self.get_topic('command',name),
-                'topic_key': [name,'command_topic'].concat('_'),
-                'callbacks': callbacks,
-                'converter': /value->self.type(value)
-                }
-        end
 
 
         return data
