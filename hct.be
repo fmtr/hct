@@ -453,12 +453,14 @@ class Entity
 
     end
 
-    def add_endpoint_data(data,name,dir,converter)
+    def add_endpoint_data(data,name,dir,converter,extensions)
 
         var callbacks=self.callback_data.find(name,{}).find(dir)
         if !callbacks
             return
         end
+
+        extensions=extensions?extensions:{}
 
         var dir_mqtt={'in':'command','out':'state'}[dir]
 
@@ -478,6 +480,11 @@ class Entity
                 }
             )
         end
+
+        data_update=update_map(
+            data_update,
+            extensions
+        )
 
         data=set_default(data,name,{})
         data[name][dir]=data_update
@@ -1128,23 +1135,34 @@ class Fan : Entity
             data[name][direction]['template_key']='state_value_template'
         end
 
-        data=self.add_endpoint_data(data,'preset_mode','out')
-        data=self.add_endpoint_data(data,'preset_mode','in')
-        data=self.add_endpoint_data(data,'percentage','out',int)
-        data=self.add_endpoint_data(data,'percentage','in',int)
-        data=self.add_endpoint_data(data,'oscillation','out',from_bool)
-        data['oscillation']['out']['template_key']='oscillation_value_template'
-        data=self.add_endpoint_data(data,'oscillation','in',to_bool)
-
-        update_map(
-            data['oscillation']['in'],
+        self.add_endpoint_data(data,'preset_mode','out')
+        self.add_endpoint_data(data,'preset_mode','in')
+        self.add_endpoint_data(data,'percentage','out',int)
+        self.add_endpoint_data(data,'percentage','in',int)
+        
+        self.add_endpoint_data(
+            data,
+            'oscillation',
+            'out',
+            from_bool,
+            {
+                'template_key':'oscillation_value_template'
+            }
+        )
+        
+        self.add_endpoint_data(
+            data,
+            'oscillation',
+            'in',
+            to_bool,
             {
                 'payload_on': ON,
                 'payload_on_key': 'payload_oscillation_on',
                 'payload_off': OFF,
                 'payload_off_key': 'payload_oscillation_off'
             }
-        )
+    )
+
 
         return data
 
