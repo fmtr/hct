@@ -12,10 +12,10 @@ your `autoexec.be`:
 import hct
 
 hct.Button(        
-    'Upgrade Tasmota',
+    'Restart Tasmota',
     nil,
-    'mdi:update',
-    /value->tasmota.cmd("upgrade 1")
+    'mdi:restart',
+    hct.CallbackIn(/value->tasmota.cmd("restart 1"))
 )
 ```
 
@@ -24,14 +24,23 @@ A fully functional update button will now appear associated with the device in H
 Or, more practically, a cookbook pull-down menu, for a Tuya air fryer, might look like this:
 
 ```be
+food_data=hct.MapData({'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10})
+
 hct.Select(   
-    'Air Fryer Cookbook',
-    {'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10},
+    'Cookbook',
+    food_data.keys,
     nil,
     'mdi:chef-hat',
-    'tuyareceived#dptype4id3',
-    /value->tasmota.cmd('TuyaEnum1 '+str(value))
-    )  
+    [
+        hct.CallbackOut(
+            'tuyareceived#dptype4id3',
+            /value->food_data.out.find(value,'Default')
+        ),
+        hct.CallbackIn(
+            /value->hct.tuya_send(4,3,food_data.in.find(value,0))
+    )
+    ]
+)
 ```
 
 For a full walk-through of configuring the cookbook entity, see the [Walkthrough Example](#example-walkthrough) below.
@@ -65,7 +74,8 @@ handles for you:
 ## Pre-Release
 
 :warning: This library is currently in a pre-release state. The configuration format (and perhaps even the library name)
-is likely to change, and only `Sensor`, `Select`, `Button` and `Number` entities are currently implemented.
+is likely to change, and only `Sensor`, `Select`, `Button`, `Number`, `BinarySensor`, `Switch`, `Text`, `Update`, `Fan`
+and `Climate` entities are currently implemented.
 
 ## Installing
 
@@ -89,40 +99,57 @@ Frist we import this library.
 import hct
 ```
 
-Next we specify the options to show in our pull-down. This could be a list of strings (e.g. `['Foo','Bar']`) - or a mapping from "friendly" values to show in Home Assistant, to corresponding data on the Tasmota side. So here we map food descriptions to their IDs.
+Next we specify the options to show in our pull-down. We can use a `MapData` object, which will create incoming/outgoing
+(i.e. incoming from Home Assistant, outgoing from Tasmota) mappings for use in any callbacks we write. So this is a
+mapping from strings, to integers.
 
 ```be
-options={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
+food_data=hct.MapData({'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10})
 ```
 
 Then we write a very simple callback closure to set those Tuya IDs (the `value` argument) on the Tasmota side, when
-their names are selected in Home Assistant.
+their names are selected in Home Assistant. This again uses an `hct` utility, function `tuya_send`, to send the value.
 
 ```be   
-set_cookbook_entry=/value->tasmota.cmd('TuyaEnum1 '+str(value))
+set_cookbook_entry=/value->hct.tuya_send(4,3,food_data.in.find(value,0))
 ```
 
-Now we specify a trigger defining when a change has happened on the Tasmota side that needs to be reflected in Home Assistant.
+Now we specify a trigger, for when a change has happened on the Tasmota side (e.g. a button pressed on the air fryer),
+along with a callback to handle that trigger.
+The output of the callback will be reflected in Home Assistant, so we just translate the Tuya ID back the "friendly"
+name HA uses.
 
 ```be
 trigger='tuyareceived#dptype4id3'
+report_cookbook_entry=/value->food_data.out.find(value,'Default')
+```
+
+With that done, we need to wrap our callback functions in `CallbackIn`/`CallbackOut` objects, which tell `hct` which
+direction (In or Out) each callback is intended for, associate the trigger with the outgoing callback, etc.
+
+```be
+callbacks=[
+    hct.CallbackIn(set_cookbook_entry),
+    hct.CallbackOut(trigger,report_cookbook_entry)    
+]
 ```
 
 With that all done, we can define a pull-down (`hct.Select`) object.
 
 ```be
 hct.Select(   
-    'Air Fryer Cookbook',    # Entity name   
-    options,                 # The options we defined above.
-    nil,                     # Entity ID (or leave as `nil` if you're happy for Home Assistant to decide)
-    'mdi:chef-hat',          # Icon the entity should have in Home Assistant    
-    trigger                  # Our trigger as above.  
-    set_cookbook_entry       # The handler function we defined above.
-)
+    'Cookbook',
+    food_data.keys,
+    nil,
+    'mdi:chef-hat',
+    callbacks # Our list of callbacks we defined above.
+) 
 ```
 
-And that's it. Now `hct` will handle everything else mentioned above - and sharing what you've done just means sharing
+And that's it. The new select control will appear in Home Assistant, associated with the air fryer device. In other
+words, `hct` will handle everything else mentioned above - and sharing what you've done just means sharing
 the above script.
 
 For the rest of the air fryer setup (which includes defining more entity types)
-see [its setup script](examples/proscenic_t21.be).
+see [its setup script](examples/proscenic_t21.be) - and further examples can be found in the [examples](examples/)
+directory.
