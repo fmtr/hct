@@ -293,9 +293,30 @@ def get_latest_version(org,repo)
 
 end
 
+def tuya_send(type_id,dp_id,data)
+    var cmd=[
+        ['TuyaSend',str(type_id)].concat(),
+        [str(dp_id),str(data)].concat(','),
+    ].concat(' ')
+    return tasmota.cmd(cmd)
+end
+
 # End of utility functions.
 
 # Helper objects
+
+class MapData
+
+    var in
+    var out
+    var keys
+
+    def init(data)
+        self.in=data
+        self.out=reverse_map(self.in)
+        self.keys=get_keys(self.in)
+    end
+end
 
 class Callback
     static var direction
@@ -1489,6 +1510,7 @@ hct.Publish=Publish
 hct.NoPublish=NoPublish
 hct.CallbackOut=CallbackOut
 hct.CallbackIn=CallbackIn
+hct.MapData=MapData
 
 hct.add_rule_once=add_rule_once
 hct.reverse_map=reverse_map
@@ -1496,6 +1518,7 @@ hct.get_keys=get_keys
 hct.download_url=download_url
 hct.read_url=read_url
 hct.log_debug=log_debug
+hct.tuya_send=tuya_send
 
 hct.get_latest_version=get_latest_version
 
