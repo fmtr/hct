@@ -876,6 +876,12 @@ class BinarySensor : Sensor
 
     static var platform='binary_sensor'
 
+    def init(name, entity_id, icon, callbacks)
+        
+        super(self).init(name, nil, nil, entity_id, icon, callbacks)
+
+    end
+
     def converter_state_in(value)
         return to_bool(value)
     end

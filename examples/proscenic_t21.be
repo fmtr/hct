@@ -12,10 +12,6 @@ log("Setting up Proscenic T21 (using hct version "+hct.VERSION+")...")
 # Now we add a Number slider to control cooking temperature in F.
 # Since the fryer MCU uses F natively, this just the process similar to the cookbook pull-down above.
 
-
-
-#def init(name, number_range, mode, step, uom, entity_id, icon, callback_outs, callback_in)
-
 hct.Number(
     'Cooking Temperature (F)',
     170..399,                
