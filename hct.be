@@ -388,20 +388,11 @@ class Entity
         self.name=name
         self.entity_id=entity_id
         self.icon=icon	
-        self.name_sanitized=sanitize_name(self.name)	
+        self.name_sanitized=sanitize_name(self.name)
 
-
-        
-
-
+        callbacks=classname(callbacks)=='list'?callbacks:[callbacks]
         self.callback_data={}
-
-
-
         for cb : callbacks
-
-            
-
             set_default(self.callback_data, cb.endpoint,{})
             set_default(self.callback_data[cb.endpoint], cb.direction,[])
             self.callback_data[cb.endpoint][cb.direction].push(cb)
@@ -852,14 +843,7 @@ end
 
 class Button : Entity
 
-    static var platform='button'
-    var uom
-
-    def init(name, entity_id, icon, callbacks)
-
-        super(self).init(name, entity_id, icon, callbacks)
-
-    end
+    static var platform='button'    
 
 end
 
@@ -892,14 +876,6 @@ class BinarySensor : Sensor
 
     static var platform='binary_sensor'
 
-
-    def init(name, entity_id, icon, callbacks)
-
-        super(self).init(name, nil, nil ,entity_id, icon, callbacks)
-
-    end
-
-
     def converter_state_in(value)
         return to_bool(value)
     end
@@ -931,7 +907,7 @@ class Text : Entity
     var pattern
 
 
-    def init(name,entity_id, icon, size_range, pattern,callbacks)
+    def init(name,entity_id,icon,size_range,pattern,callbacks)
 
         if size_range
             self.size_min=size_range.lower()
@@ -984,12 +960,7 @@ class Humidifier : Entity
     var min_humidity
     var max_humidity
 
-    var callback_outs_mode
-    var callback_in_mode
-    var callback_outs_target_humidity
-    var callback_in_target_humidity
-
-    def init(name, modes, humidity_range, entity_id, icon, callbacks, callback_outs_mode, callback_in_mode, callback_outs_target_humidity, callback_in_target_humidity)
+    def init(name, modes, humidity_range, entity_id, icon, callbacks)
 
         self.modes=modes
 
@@ -997,11 +968,6 @@ class Humidifier : Entity
             self.min_humidity=humidity_range.lower()
             self.max_humidity=humidity_range.upper()
         end
-
-        self.callback_outs_mode=callback_outs_mode
-        self.callback_in_mode=callback_in_mode
-        self.callback_outs_target_humidity=callback_outs_target_humidity
-        self.callback_in_target_humidity=callback_in_target_humidity
 
         super(self).init(name, entity_id, icon, callbacks)
 
@@ -1013,8 +979,6 @@ class Humidifier : Entity
         var direction
         var callbacks
 
-
-
         if self.callback_data.find('state',{}).find('in')
             data['state']['in']['converter']=to_bool
         end
@@ -1022,7 +986,7 @@ class Humidifier : Entity
         if self.callback_data.find('state',{}).find('out')
             data['state']['out']['converter']=from_bool
             data['state']['out']['template_key']='state_value_template'
-        end
+        end        
 
         name='mode'
 
