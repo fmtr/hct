@@ -208,7 +208,7 @@ hct.Select(
     ]
 )   
 
-# Extended controls. Mainly for aesthetics, convenience in Home Assistant.
+# Optional, extended controls. Mainly for aesthetics, convenience in Home Assistant.
 
 hct.Switch(   
     'Power',        
