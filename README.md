@@ -21,6 +21,8 @@ hct.Button(
 
 A fully functional restart button will now appear associated with the device in Home Assistant:
 
+![Restart Button](assets/restart_button.png)
+
 Or, more practically, a cookbook pull-down menu, for a Tuya air fryer, might look like this:
 
 ```be
@@ -42,6 +44,8 @@ hct.Select(
     ]
 )
 ```
+
+![Air Fryer Cookbook](assets/air_fryer_cookbook.png)
 
 For a full walk-through of configuring the cookbook entity, see the [Walkthrough Example](#example-walkthrough) below.
 
