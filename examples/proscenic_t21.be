@@ -27,7 +27,7 @@ hct.Number(
     [
         Out('tuyareceived#dptype2id103'),
         In(
-            /value->tasmota.cmd('TuyaSend2 103,'+str(value))
+            /value->hct.tuya_send(2,103,value)
         )
     ]
 )
@@ -45,7 +45,7 @@ callback_f_to_c=Out(
     )
 
 callback_c_to_f=In(
-    /value->tasmota.cmd('TuyaSend2 103,'+str(int((value*1.8)+32)))
+    /value->hct.tuya_send(2,103,int((value*1.8)+32))
 )
 
 hct.Number(
@@ -70,13 +70,16 @@ hct.Number(
     [
         Out('tuyareceived#DpType2Id7'),
         In(
-            /value->tasmota.cmd('TuyaSend2 7,'+str(value))
+            /value->hct.tuya_send(2,7,value)
         )
     ]
 )
 
 
 def keep_warm_enable_if_time_set(value)
+
+    # If the Keep Warm time is set a value greater than zero, automatically enable the Keep Warm setting, and vice versa.
+    # This is more convenient as otherwise the Home Assistant user would need to juggle between two separte controls.
 
     value=value!=nil ? value : 0
 
@@ -90,12 +93,12 @@ def keep_warm_enable_if_time_set(value)
     if !tasmota.get_power()[2]
         hct.add_rule_once(
             'Power3#state=1',
-            /->tasmota.cmd('TuyaSend2 105,'+str(value))
+            /->hct.tuya_send(2,105,value)
             
         )
         tasmota.set_power(2,true)
     else
-        tasmota.cmd('TuyaSend2 105,'+str(value))
+        hct.tuya_send(2,105,value)
     end
 
     return hct.Publish(value)
@@ -120,6 +123,8 @@ hct.Number(
 
 def delay_enable_if_time_set(value)
 
+    # Same principle as keep_warm_enable_if_time_set above.
+
     value=value!=nil ? value : 0
 
     if value==0
@@ -132,12 +137,12 @@ def delay_enable_if_time_set(value)
     if !tasmota.get_power()[3]
         hct.add_rule_once(
             'Power4#state=1',
-            /->tasmota.cmd('TuyaSend2 6,'+str(value))
+            /->hct.tuya_send(2,6,value)
             
         )
         tasmota.set_power(3,true)
     else
-        tasmota.cmd('TuyaSend2 6,'+str(value))
+        hct.tuya_send(2,6,value)
     end
 
     return hct.Publish(value)
@@ -185,27 +190,25 @@ hct.Sensor(
 
 # Lastly we add the cookbook pull-down. This has already been covered in the README: https://github.com/fmtr/hct#example-walkthrough
 
-FOODS_INDEXES={'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10}
-INDEXES_FOODS=hct.reverse_map(FOODS_INDEXES)
-FOODS=hct.get_keys(FOODS_INDEXES)
+food_data=hct.MapData({'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10})
 
 hct.Select(   
     'Cookbook',
-    FOODS,
+    food_data.keys,
     nil,
     'mdi:chef-hat',
     [
         Out(
             'tuyareceived#dptype4id3',
-            /value->INDEXES_FOODS[value]
+            /value->food_data.out.find(value,'Default')
         ),
         In(
-            /value->tasmota.cmd('TuyaEnum1 '+str(FOODS_INDEXES.find(value)))
+            /value->hct.tuya_send(4,3,food_data.in.find(value,0))
     )
     ]
 )   
 
-# Extended controls.
+# Extended controls. Mainly for aesthetics, convenience in Home Assistant.
 
 hct.Switch(   
     'Power',        
@@ -230,6 +233,8 @@ hct.Switch(
         )
     ]
 )
+
+# Since the functions above make the Keep Warm/Delay switches redendant, expose them instead as sensors.
 
 hct.BinarySensor(   
     'Keep Warm',        
