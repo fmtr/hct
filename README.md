@@ -4,7 +4,7 @@ This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simpli
 Assistant controls (e.g. Pull-down Lists, Number Sliders, Sensors, etc.) from a Tasmota device - and handling the
 communication between both sides.
 
-Using `hct` to expose, for example, an "Upgrade Tasmota Firmware" button to Home Assistant is as simple as adding the
+Using `hct` to expose, for example, an "Restart Tasmota" button to Home Assistant is as simple as adding the
 following lines to
 your `autoexec.be`:
 
@@ -19,7 +19,7 @@ hct.Button(
 )
 ```
 
-A fully functional update button will now appear associated with the device in Home Assistant:
+A fully functional restart button will now appear associated with the device in Home Assistant:
 
 Or, more practically, a cookbook pull-down menu, for a Tuya air fryer, might look like this:
 
