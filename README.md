@@ -142,15 +142,15 @@ With that all done, we can define a pull-down (`hct.Select`) object.
 
 ```be
 hct.Select(   
-    'Cookbook',
-    food_data.keys,
-    nil,
-    'mdi:chef-hat',
-    callbacks # Our list of callbacks we defined above.
+    'Cookbook',         # Name
+    food_data.keys,     # List of values (i.e. the strings from our `MapData` object)
+    nil,                # Entity ID (we can leave `nil` to let Home Assistant decide
+    'mdi:chef-hat',     # Icon ID
+    callbacks           # Our list of callbacks we defined above.
 ) 
 ```
 
-And that's it. The new select control will appear in Home Assistant, associated with the air fryer device. In other
+And that's it. The new Select control will appear in Home Assistant, associated with the air fryer device. In other
 words, `hct` will handle everything else mentioned above - and sharing what you've done just means sharing
 the above script.
 
