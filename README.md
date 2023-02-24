@@ -105,14 +105,14 @@ import hct
 
 Next we specify the options to show in our pull-down. We can use a `MapData` object, which will create incoming/outgoing
 (i.e. incoming from Home Assistant, outgoing from Tasmota) mappings for use in any callbacks we write. So this is a
-mapping from strings, to integers.
+mapping from strings to integers.
 
 ```be
 food_data=hct.MapData({'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'Fish':5,'Steak':6,'Cake':7,'Bacon':8,'Preheat':9,'Custom':10})
 ```
 
 Then we write a very simple callback closure to set those Tuya IDs (the `value` argument) on the Tasmota side, when
-their names are selected in Home Assistant. This again uses an `hct` utility, function `tuya_send`, to send the value.
+their names are selected in Home Assistant. This again uses an `hct` utility function, `tuya_send`, to send the value.
 
 ```be   
 set_cookbook_entry=/value->hct.tuya_send(4,3,food_data.in.find(value,0))
