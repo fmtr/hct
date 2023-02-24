@@ -1085,7 +1085,6 @@ class Fan : Entity
     var min_speed
     var max_speed
 
-
     def init(name, modes, speed_range, entity_id, icon, callbacks)
 
         self.modes=modes
