@@ -113,12 +113,17 @@ def get_mac()
     raise "Couldn't get MAC address"
 end
 var MAC=get_mac()
+var MAC_SHORT=string.split(string.tolower(MAC),':').concat()
+var MAC_LAST_SIX=string.replace(string.split(MAC,':',3)[3],':','')
 
 def get_topic()
     var topic=tasmota.cmd('topic').find('Topic')
     if !topic
         raise "Couldn't get topic"
-    end
+    end   
+    
+    topic=string.replace(topic,'%06X',MAC_LAST_SIX)
+
     return topic
 end
 var TOPIC=get_topic()
@@ -650,8 +655,8 @@ class Entity
 
         var uid_segs=[string.split(TOPIC,'-').concat('_')]   
 
-        if string.find(string.tolower(TOPIC),self.mac)<0
-            uid_segs+=[self.mac]
+        if string.find(string.tolower(TOPIC),string.tolower(MAC_LAST_SIX))<0
+            uid_segs+=[MAC_SHORT]
         end
         uid_segs+=[self.name]
 
@@ -666,8 +671,8 @@ class Entity
     var data
         data= {
             'device': {
-                'connections': [['mac', self.mac]],
-                'identifiers': self.mac
+                'connections': [['mac', MAC_SHORT]],
+                'identifiers': MAC_SHORT
             },
             'name': self.name,
             'unique_id': self.get_unique_id(),		
