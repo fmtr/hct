@@ -624,7 +624,7 @@ class Entity
             var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
             var output=json.dump({'value':converter(value)})
             log_debug([self.name,name,'Incoming publishing to state topic:', output, topic])        
-            mqtt.publish(topic,output)
+            mqtt.publish(topic,output,true)
         end
     
         self.values[name]=value
@@ -706,7 +706,7 @@ class Entity
     def announce()	
         var data=self.get_data_announce()
         log_debug([self.name, 'Doing announce', data])
-        return mqtt.publish(self.topic_announce, json.dump(data))
+        return mqtt.publish(self.topic_announce, json.dump(data), true)
     end
 
     def close()
