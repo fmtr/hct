@@ -17,6 +17,7 @@ class Config
     static var URL_VERSION='https://raw.githubusercontent.com/fmtr/hct/release/version'
     static var PATH_MODULE='/hct.be'
     static var URL_MODULE='https://raw.githubusercontent.com/fmtr/hct/release/hct.be'
+    static var DEVICE_NAME
 
     
 end
@@ -104,10 +105,10 @@ def get_mac()
     var mac_wifi=status_net.find('Mac', MAC_EMPTY)
     var mac_ethernet=status_net.find('Ethernet', {}).find('Mac', MAC_EMPTY)    
     
-    if [MAC_EMPTY,nil].find(mac_ethernet)==nil
-        return mac_ethernet
-    elif [MAC_EMPTY,nil].find(mac_wifi)==nil
+    if [MAC_EMPTY,nil].find(mac_wifi)==nil
         return mac_wifi
+    elif [MAC_EMPTY,nil].find(mac_ethernet)==nil
+        return mac_ethernet    
     end
     
     raise "Couldn't get MAC address"
@@ -356,6 +357,8 @@ class CallbackOut: Callback
     end
 end
 
+var button_data=MapData({0:'CLEAR',1:'SINGLE',2:'DOUBLE',3:'TRIPLE',4:'QUAD',5:'PENTA',6:'HOLD'})
+
 class Entity
 
     static var platform=nil
@@ -373,11 +376,7 @@ class Entity
     var icon 
     var rule_registry
     var callbacks_wrappeds
-
-
-
     var callback_data
-
     var endpoint_data
 
     def init(name, entity_id, icon, callbacks)
@@ -387,7 +386,10 @@ class Entity
         self.callbacks_wrappeds={}
 
         if Config.USE_LONG_NAMES        
-            name=[DEVICE_NAME,name].concat(' ')
+            name=[
+                Config.DEVICE_NAME?Config.DEVICE_NAME:DEVICE_NAME,
+                name
+            ].concat(' ')
         end
 
         self.name=name
@@ -668,40 +670,40 @@ class Entity
 
     def get_data_announce()
 
-    var data
-        data= {
-            'device': {
-                'connections': [['mac', MAC_SHORT]],
-                'identifiers': MAC_SHORT
-            },
-            'name': self.name,
-            'unique_id': self.get_unique_id(),		
-            'force_update': True,
-            'payload_available': 'Online',
-            'payload_not_available': 'Offline',
-            'availability_topic': TOPIC_LWT,		
-            
-        }
+        var data
+            data= {
+                'device': {
+                    'connections': [['mac', MAC_SHORT]],
+                    'identifiers': MAC_SHORT
+                },
+                'name': self.name,
+                'unique_id': self.get_unique_id(),		
+                'force_update': True,
+                'payload_available': 'Online',
+                'payload_not_available': 'Offline',
+                'availability_topic': TOPIC_LWT,		
+                
+            }
 
-        var data_update={      
-            'icon':self.icon,
-            'object_id':self.entity_id
-        }
+            var data_update={      
+                'icon':self.icon,
+                'object_id':self.entity_id
+            }
 
-        for name: self.endpoint_data.keys()
-            var dir_data=self.endpoint_data[name]
-            for io_data: [dir_data.find('in',{}),dir_data.find('out',{})]
-            for keyfix: ['topic','template','payload_on','payload_off']
-                data_update[io_data.find(keyfix+'_key')]=io_data.find(keyfix)
+            for name: self.endpoint_data.keys()
+                var dir_data=self.endpoint_data[name]
+                for io_data: [dir_data.find('in',{}),dir_data.find('out',{})]
+                for keyfix: ['topic','template','payload_on','payload_off']
+                    data_update[io_data.find(keyfix+'_key')]=io_data.find(keyfix)
+                end
+                end
             end
-            end
+
+            data=update_map(data,data_update)
+
+            return data
+
         end
-
-        data=update_map(data,data_update)
-
-        return data
-
-    end
 
     def announce()	
         var data=self.get_data_announce()
@@ -819,13 +821,15 @@ end
 class Sensor : Entity
 
     static var platform='sensor'
+    var device_class
     var uom
     var type
 
-    def init(name, uom, data_type, entity_id, icon, callbacks)
+    def init(name, uom, data_type, entity_id, icon, callbacks, device_class)
 
         self.uom=uom
         self.type=data_type==nil ? /value->value : data_type
+        self.device_class=device_class
         super(self).init(name, entity_id, icon, callbacks)
 
     end
@@ -839,8 +843,14 @@ class Sensor : Entity
     end
 
     def get_data_announce()
-        var data=super(self).get_data_announce()
-        if self.uom data['unit_of_measurement']=self.uom end
+        var data=super(self).get_data_announce()       
+
+        var data_update={
+            'unit_of_measurement':self.uom,            
+            'device_class': self.device_class
+        }
+        data=update_map(data,data_update)
+
         return data
     end
 
@@ -880,10 +890,12 @@ end
 class BinarySensor : Sensor
 
     static var platform='binary_sensor'
+    var off_delay
 
-    def init(name, entity_id, icon, callbacks)
+    def init(name, entity_id, icon, callbacks, device_class, off_delay)
         
-        super(self).init(name, nil, nil, entity_id, icon, callbacks)
+        super(self).init(name, nil, nil, entity_id, icon, callbacks, device_class)
+        self.off_delay=off_delay
 
     end
 
@@ -899,8 +911,12 @@ class BinarySensor : Sensor
 
         var data=super(self).get_data_announce()
 
-        data['payload_on']=ON
-        data['payload_off']=OFF
+        var data_update={
+            'payload_on':ON,
+            'payload_off':OFF,            
+            'off_delay':self.off_delay
+        }
+        data=update_map(data,data_update)
 
         return data
 
@@ -1493,6 +1509,8 @@ hct.download_url=download_url
 hct.read_url=read_url
 hct.log_debug=log_debug
 hct.tuya_send=tuya_send
+
+hct.button_data=button_data
 
 hct.get_latest_version=get_latest_version
 
