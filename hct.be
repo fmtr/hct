@@ -1411,6 +1411,50 @@ class Climate : Entity
 
 end
 
+# Convenience classes. Simplify common use-cases.
+
+class BinarySensorMotionSwitch: BinarySensor
+
+    # Expose motion sensors configured as switches in Tasmota.
+
+    def init(name, switch_ids, off_delay, entity_id, icon)
+
+        name=name?name:'Motion'        
+        switch_ids=classname(switch_ids)=='list'?switch_ids:[switch_ids]
+
+        var callbacks=[]
+        for id:switch_ids
+            callbacks.push(
+                CallbackOut('SWITCH'+str(id)+'#STATE')        
+            )
+        end     
+
+        super(self).init(name, entity_id, icon, callbacks, 'motion', off_delay)
+
+    end
+
+end
+
+class ButtonSensor: Sensor
+
+    # Expose a physical button as a numeric sensor outputting number of presses
+
+    def init(name, button_id, entity_id, icon)
+
+        name=name?name:'Button'
+        icon=icon?icon:'mdi:radiobox-marked'        
+
+        var callback=CallbackOut(
+            'BUTTON'+str(button_id)+'#ACTION',
+            /value->button_data.out.find(value,-1)
+        )        
+
+        super(self).init(name, 'presses', int, entity_id, icon, callback, nil)
+
+    end
+
+end
+
 def expose_updater(org,repo,version_current,callback_update)
 
     org=org?org:'fmtr'
@@ -1487,6 +1531,8 @@ hct.Sensor=Sensor
 hct.Button=Button
 hct.Switch=Switch
 hct.BinarySensor=BinarySensor
+hct.ButtonSensor=ButtonSensor
+hct.BinarySensorMotionSwitch=BinarySensorMotionSwitch
 
 hct.Humidifier=Humidifier
 hct.Dehumidifier=Dehumidifier
