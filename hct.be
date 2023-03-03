@@ -139,6 +139,14 @@ def get_device_name()
 end
 var DEVICE_NAME=get_device_name()
 
+def get_uptime_sec()
+    var uptime=tasmota.cmd('status 11').find('StatusSTS',{}).find('UptimeSec')
+    if uptime==nil
+        raise "Couldn't get uptime"
+    end
+    return uptime
+end
+
 def to_chars(s)
     var chars=[]
     for i: 0..(size(s)-1) 
@@ -353,7 +361,7 @@ class CallbackOut: Callback
     def init(triggers, callback, endpoint, id)
         super(self).init(callback, endpoint, id)        
         self.triggers=classname(triggers)=='list'?triggers:[triggers]
-        
+
     end
 end
 
