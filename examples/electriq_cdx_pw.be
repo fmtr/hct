@@ -8,7 +8,9 @@ var Out=hct.CallbackOut
 log("Setting up development Home Assistant controls (using hct version "+hct.VERSION+")...")
 
 TUYA0_DELAY=1000
-tasmota.add_rule('power1#state=1',/->tasmota.cmd('tuyasend0'))
+var tuyasend0=/->tasmota.cmd('TuyaSend0')
+tasmota.add_rule('power1#state=1',tuyasend0)
+tasmota.add_rule('Mqtt#Connected',tuyasend0)
 
 preset_data=hct.MapData({'Smart':0, 'Purify':1})
 
@@ -31,7 +33,7 @@ callbacks=[
             # The only way to resolve this is to force a full Tuya update whenever the target humidity changes to 55.
             # That update is wrapped in a delay, so that its result should not win the race condition with the original update to 55, and be overridden.
             if value==55 && entity.values.find('target_humidity')!=55
-                tasmota.set_timer(TUYA0_DELAY, /->tasmota.cmd('tuyasend0'))
+                tasmota.set_timer(TUYA0_DELAY, tuyasend0)
             end
             return value
         end,
@@ -97,4 +99,14 @@ climate=hct.Climate(
     nil,
     nil,
     callbacks
+)
+
+light_indicator=hct.Light(    
+    'Humidity Health Indicator',
+    nil,
+    'mdi:led-on',
+    [
+        In(/value->hct.tuya_send(1,101,value)),
+        Out('tuyareceived#DpType1Id101'),
+    ]
 )

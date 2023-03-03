@@ -7,6 +7,10 @@ var Out=hct.CallbackOut
 
 log("Setting up development Home Assistant controls (using hct version "+hct.VERSION+")...")
 
+var tuyasend0=/value->tasmota.cmd('TuyaSend0')
+tasmota.add_rule('power1#state=1',tuyasend0)
+tasmota.add_rule('Mqtt#Connected',tuyasend0)
+
 preset_data=hct.MapData({'Smart':0, 'High':2, 'Low':3,'Purify':1})
 swing_data=hct.MapData({'Fixed 90°':1,'Fixed 45°':0,'Swing':2})
 
@@ -103,5 +107,26 @@ climate=hct.Climate(
     callbacks
 )
 
-tasmota.add_rule('power1#state=1',/value->tasmota.cmd('TuyaSend0'))
-tasmota.add_rule('Mqtt#Connected',/value->tasmota.cmd('TuyaSend0'))
+
+
+light_indicator=hct.Light(    
+    'Humidity Health Indicator',
+    nil,
+    'mdi:led-on',
+    [
+        In(/value->hct.tuya_send(1,101,value)),
+        Out('tuyareceived#DpType1Id101'),
+    ]
+
+)
+
+light_uv=hct.Light(    
+    'Ultra Violet',
+    nil,
+    'mdi:sun-wireless',
+    [
+        In(/value->hct.tuya_send(1,10,value)),
+        Out('tuyareceived#DpType1Id10'),
+    ]
+
+)

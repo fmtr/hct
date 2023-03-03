@@ -308,6 +308,11 @@ def get_latest_version(org,repo)
 end
 
 def tuya_send(type_id,dp_id,data)
+
+    if type_id==1
+        data=int(to_bool(data))
+    end
+
     var cmd=[
         ['TuyaSend',str(type_id)].concat(),
         [str(dp_id),str(data)].concat(','),
@@ -1419,6 +1424,28 @@ class Climate : Entity
 
 end
 
+class Light : Entity
+
+    static var platform='light'
+
+    def converter_state_in(value)
+        return to_bool(value)
+    end
+
+    def converter_state_out(value)
+        return from_bool(value)
+    end
+
+    def extend_endpoint_data(data)
+
+        data['state']['out']['template_key']='state_value_template'
+
+        return data
+
+    end
+
+end
+
 # Convenience classes. Simplify common use-cases.
 
 class BinarySensorMotionSwitch: BinarySensor
@@ -1538,6 +1565,7 @@ hct.Password=Password
 hct.Sensor=Sensor
 hct.Button=Button
 hct.Switch=Switch
+hct.Light=Light
 hct.BinarySensor=BinarySensor
 hct.ButtonSensor=ButtonSensor
 hct.BinarySensorMotionSwitch=BinarySensorMotionSwitch
