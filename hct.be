@@ -9,6 +9,7 @@ import uuid
 
 import hct_config
 import hct_tools as tools
+import hct_callback as callback
 
 var Config=hct_config.Config
 
@@ -29,21 +30,6 @@ var TOPIC=tools.get_topic()
 var TOPIC_LWT=tools.get_topic_lwt()
 var DEVICE_NAME=tools.get_device_name()
 
-class Publish
-    var value
-
-    def init(value)
-        self.value=value
-    end
-end
-
-class NoPublish    
-end
-
-
-# End of utility functions.
-
-# Helper objects
 
 class MapData
 
@@ -55,39 +41,6 @@ class MapData
         self.in=data
         self.out=tools.reverse_map(self.in)
         self.keys=tools.get_keys(self.in)
-    end
-end
-
-class Callback
-    static var direction
-    var endpoint
-    var callback
-    var id
-    var name_endpoint
-    def init(callback, endpoint, id)
-        import uuid
-        self.id=id?id:callback
-        self.callback=callback?callback:/value->value
-        self.endpoint=endpoint?endpoint:'state'
-    end
-
-    def get_desc()
-        return [self.endpoint, self.direction].concat(', ')
-    end
-end
-
-class CallbackIn: Callback
-    static var direction='in'
-    
-end
-
-class CallbackOut: Callback
-    static var direction='out'
-    var triggers
-    def init(triggers, callback, endpoint, id)
-        super(self).init(callback, endpoint, id)        
-        self.triggers=classname(triggers)=='list'?triggers:[triggers]
-
     end
 end
 
@@ -292,7 +245,7 @@ class Entity
     
         tools.log_debug([self.name,'Outgoing callback output:',name, output_raw])
     
-        if classname(output_raw)==classname(NoPublish)
+        if classname(output_raw)==classname(callback.NoPublish)
             return    
         end
         
@@ -340,9 +293,9 @@ class Entity
         var value=converter(value_raw)
         var output_raw=cbo.callback(value,self, topic, code, value_raw, value_bytes)
     
-        if classname(output_raw)==classname(Publish)
+        if classname(output_raw)==classname(callback.Publish)
             output_raw=output_raw.value
-        elif classname(output_raw)==classname(NoPublish)
+        elif classname(output_raw)==classname(callback.NoPublish)
             return
         else
             output_raw=value
@@ -1181,7 +1134,7 @@ class BinarySensorMotionSwitch: BinarySensor
         var callbacks=[]
         for id:switch_ids
             callbacks.push(
-                CallbackOut('SWITCH'+str(id)+'#STATE')        
+                callback.Out('SWITCH'+str(id)+'#STATE')        
             )
         end     
 
@@ -1200,7 +1153,7 @@ class ButtonSensor: Sensor
         name=name?name:'Button'
         icon=icon?icon:'mdi:radiobox-marked'        
 
-        var callback=CallbackOut(
+        var callback=callback.Out(
             'BUTTON'+str(button_id)+'#ACTION',
             /value->button_data.out.find(value,-1)
         )        
@@ -1216,14 +1169,14 @@ def expose_updater(org,repo,version_current,callback_update)
     org=org?org:'fmtr'
     repo=repo?repo:'hct'
     version_current=version_current?version_current:VERSION
-    callback_update=callback_update?callback_update:/value->NoPublish(tools.update_hct(value))
+    callback_update=callback_update?callback_update:/value->callback.NoPublish(tools.update_hct(value))
     
     
     var trigger='cron:0 0 */12 * * *'
 
     def callback_latest(value)
         var version=tools.get_latest_version(org,repo)
-        return version?version:NoPublish()
+        return version?version:callback.NoPublish()
     end
 
     def callback_current(value)
@@ -1237,9 +1190,9 @@ def expose_updater(org,repo,version_current,callback_update)
         nil,
         nil,
         [
-            CallbackOut(trigger, callback_current),
-            CallbackIn(callback_update),
-            CallbackOut(trigger, callback_latest,'latest_version')
+            callback.Out(trigger, callback_current),
+            callback.In(callback_update),
+            callback.Out(trigger, callback_latest,'latest_version')
         ]
         
     )
@@ -1255,7 +1208,7 @@ def expose_updater(org,repo,version_current,callback_update)
         nil,
         'mdi:source-branch-sync',
         [
-            CallbackIn(callback_force_publish)
+            callback.In(callback_force_publish)
         ]
     )
     
@@ -1299,10 +1252,10 @@ hct.Fan=Fan
 
 hct.Update=Update
 
-hct.Publish=Publish
-hct.NoPublish=NoPublish
-hct.CallbackOut=CallbackOut
-hct.CallbackIn=CallbackIn
+hct.Publish=callback.Publish
+hct.NoPublish=callback.NoPublish
+hct.CallbackOut=callback.Out
+hct.CallbackIn=callback.In
 hct.MapData=MapData
 
 hct.add_rule_once=tools.add_rule_once
