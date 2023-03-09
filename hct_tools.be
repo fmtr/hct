@@ -227,6 +227,62 @@ def update_map(data,data_update)
     return data
 end
 
+
+def update_hct(value)
+
+    if value!='INSTALL'
+        return false
+    end
+
+    log('Starting hct update...')
+
+    var is_download_success=download_url(Config.URL_MODULE,Config.PATH_MODULE)
+    if is_download_success
+        log('Download succeeded. Restarting...')
+        tasmota.cmd('restart 1')        
+        return true
+    else
+        log('Download failed.')
+        return false
+    end
+    
+
+end
+
+def get_latest_version(org,repo)
+
+    log(['Fetching', org, repo, 'latest version...'].concat(' '))
+
+    var url=[
+        'https://europe-west2-extreme-flux-351112.cloudfunctions.net/get_github_latest_release_version?org=',
+        org,
+        '&repo=',
+        repo
+        ].concat()
+
+    var version=read_url(url)
+    if version
+        return version
+    else
+        log('Reading URL failed.')
+        return false
+    end
+
+end
+
+def tuya_send(type_id,dp_id,data)
+
+    if type_id==1
+        data=int(to_bool(data))
+    end
+
+    var cmd=[
+        ['TuyaSend',str(type_id)].concat(),
+        [str(dp_id),str(data)].concat(','),
+    ].concat(' ')
+    return tasmota.cmd(cmd)
+end
+
 var mod = module("hct_tools")
 mod.to_bool=to_bool
 mod.from_bool=from_bool
@@ -249,4 +305,7 @@ mod.add_rule_once=add_rule_once
 mod.reverse_map=reverse_map
 mod.update_map=update_map
 mod.get_keys=get_keys
+mod.update_hct=update_hct
+mod.get_latest_version=get_latest_version
+mod.tuya_send=tuya_send
 return mod

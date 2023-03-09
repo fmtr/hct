@@ -40,60 +40,6 @@ end
 class NoPublish    
 end
 
-def update_hct(value)
-
-    if value!='INSTALL'
-        return false
-    end
-
-    log('Starting hct update...')
-
-    var is_download_success=tools.download_url(Config.URL_MODULE,Config.PATH_MODULE)
-    if is_download_success
-        log('Download succeeded. Restarting...')
-        tasmota.cmd('restart 1')        
-        return true
-    else
-        log('Download failed.')
-        return false
-    end
-    
-
-end
-
-def get_latest_version(org,repo)
-
-    log(['Fetching', org, repo, 'latest version...'].concat(' '))
-
-    var url=[
-        'https://europe-west2-extreme-flux-351112.cloudfunctions.net/get_github_latest_release_version?org=',
-        org,
-        '&repo=',
-        repo
-        ].concat()
-
-    var version=tools.read_url(url)
-    if version
-        return version
-    else
-        log('Reading URL failed.')
-        return false
-    end
-
-end
-
-def tuya_send(type_id,dp_id,data)
-
-    if type_id==1
-        data=int(tools.to_bool(data))
-    end
-
-    var cmd=[
-        ['TuyaSend',str(type_id)].concat(),
-        [str(dp_id),str(data)].concat(','),
-    ].concat(' ')
-    return tasmota.cmd(cmd)
-end
 
 # End of utility functions.
 
@@ -1270,13 +1216,13 @@ def expose_updater(org,repo,version_current,callback_update)
     org=org?org:'fmtr'
     repo=repo?repo:'hct'
     version_current=version_current?version_current:VERSION
-    callback_update=callback_update?callback_update:/value->NoPublish(update_hct(value))
+    callback_update=callback_update?callback_update:/value->NoPublish(tools.update_hct(value))
     
     
     var trigger='cron:0 0 */12 * * *'
 
     def callback_latest(value)
-        var version=get_latest_version(org,repo)
+        var version=tools.get_latest_version(org,repo)
         return version?version:NoPublish()
     end
 
@@ -1363,11 +1309,9 @@ hct.add_rule_once=tools.add_rule_once
 hct.download_url=tools.download_url
 hct.read_url=tools.read_url
 hct.log_debug=tools.log_debug
-hct.tuya_send=tuya_send
+hct.tuya_send=tools.tuya_send
 
 hct.button_data=button_data
-
-hct.get_latest_version=get_latest_version
 
 hct.expose_updater=expose_updater
 hct.expose_updater_tasmota=expose_updater_tasmota
