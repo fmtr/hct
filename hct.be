@@ -7,252 +7,27 @@ import math
 import uuid
 
 
+import hct_config
+import hct_tools as tools
 
-class Config
+var Config=hct_config.Config
 
-    # Module-wide configuration
-    
-    static var USE_LONG_NAMES=false
-    static var IS_DEBUG=false
-    static var URL_VERSION='https://raw.githubusercontent.com/fmtr/hct/release/version'
-    static var PATH_MODULE='/hct.be'
-    static var URL_MODULE='https://raw.githubusercontent.com/fmtr/hct/release/hct.be'
-    static var DEVICE_NAME
 
-    
-end
 
-def log_debug(messages)
-
-    if !Config.IS_DEBUG
-        return
-    end
-
-    if classname(messages)!='list'
-        messages=[messages]
-    end
-
-    var as_strs=[]
-
-    for message: messages
-        as_strs.push(str(message))
-    end
-
-    var as_str=as_strs.concat(', ')
-    log(as_str)
-
-    var timestamp=str(tasmota.cmd('Time').find('Time'))
-
-    as_str=[timestamp,as_str].concat(': ')
-    print(as_str)
-
-end
-
-log_debug("hct.be compiling...")
+tools.log_debug("hct.be compiling...")
 
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
-var MAC_EMPTY='00:00:00:00:00:00'
+
 var ON='ON'
 var OFF='OFF'
 var VALUE_TEMPLATE='{{ value_json.value }}'
 
-def read_url(url, retries)
-
-    var client = webclient()
-    client.begin(url)
-    var status=client.GET()
-    if status==200
-        return client.get_string()
-    else
-        log(['Error reading',str(url),'Code',str(status)].concat(' '))
-        return false
-    end
-    
-end
-
-def download_url(url, file_path, retries)
-
-    retries=retries==nil?10:retries
-
-    try
-        tasmota.urlfetch(url,file_path)
-        return true
-    except .. as exception
-
-        log(['Error downloading URL',str(url),':',str(exception),'.','retries remaining:',str(retries)].concat(' '))      
-
-        retries-=1
-        if !retries
-            return false
-        else
-            return download_url(url,file_path,retries)
-        end
-
-    end
-end
-
-def to_bool(value)
-  return [str(true),str(1),string.tolower(ON)].find(string.tolower(str(value)))!=nil
-end
-
-def from_bool(value)
-  return to_bool(value)?ON:OFF
-end
-
-def get_mac()
-    
-    var status_net=tasmota.cmd('status 5').find('StatusNET',{})
-    var mac_wifi=status_net.find('Mac', MAC_EMPTY)
-    var mac_ethernet=status_net.find('Ethernet', {}).find('Mac', MAC_EMPTY)    
-    
-    if [MAC_EMPTY,nil].find(mac_wifi)==nil
-        return mac_wifi
-    elif [MAC_EMPTY,nil].find(mac_ethernet)==nil
-        return mac_ethernet    
-    end
-    
-    raise "Couldn't get MAC address"
-end
-var MAC=get_mac()
-var MAC_SHORT=string.split(string.tolower(MAC),':').concat()
-var MAC_LAST_SIX=string.replace(string.split(MAC,':',3)[3],':','')
-
-def get_topic()
-    var topic=tasmota.cmd('topic').find('Topic')
-    if !topic
-        raise "Couldn't get topic"
-    end   
-    
-    topic=string.replace(topic,'%06X',MAC_LAST_SIX)
-
-    return topic
-end
-var TOPIC=get_topic()
-var TOPIC_LWT=['tele',TOPIC,'LWT'].concat('/')
-
-def get_device_name()
-    var device_name=tasmota.cmd('DeviceName').find('DeviceName')
-    if !device_name
-        raise "Couldn't get device name"
-    end
-    return device_name
-end
-var DEVICE_NAME=get_device_name()
-
-def get_uptime_sec()
-    var uptime=tasmota.cmd('status 11').find('StatusSTS',{}).find('UptimeSec')
-    if uptime==nil
-        raise "Couldn't get uptime"
-    end
-    return uptime
-end
-
-def to_chars(s)
-    var chars=[]
-    for i: 0..(size(s)-1) 
-        chars.push(s[i]) 
-    end 
-    return chars
-end
-var CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
-var SEPS=to_chars('_- ')
-
-def sanitize_name(s, sep)
-    sep= sep ? sep : '-'
-    var chars=[]
-    for c: to_chars(string.tolower(s))
-        if SEPS.find(c)!=nil
-            chars.push(sep)
-        elif CHARS_ALLOWED.find(c)!=nil
-            chars.push(c)
-        end        
-    end 
-    return chars.concat()
-end
-
-def set_default(data,key,value)
-    if !data.contains(key)
-        data[key]=value
-    end
-    return data
-end
-
-def add_rule(id,trigger,closure)   
-    
-    var entry
-    if string.find(trigger,'cron:')!=0
-        entry={'type': 'trigger', 'trigger':trigger, 'function':closure} 
-        tasmota.add_rule(entry['trigger'],closure,id)           
-    else
-        entry={'type': 'cron', 'trigger':string.replace(trigger,'cron:',''), 'function':closure}
-        tasmota.add_cron(entry['trigger'],closure,id)
-    end
-
-    return entry
-end
-
-def remove_rule(id, entry)   
-            
-    if entry['type']=='trigger'
-        tasmota.remove_rule(entry['trigger'],id)
-    else
-        tasmota.remove_cron(id)
-    end
-
-end
-
-def add_rule_once(trigger, function)
-
-    var id=uuid.uuid4()
-
-    def wrapper(value, trigger_wrapper, message)      
-        log_debug(['Removing rule-once', trigger, id])          
-        tasmota.remove_rule(trigger,id)        
-        return function(value, trigger_wrapper, message)
-    end
-    
-    log_debug(['Adding rule-once', trigger, id])          
-    tasmota.add_rule(trigger,wrapper, id)    
-
-end
-
-
-
-def list_to_map(as_list)
-    var as_map={}
-    for value: as_list
-        as_map[/value->value]=value
-    end
-    return as_map
-end
-
-def reverse_map(data)
-    var reversed={}
-    for key: data.keys()
-        reversed[data[key]]=key
-    end
-    return reversed
-end
-
-def get_keys(data)
-    var keys=[]
-    for key: data.keys()
-        keys.push(key)
-    end
-    return keys
-end
-
-def update_map(data,data_update)
-    for key: data_update.keys()
-        var value=data_update[key]
-        if value!=nil
-            data[key]=value
-        end
-    end
-    return data
-end
-
-
+var MAC=tools.get_mac()
+var MAC_SHORT=tools.get_mac_short()
+var MAC_LAST_SIX=tools.get_mac_last_six()
+var TOPIC=tools.get_topic()
+var TOPIC_LWT=tools.get_topic_lwt()
+var DEVICE_NAME=tools.get_device_name()
 
 class Publish
     var value
@@ -273,7 +48,7 @@ def update_hct(value)
 
     log('Starting hct update...')
 
-    var is_download_success=download_url(Config.URL_MODULE,Config.PATH_MODULE)
+    var is_download_success=tools.download_url(Config.URL_MODULE,Config.PATH_MODULE)
     if is_download_success
         log('Download succeeded. Restarting...')
         tasmota.cmd('restart 1')        
@@ -297,7 +72,7 @@ def get_latest_version(org,repo)
         repo
         ].concat()
 
-    var version=read_url(url)
+    var version=tools.read_url(url)
     if version
         return version
     else
@@ -310,7 +85,7 @@ end
 def tuya_send(type_id,dp_id,data)
 
     if type_id==1
-        data=int(to_bool(data))
+        data=int(tools.to_bool(data))
     end
 
     var cmd=[
@@ -332,8 +107,8 @@ class MapData
 
     def init(data)
         self.in=data
-        self.out=reverse_map(self.in)
-        self.keys=get_keys(self.in)
+        self.out=tools.reverse_map(self.in)
+        self.keys=tools.get_keys(self.in)
     end
 end
 
@@ -408,13 +183,13 @@ class Entity
         self.name=name
         self.entity_id=entity_id
         self.icon=icon	
-        self.name_sanitized=sanitize_name(self.name)
+        self.name_sanitized=tools.sanitize_name(self.name)
 
         callbacks=classname(callbacks)=='list'?callbacks:[callbacks]
         self.callback_data={}
         for cb : callbacks
-            set_default(self.callback_data, cb.endpoint,{})
-            set_default(self.callback_data[cb.endpoint], cb.direction,[])
+            tools.set_default(self.callback_data, cb.endpoint,{})
+            tools.set_default(self.callback_data[cb.endpoint], cb.direction,[])
             self.callback_data[cb.endpoint][cb.direction].push(cb)
         end
 
@@ -449,7 +224,7 @@ class Entity
         direction='in'
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            set_default(data,name,{})
+            tools.set_default(data,name,{})
             data[name]['in']={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'command_topic',
@@ -461,7 +236,7 @@ class Entity
         direction='out'
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            set_default(data,name,{})
+            tools.set_default(data,name,{})
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'state_topic',
@@ -502,7 +277,7 @@ class Entity
             }
 
         if dir=='out'
-            data_update=update_map(
+            data_update=tools.update_map(
                 data_update,
                 {
                     'template':VALUE_TEMPLATE,
@@ -511,12 +286,12 @@ class Entity
             )
         end
 
-        data_update=update_map(
+        data_update=tools.update_map(
             data_update,
             extensions
         )
 
-        data=set_default(data,name,{})
+        data=tools.set_default(data,name,{})
         data[name][dir]=data_update
 
         return data
@@ -526,8 +301,8 @@ class Entity
 
     def register_rule(trigger,closure)
         var id=[str(classname(self)),str(closure)].concat('_')
-        var entry=add_rule(id,trigger,closure)        
-        log_debug([self.name,'Adding rule',entry,id])        
+        var entry=tools.add_rule(id,trigger,closure)        
+        tools.log_debug([self.name,'Adding rule',entry,id])        
         self.rule_registry[id]=entry
         return id
     end
@@ -565,11 +340,11 @@ class Entity
 
     def callback_out_wrapper(cbo, name, value_raw, trigger, message)   
   
-        log_debug([self.name,'Outgoing input:', cbo, self,name, value_raw, trigger, message])
+        tools.log_debug([self.name,'Outgoing input:', cbo, self,name, value_raw, trigger, message])
     
         var output_raw=cbo.callback(value_raw,self, value_raw, trigger, message)
     
-        log_debug([self.name,'Outgoing callback output:',name, output_raw])
+        tools.log_debug([self.name,'Outgoing callback output:',name, output_raw])
     
         if classname(output_raw)==classname(NoPublish)
             return    
@@ -612,7 +387,7 @@ class Entity
 
     def callback_in_wrapper(cbo, name, topic, code, value_raw, value_bytes)        
 
-        log_debug([self.name,'Incoming input:', cbo, self, name, topic, code, value_raw, value_bytes])
+        tools.log_debug([self.name,'Incoming input:', cbo, self, name, topic, code, value_raw, value_bytes])
     
         var converter=self.endpoint_data[name].find('in',{}).find('converter',/value->value)
 
@@ -638,7 +413,7 @@ class Entity
         if topic
             var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
             var output=json.dump({'value':converter(value)})
-            log_debug([self.name,name,'Incoming publishing to state topic:', output, topic])        
+            tools.log_debug([self.name,name,'Incoming publishing to state topic:', output, topic])        
             mqtt.publish(topic,output,true)
         end
     
@@ -675,7 +450,7 @@ class Entity
         end
         uid_segs+=[self.name]
 
-        var unique_id=sanitize_name(uid_segs.concat(' '), '_')
+        var unique_id=tools.sanitize_name(uid_segs.concat(' '), '_')
 
         return unique_id
 
@@ -712,7 +487,7 @@ class Entity
                 end
             end
 
-            data=update_map(data,data_update)
+            data=tools.update_map(data,data_update)
 
             return data
 
@@ -720,17 +495,17 @@ class Entity
 
     def announce()	
         var data=self.get_data_announce()
-        log_debug([self.name, 'Doing announce', data])
+        tools.log_debug([self.name, 'Doing announce', data])
         return mqtt.publish(self.topic_announce, json.dump(data), true)
     end
 
     def close()
 
-        log_debug(['Closing',classname(self),self.name,'...'].concat(' '))
+        tools.log_debug(['Closing',classname(self),self.name,'...'].concat(' '))
         var entry
         for id: self.rule_registry.keys()
             entry=self.rule_registry[id]    
-            remove_rule(id, entry)
+            tools.remove_rule(id, entry)
         end
     end
 
@@ -862,7 +637,7 @@ class Sensor : Entity
             'unit_of_measurement':self.uom,            
             'device_class': self.device_class
         }
-        data=update_map(data,data_update)
+        data=tools.update_map(data,data_update)
 
         return data
     end
@@ -880,11 +655,11 @@ class Switch : Entity
     static var platform='switch'
 
     def converter_state_in(value)
-        return to_bool(value)
+        return tools.to_bool(value)
     end
 
     def converter_state_out(value)
-        return from_bool(value)
+        return tools.from_bool(value)
     end
 
     def get_data_announce()
@@ -913,11 +688,11 @@ class BinarySensor : Sensor
     end
 
     def converter_state_in(value)
-        return to_bool(value)
+        return tools.to_bool(value)
     end
 
     def converter_state_out(value)
-        return from_bool(value)
+        return tools.from_bool(value)
     end
 
     def get_data_announce()
@@ -929,7 +704,7 @@ class BinarySensor : Sensor
             'payload_off':OFF,            
             'off_delay':self.off_delay
         }
-        data=update_map(data,data_update)
+        data=tools.update_map(data,data_update)
 
         return data
 
@@ -978,7 +753,7 @@ class Text : Entity
             'mode': self.mode
         }
 
-        data=update_map(data,data_update)
+        data=tools.update_map(data,data_update)
 
 
         return data
@@ -1020,11 +795,11 @@ class Humidifier : Entity
         var callbacks
 
         if self.callback_data.find('state',{}).find('in')
-            data['state']['in']['converter']=to_bool
+            data['state']['in']['converter']=tools.to_bool
         end
 
         if self.callback_data.find('state',{}).find('out')
-            data['state']['out']['converter']=from_bool
+            data['state']['out']['converter']=tools.from_bool
             data['state']['out']['template_key']='state_value_template'
         end        
 
@@ -1033,7 +808,7 @@ class Humidifier : Entity
         direction='out'
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            set_default(data,name,{})
+            tools.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'mode_state_topic',
@@ -1046,7 +821,7 @@ class Humidifier : Entity
         direction='in'
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            set_default(data,name,{})
+            tools.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'mode_command_topic',
@@ -1061,7 +836,7 @@ class Humidifier : Entity
         direction='out'
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            set_default(data,name,{})
+            tools.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'target_humidity_state_topic',
@@ -1075,7 +850,7 @@ class Humidifier : Entity
         direction='in'
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            set_default(data,name,{})
+            tools.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'target_humidity_command_topic',
@@ -1103,7 +878,7 @@ class Humidifier : Entity
 
         }
 
-        data=update_map(data,data_update)
+        data=tools.update_map(data,data_update)
 
         return data
 
@@ -1148,12 +923,12 @@ class Fan : Entity
         direction='in'
 
         if self.callback_data.find(name,{}).find(direction)
-            data[name][direction]['converter']=to_bool
+            data[name][direction]['converter']=tools.to_bool
         end
 
         direction='out'
         if self.callback_data.find(name,{}).find(direction)
-            data[name][direction]['converter']=from_bool
+            data[name][direction]['converter']=tools.from_bool
             data[name][direction]['template_key']='state_value_template'
         end
 
@@ -1161,22 +936,22 @@ class Fan : Entity
         self.add_endpoint_data(data,'preset_mode','in')
         self.add_endpoint_data(data,'percentage','out',int)
         self.add_endpoint_data(data,'percentage','in',int)
-        
+
         self.add_endpoint_data(
             data,
             'oscillation',
             'out',
-            from_bool,
+            tools.from_bool,
             {
                 'template_key':'oscillation_value_template'
             }
         )
-        
+
         self.add_endpoint_data(
             data,
             'oscillation',
             'in',
-            to_bool,
+            tools.to_bool,
             {
                 'payload_on': ON,
                 'payload_on_key': 'payload_oscillation_on',
@@ -1201,7 +976,7 @@ class Fan : Entity
             'speed_range_max':self.max_speed
         }
 
-        data=update_map(data,data_update)
+        data=tools.update_map(data,data_update)
 
         return data
 
@@ -1238,7 +1013,7 @@ class Update : Entity
         direction='out'
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            set_default(data,name,{})
+            tools.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'latest_version_topic',
@@ -1263,7 +1038,7 @@ class Update : Entity
             'release_url':self.release_url
         }
 
-        data=update_map(data,data_update)
+        data=tools.update_map(data,data_update)
 
         return data
 
@@ -1326,8 +1101,8 @@ class Climate : Entity
         self.add_endpoint_data(data,'target_humidity','out',numeric_converter)
         self.add_endpoint_data(data,'target_humidity','in',numeric_converter)
 
-        self.add_endpoint_data(data,'aux','out',from_bool)
-        self.add_endpoint_data(data,'aux','in',to_bool)
+        self.add_endpoint_data(data,'aux','out',tools.from_bool)
+        self.add_endpoint_data(data,'aux','in',tools.to_bool)
 
         self.add_endpoint_data(
             data,
@@ -1416,7 +1191,7 @@ class Climate : Entity
 
         }
 
-        data=update_map(data,data_update)
+        data=tools.update_map(data,data_update)
 
         return data
 
@@ -1429,11 +1204,11 @@ class Light : Entity
     static var platform='light'
 
     def converter_state_in(value)
-        return to_bool(value)
+        return tools.to_bool(value)
     end
 
     def converter_state_out(value)
-        return from_bool(value)
+        return tools.from_bool(value)
     end
 
     def extend_endpoint_data(data)
@@ -1584,12 +1359,10 @@ hct.CallbackOut=CallbackOut
 hct.CallbackIn=CallbackIn
 hct.MapData=MapData
 
-hct.add_rule_once=add_rule_once
-hct.reverse_map=reverse_map
-hct.get_keys=get_keys
-hct.download_url=download_url
-hct.read_url=read_url
-hct.log_debug=log_debug
+hct.add_rule_once=tools.add_rule_once
+hct.download_url=tools.download_url
+hct.read_url=tools.read_url
+hct.log_debug=tools.log_debug
 hct.tuya_send=tuya_send
 
 hct.button_data=button_data
@@ -1599,6 +1372,6 @@ hct.get_latest_version=get_latest_version
 hct.expose_updater=expose_updater
 hct.expose_updater_tasmota=expose_updater_tasmota
 
-log_debug("hct.be compiled OK.")
+tools.log_debug("hct.be compiled OK.")
 
 return hct
