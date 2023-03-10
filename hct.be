@@ -14,6 +14,8 @@ import hct_select
 import hct_number
 import hct_sensor
 import hct_button
+import hct_switch
+import hct_binary_sensor
 
 
 var Config=hct_config.Config
@@ -60,67 +62,9 @@ var button_data=MapData({0:'CLEAR',1:'SINGLE',2:'DOUBLE',3:'TRIPLE',4:'QUAD',5:'
 
 
 
-class Switch : Entity
 
-    static var platform='switch'
 
-    def converter_state_in(value)
-        return tools.to_bool(value)
-    end
 
-    def converter_state_out(value)
-        return tools.from_bool(value)
-    end
-
-    def get_data_announce()
-
-        var data=super(self).get_data_announce()
-
-        data['payload_on']=ON
-        data['payload_off']=OFF
-
-        return data
-
-    end
-
-end
-
-class BinarySensor : hct_sensor.Sensor
-
-    static var platform='binary_sensor'
-    var off_delay
-
-    def init(name, entity_id, icon, callbacks, device_class, off_delay)
-        
-        super(self).init(name, nil, nil, entity_id, icon, callbacks, device_class)
-        self.off_delay=off_delay
-
-    end
-
-    def converter_state_in(value)
-        return tools.to_bool(value)
-    end
-
-    def converter_state_out(value)
-        return tools.from_bool(value)
-    end
-
-    def get_data_announce()
-
-        var data=super(self).get_data_announce()
-
-        var data_update={
-            'payload_on':ON,
-            'payload_off':OFF,            
-            'off_delay':self.off_delay
-        }
-        data=tools.update_map(data,data_update)
-
-        return data
-
-    end
-
-end
 
 class Text : Entity
 
@@ -633,7 +577,7 @@ end
 
 # Convenience classes. Simplify common use-cases.
 
-class BinarySensorMotionSwitch: BinarySensor
+class BinarySensorMotionSwitch: hct_binary_sensor.BinarySensor
 
     # Expose motion sensors configured as switches in Tasmota.
 
@@ -749,9 +693,9 @@ hct.Text=Text
 hct.Password=Password
 hct.Sensor=hct_sensor.Sensor
 hct.Button=hct_button.Button
-hct.Switch=Switch
+hct.Switch=hct_switch.Switch
 hct.Light=Light
-hct.BinarySensor=BinarySensor
+hct.BinarySensor=hct_binary_sensor.BinarySensor
 hct.ButtonSensor=ButtonSensor
 hct.BinarySensorMotionSwitch=BinarySensorMotionSwitch
 
