@@ -28,9 +28,12 @@ jobs:
           echo -n ${VERSION} > version
           python3 update_version.py ${VERSION}
           
+          zip -0 -r -j hct.tapp autoexec.be module/*
+          
           git add version
           git add module/hct.be
           git add README.md
+          git add hct.tapp
           
           git commit -am "Increment version number to ${VERSION} for release"
           git push          
@@ -40,8 +43,6 @@ jobs:
           git rebase master
           
           git push --follow-tags
-          
-          zip -0 -r -j hct.tapp module/* autoexec.be
 
       - name: Release
         uses: softprops/action-gh-release@v1
