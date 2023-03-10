@@ -18,6 +18,7 @@ import hct_switch
 import hct_binary_sensor
 import hct_text
 import hct_humidifier
+import hct_fan
 
 
 var Config=hct_config.Config
@@ -53,117 +54,6 @@ var button_data=MapData({0:'CLEAR',1:'SINGLE',2:'DOUBLE',3:'TRIPLE',4:'QUAD',5:'
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class Fan : Entity
-
-    static var platform='fan'
-
-    var modes
-    var min_speed
-    var max_speed
-
-    def init(name, modes, speed_range, entity_id, icon, callbacks)
-
-        self.modes=modes
-
-        if speed_range
-            self.min_speed=speed_range.lower()
-            self.max_speed=speed_range.upper()
-        end
-
-        super(self).init(name, entity_id, icon, callbacks)
-
-    end
-
-    def extend_endpoint_data(data)
-
-        var name
-        var callbacks
-        var direction
-
-        name='state'
-        direction='in'
-
-        if self.callback_data.find(name,{}).find(direction)
-            data[name][direction]['converter']=tools.to_bool
-        end
-
-        direction='out'
-        if self.callback_data.find(name,{}).find(direction)
-            data[name][direction]['converter']=tools.from_bool
-            data[name][direction]['template_key']='state_value_template'
-        end
-
-        self.add_endpoint_data(data,'preset_mode','out')
-        self.add_endpoint_data(data,'preset_mode','in')
-        self.add_endpoint_data(data,'percentage','out',int)
-        self.add_endpoint_data(data,'percentage','in',int)
-
-        self.add_endpoint_data(
-            data,
-            'oscillation',
-            'out',
-            tools.from_bool,
-            {
-                'template_key':'oscillation_value_template'
-            }
-        )
-
-        self.add_endpoint_data(
-            data,
-            'oscillation',
-            'in',
-            tools.to_bool,
-            {
-                'payload_on': ON,
-                'payload_on_key': 'payload_oscillation_on',
-                'payload_off': OFF,
-                'payload_off_key': 'payload_oscillation_off'
-            }
-    )
-
-
-        return data
-
-    end
-
-    def get_data_announce()
-
-        var data=super(self).get_data_announce()
-        var data_update={
-            'preset_modes':self.modes,
-            'payload_on':ON,
-            'payload_off':OFF,
-            'speed_range_min':self.min_speed,
-            'speed_range_max':self.max_speed
-        }
-
-        data=tools.update_map(data,data_update)
-
-        return data
-
-    end
-
-end
 
 class Update : Entity
 
@@ -530,7 +420,7 @@ hct.Humidifier=hct_humidifier.Humidifier
 hct.Dehumidifier=hct_humidifier.Dehumidifier
 hct.Climate=Climate
 
-hct.Fan=Fan
+hct.Fan=hct_fan.Fan
 
 hct.Update=Update
 
