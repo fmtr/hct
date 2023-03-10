@@ -5,12 +5,9 @@ Assistant controls (e.g. Pull-down Lists, Number Sliders, Sensors, etc.) from a 
 communication between both sides.
 
 Using `hct` to expose, for example, a "Restart Tasmota" button to Home Assistant is as simple as adding the
-following lines to
-your `autoexec.be`:
+following line to your `autoexec.be`:
 
 ```be
-import hct
-
 hct.Button(        
     'Restart Tasmota',
     nil,
@@ -85,11 +82,11 @@ and `Climate` entities are currently implemented.
 
 Simply paste the following into your Tasmota Berry Script Console:
 ```be
-tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/release/hct.be','/hct.be')
+tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/release/hct.tapp','/hct.tapp')
 ```
 
-Alternatively, manually download [hct.be](https://raw.githubusercontent.com/fmtr/hct/release/hct.be) and upload it onto
-your device.
+:warning: You will then *need to restart your device* before use. You should see `TAP: Loaded Tasmota App 'hct.tapp'` in
+your start-up logs. This means `hct` has been added to your global scope. So you don't need to `import` it.
 
 ## Example Walkthrough
 
@@ -97,13 +94,8 @@ This walk-through is a real-world case of implementing the cookbook pull-down me
 handles defining a friendly pull-down list of food types on the Home Assistant side and mapping those values to the
 corresponding IDs required by the Tuya driver on the Tasmota side.
 
-Frist we import this library.
-
-```be
-import hct
-```
-
-Next we specify the options to show in our pull-down. We can use a `MapData` object, which will create incoming/outgoing
+First, we specify the options to show in our pull-down. We can use a `MapData` object, which will create
+incoming/outgoing
 (i.e. incoming from Home Assistant, outgoing from Tasmota) mappings for use in any callbacks we write. So this is a
 mapping from strings to integers.
 

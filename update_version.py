@@ -8,7 +8,7 @@ ENCODING = 'UTF-8'
 PATTERN_VERSION = r'\d+\.\d+\.\d+'
 STEMS_MASKS = {
     'module/hct.be': r"VERSION\s*=\s*'({})'",
-    'README.md': r"fmtr/hct/v({})",
+    # 'README.md': r"fmtr/hct/v({})",
 }
 VERSION = sys.argv[1]
 

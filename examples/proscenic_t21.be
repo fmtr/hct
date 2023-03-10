@@ -1,9 +1,6 @@
-# To use this code, add it to your `autoexec.be` - or upload this script to your device and add `load("/proscenic_t21.be")`.
+# To use this code, add it to your `autoexec.be` - or upload this script to your device and add `load("/<filename>.be")`.
 # Before using this code, make sure you've completed the initial Tuya setup, as shown here: https://templates.blakadder.com/proscenic_T21.html
 
-#First we import this library.
-
-import hct
 var In=hct.CallbackIn
 var Out=hct.CallbackOut
 

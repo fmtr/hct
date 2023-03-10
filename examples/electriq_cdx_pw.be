@@ -1,7 +1,6 @@
 # To use this code, add it to your `autoexec.be` - or upload this script to your device and add `load("/<filename>.be")`.
 # Before using this code, make sure you've completed the initial Tuya setup, as shown here: https://templates.blakadder.com/electriq_CD12PW.html
 
-import hct
 var In=hct.CallbackIn
 var Out=hct.CallbackOut
 
