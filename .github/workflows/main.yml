@@ -29,7 +29,7 @@ jobs:
           python3 update_version.py ${VERSION}
           
           git add version
-          git add hct.be
+          git add module/hct.be
           git add README.md
           
           zip -0 -r -j hct.tapp module/* autoexec.be
