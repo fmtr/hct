@@ -1,12 +1,13 @@
-import re
 import sys
+
+import re
 from pathlib import Path
 
 PATH_ROOT = Path(__file__).parent.absolute()
 ENCODING = 'UTF-8'
 PATTERN_VERSION = r'\d+\.\d+\.\d+'
 STEMS_MASKS = {
-    'hct.be': r"VERSION\s*=\s*'({})'",
+    'module/hct.be': r"VERSION\s*=\s*'({})'",
     'README.md': r"fmtr/hct/v({})",
 }
 VERSION = sys.argv[1]
