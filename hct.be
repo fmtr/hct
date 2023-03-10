@@ -1,4 +1,9 @@
 var VERSION='0.2.7'
+
+import hct_tools as tools
+
+tools.log_debug("hct.be compiling...")
+
 var NAME='hct'
 import mqtt
 import json
@@ -6,9 +11,7 @@ import string
 import math
 import uuid
 
-
 import hct_config
-import hct_tools as tools
 import hct_callback as callback
 import hct_select
 import hct_number
@@ -24,31 +27,12 @@ import hct_climate
 import hct_light
 import hct_helper
 
-
-var Config=hct_config.Config
-import hct_entity
-var Entity=hct_entity.Entity
-
-
-tools.log_debug("hct.be compiling...")
-
-
-
-var ON='ON'
-var OFF='OFF'
-var VALUE_TEMPLATE='{{ value_json.value }}'
-
-
-
-
-
-
 # Start module definition.
 
 var hct = module(NAME)
 
 hct.VERSION=VERSION
-hct.Config=Config
+hct.Config=hct_config.Config
 
 hct.Select=hct_select.Select
 hct.Number=hct_number.Number
