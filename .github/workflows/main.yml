@@ -28,6 +28,7 @@ jobs:
           echo -n ${VERSION} > version
           python3 update_version.py ${VERSION}
           
+          rm -f hct.tapp
           zip -0 -r -j hct.tapp autoexec.be module/*
           
           git add version
