@@ -73,4 +73,6 @@ hct.expose_updater_tasmota=hct_helper.expose_updater_tasmota
 
 tools.log_debug("hct.be compiled OK.")
 
+log("HCT: Successfully imported Home Assistant Controls for Tasmota (hct) version "+hct.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc.")
+
 return hct

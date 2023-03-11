@@ -81,12 +81,15 @@ and `Climate` entities are currently implemented.
 ## Installing
 
 Simply paste the following into your Tasmota Berry Script Console:
+
 ```be
 tasmota.urlfetch('https://raw.githubusercontent.com/fmtr/hct/release/hct.tapp','/hct.tapp')
 ```
 
-:warning: You will then *need to restart your device* before use. You should see `TAP: Loaded Tasmota App 'hct.tapp'` in
-your start-up logs. This means `hct` has been added to your global scope. So you don't need to `import` it.
+:warning: You will then *need to restart your device* before use.
+
+You should then see `HCT: Successfully imported Home Assistant Controls for Tasmota (hct)...` in
+your start-up logs. This means `hct` has been added to your global scope, so you don't need to `import` it.
 
 ## Example Walkthrough
 
