@@ -1,8 +1,6 @@
+import hct_constants as constants
 import hct_entity
 import hct_tools as tools
-
-var ON='ON'
-var OFF='OFF'
 
 class Switch : hct_entity.Entity
 
@@ -20,8 +18,8 @@ class Switch : hct_entity.Entity
 
         var data=super(self).get_data_announce()
 
-        data['payload_on']=ON
-        data['payload_off']=OFF
+        data['payload_on']=constants.ON
+        data['payload_off']=constants.OFF
 
         return data
 

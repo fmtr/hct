@@ -1,9 +1,6 @@
+import hct_constants as constants
 import hct_entity
 import hct_tools as tools
-
-var ON='ON'
-var OFF='OFF'
-var VALUE_TEMPLATE='{{ value_json.value }}'
 
 class Fan : hct_entity.Entity
 
@@ -66,9 +63,9 @@ class Fan : hct_entity.Entity
             'in',
             tools.to_bool,
             {
-                'payload_on': ON,
+                'payload_on': constants.ON,
                 'payload_on_key': 'payload_oscillation_on',
-                'payload_off': OFF,
+                'payload_off': constants.OFF,
                 'payload_off_key': 'payload_oscillation_off'
             }
     )
@@ -83,8 +80,8 @@ class Fan : hct_entity.Entity
         var data=super(self).get_data_announce()
         var data_update={
             'preset_modes':self.modes,
-            'payload_on':ON,
-            'payload_off':OFF,
+            'payload_on':constants.ON,
+            'payload_off':constants.OFF,
             'speed_range_min':self.min_speed,
             'speed_range_max':self.max_speed
         }

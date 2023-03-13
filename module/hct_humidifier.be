@@ -1,9 +1,6 @@
+import hct_constants as constants
 import hct_entity
 import hct_tools as tools
-
-var ON='ON'
-var OFF='OFF'
-var VALUE_TEMPLATE='{{ value_json.value }}'
 
 class Humidifier : hct_entity.Entity
 
@@ -50,7 +47,7 @@ class Humidifier : hct_entity.Entity
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'mode_state_topic',
-                'template':VALUE_TEMPLATE,
+                'template':constants.VALUE_TEMPLATE,
                 'template_key': 'mode_state_template',
                 'callbacks': callbacks
                 }
@@ -78,7 +75,7 @@ class Humidifier : hct_entity.Entity
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'target_humidity_state_topic',
-                'template':VALUE_TEMPLATE,
+                'template':constants.VALUE_TEMPLATE,
                 'template_key': 'target_humidity_state_template',
                 'callbacks': callbacks,
                 'converter': int
@@ -109,8 +106,8 @@ class Humidifier : hct_entity.Entity
         var data_update={
             'modes':self.modes,
             'device_class':self.device_class,
-            'payload_on':ON,
-            'payload_off':OFF,
+            'payload_on':constants.ON,
+            'payload_off':constants.OFF,
             'min_humidity':self.min_humidity,
             'max_humidity':self.max_humidity
 

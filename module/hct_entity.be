@@ -1,3 +1,4 @@
+import hct_constants as constants
 import hct_callback as callback
 import hct_tools as tools
 import hct_config
@@ -13,7 +14,6 @@ var MAC=tools.get_mac()
 var MAC_SHORT=tools.get_mac_short()
 var MAC_LAST_SIX=tools.get_mac_last_six()
 var DEVICE_NAME=tools.get_device_name()
-var VALUE_TEMPLATE='{{ value_json.value }}'
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
 
 class Entity
@@ -109,7 +109,7 @@ class Entity
             data[name]['out']={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'state_topic',
-                'template':VALUE_TEMPLATE,
+                'template':constants.VALUE_TEMPLATE,
                 'template_key': 'value_template',
                 'callbacks': callbacks,
                 'converter': /value->self.converter_state_out(value)
@@ -149,7 +149,7 @@ class Entity
             data_update=tools.update_map(
                 data_update,
                 {
-                    'template':VALUE_TEMPLATE,
+                    'template':constants.VALUE_TEMPLATE,
                     'template_key': [name,dir_mqtt,'template'].concat('_')
                 }
             )

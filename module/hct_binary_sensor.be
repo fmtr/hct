@@ -1,8 +1,6 @@
+import hct_constants as constants
 import hct_sensor
 import hct_tools as tools
-
-var ON='ON'
-var OFF='OFF'
 
 class BinarySensor : hct_sensor.Sensor
 
@@ -29,8 +27,8 @@ class BinarySensor : hct_sensor.Sensor
         var data=super(self).get_data_announce()
 
         var data_update={
-            'payload_on':ON,
-            'payload_off':OFF,
+            'payload_on':constants.ON,
+            'payload_off':constants.OFF,
             'off_delay':self.off_delay
         }
         data=tools.update_map(data,data_update)

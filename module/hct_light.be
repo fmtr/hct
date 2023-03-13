@@ -1,9 +1,6 @@
+import hct_constants as constants
 import hct_entity
 import hct_tools as tools
-
-var ON='ON'
-var OFF='OFF'
-var VALUE_TEMPLATE='{{ value_json.value }}'
 
 class Light : hct_entity.Entity
 

@@ -1,11 +1,10 @@
 import string
 import uuid
+import hct_constants as constants
 import hct_config
 
 var Config=hct_config.Config
 
-var ON='ON'
-var OFF='OFF'
 var MAC_EMPTY='00:00:00:00:00:00'
 
 def get_device_name()
@@ -17,11 +16,11 @@ def get_device_name()
 end
 
 def to_bool(value)
-  return [str(true),str(1),string.tolower(ON)].find(string.tolower(str(value)))!=nil
+  return [str(true),str(1),string.tolower(constants.ON)].find(string.tolower(str(value)))!=nil
 end
 
 def from_bool(value)
-  return to_bool(value)?ON:OFF
+  return to_bool(value)?constants.ON:constants.OFF
 end
 
 def read_url(url, retries)

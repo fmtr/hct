@@ -1,9 +1,6 @@
+import hct_constants as constants
 import hct_entity
 import hct_tools as tools
-
-var ON='ON'
-var OFF='OFF'
-var VALUE_TEMPLATE='{{ value_json.value }}'
 
 class Update : hct_entity.Entity
 
@@ -38,7 +35,7 @@ class Update : hct_entity.Entity
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'latest_version_topic',
-                'template':VALUE_TEMPLATE,
+                'template':constants.VALUE_TEMPLATE,
                 'template_key': 'latest_version_template',
                 'callbacks': callbacks
                 }
