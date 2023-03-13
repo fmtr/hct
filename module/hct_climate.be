@@ -1,9 +1,7 @@
+import hct_constants as constants
+
 import hct_entity
 import hct_tools as tools
-
-var ON='ON'
-var OFF='OFF'
-var VALUE_TEMPLATE='{{ value_json.value }}'
 
 class Climate : hct_entity.Entity
 
@@ -54,19 +52,19 @@ class Climate : hct_entity.Entity
 
         var numeric_converter=/value->self.type(value)
 
-        self.add_endpoint_data(data,'temperature','out',numeric_converter)
-        self.add_endpoint_data(data,'temperature','in',numeric_converter)
+        self.add_endpoint_data(data,'temperature',constants.OUT,numeric_converter)
+        self.add_endpoint_data(data,'temperature',constants.IN,numeric_converter)
 
-        self.add_endpoint_data(data,'target_humidity','out',numeric_converter)
-        self.add_endpoint_data(data,'target_humidity','in',numeric_converter)
+        self.add_endpoint_data(data,'target_humidity',constants.OUT,numeric_converter)
+        self.add_endpoint_data(data,'target_humidity',constants.IN,numeric_converter)
 
-        self.add_endpoint_data(data,'aux','out',tools.from_bool)
-        self.add_endpoint_data(data,'aux','in',tools.to_bool)
+        self.add_endpoint_data(data,'aux',constants.OUT,tools.from_bool)
+        self.add_endpoint_data(data,'aux',constants.IN,tools.to_bool)
 
         self.add_endpoint_data(
             data,
             'current_humidity',
-            'out',
+            constants.OUT,
             numeric_converter,
             {
                 'topic_key': 'current_humidity_topic',
@@ -77,7 +75,7 @@ class Climate : hct_entity.Entity
         self.add_endpoint_data(
             data,
             'current_temperature',
-            'out',
+            constants.OUT,
             numeric_converter,
             {
                 'topic_key': 'current_temperature_topic',
@@ -88,7 +86,7 @@ class Climate : hct_entity.Entity
         self.add_endpoint_data(
             data,
             'action',
-            'out',
+            constants.OUT,
             nil,
             {
                 'topic_key': 'action_topic',
@@ -97,32 +95,32 @@ class Climate : hct_entity.Entity
         )
 
 
-        self.add_endpoint_data(data,'fan_mode','out')
-        self.add_endpoint_data(data,'fan_mode','in')
+        self.add_endpoint_data(data,'fan_mode',constants.OUT)
+        self.add_endpoint_data(data,'fan_mode',constants.IN)
 
-        self.add_endpoint_data(data,'mode','out')
-        self.add_endpoint_data(data,'mode','in')
+        self.add_endpoint_data(data,'mode',constants.OUT)
+        self.add_endpoint_data(data,'mode',constants.IN)
 
         self.add_endpoint_data(
             data,
             'preset_mode',
-            'out',
+            constants.OUT,
             nil,
             {
                 'template_key': 'preset_mode_value_template'
             }
         )
 
-        self.add_endpoint_data(data,'preset_mode','in')
+        self.add_endpoint_data(data,'preset_mode',constants.IN)
 
-        self.add_endpoint_data(data,'swing_mode','out')
-        self.add_endpoint_data(data,'swing_mode','in')
+        self.add_endpoint_data(data,'swing_mode',constants.OUT)
+        self.add_endpoint_data(data,'swing_mode',constants.IN)
 
-        self.add_endpoint_data(data,'temperature_high','out',numeric_converter)
-        self.add_endpoint_data(data,'temperature_high','in',numeric_converter)
+        self.add_endpoint_data(data,'temperature_high',constants.OUT,numeric_converter)
+        self.add_endpoint_data(data,'temperature_high',constants.IN,numeric_converter)
 
-        self.add_endpoint_data(data,'temperature_low','out',numeric_converter)
-        self.add_endpoint_data(data,'temperature_low','in',numeric_converter)
+        self.add_endpoint_data(data,'temperature_low',constants.OUT,numeric_converter)
+        self.add_endpoint_data(data,'temperature_low',constants.IN,numeric_converter)
 
 
 
@@ -135,8 +133,8 @@ class Climate : hct_entity.Entity
         var data=super(self).get_data_announce()
         var data_update={
 
-            'payload_on':ON,
-            'payload_off':OFF,
+            'payload_on':constants.ON,
+            'payload_off':constants.OFF,
             'fan_modes':self.fan_modes,
             'preset_modes':self.preset_modes,
             'swing_modes':self.swing_modes,

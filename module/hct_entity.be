@@ -90,11 +90,11 @@ class Entity
 
         name='state'
 
-        direction='in'
+        direction=constants.IN
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
             tools.set_default(data,name,{})
-            data[name]['in']={
+            data[name][constants.IN]={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'command_topic',
                 'callbacks': callbacks,
@@ -102,11 +102,11 @@ class Entity
                 }
         end
 
-        direction='out'
+        direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
             tools.set_default(data,name,{})
-            data[name]['out']={
+            data[name][constants.OUT]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'state_topic',
                 'template':constants.VALUE_TEMPLATE,
@@ -136,7 +136,7 @@ class Entity
 
         extensions=extensions?extensions:{}
 
-        var dir_mqtt={'in':'command','out':'state'}[dir]
+        var dir_mqtt={constants.IN:'command',constants.OUT:'state'}[dir]
 
         var data_update={
                 'topic': self.get_topic(dir_mqtt,name),
@@ -145,7 +145,7 @@ class Entity
                 (converter?'converter':converter):converter
             }
 
-        if dir=='out'
+        if dir==constants.OUT
             data_update=tools.update_map(
                 data_update,
                 {
@@ -186,7 +186,7 @@ class Entity
 
     def subscribe_out(name)
 
-        var callback_outs=self.endpoint_data[name].find('out',{}).find('callbacks')
+        var callback_outs=self.endpoint_data[name].find(constants.OUT,{}).find('callbacks')
 
         if !callback_outs
             return
@@ -233,14 +233,14 @@ class Entity
 
     def subscribe_in(name)
 
-        var callback_ins=self.endpoint_data[name].find('in',{}).find('callbacks')
+        var callback_ins=self.endpoint_data[name].find(constants.IN,{}).find('callbacks')
 
         if !callback_ins
             return
         end
 
-        assert self.endpoint_data[name].contains('in')
-        var topic=self.endpoint_data[name]['in']['topic']
+        assert self.endpoint_data[name].contains(constants.IN)
+        var topic=self.endpoint_data[name][constants.IN]['topic']
 
         if classname(callback_ins)!='list'
             callback_ins=[callback_ins]
@@ -262,7 +262,7 @@ class Entity
 
         tools.log_debug([self.name,'Incoming input:', cbo, self, name, topic, code, value_raw, value_bytes])
 
-        var converter=self.endpoint_data[name].find('in',{}).find('converter',/value->value)
+        var converter=self.endpoint_data[name].find(constants.IN,{}).find('converter',/value->value)
 
         var value=converter(value_raw)
         var output_raw=cbo.callback(value,self, topic, code, value_raw, value_bytes)
@@ -281,10 +281,10 @@ class Entity
 
     def publish(name, value)
 
-        var topic=self.endpoint_data[name].find('out',{}).find('topic')
+        var topic=self.endpoint_data[name].find(constants.OUT,{}).find('topic')
 
         if topic
-            var converter=self.endpoint_data[name].find('out',{}).find('converter',/value->value)
+            var converter=self.endpoint_data[name].find(constants.OUT,{}).find('converter',/value->value)
             var output=json.dump({'value':converter(value)})
             tools.log_debug([self.name,name,'Incoming publishing to state topic:', output, topic])
             mqtt.publish(topic,output,true)
@@ -353,7 +353,7 @@ class Entity
 
             for name: self.endpoint_data.keys()
                 var dir_data=self.endpoint_data[name]
-                for io_data: [dir_data.find('in',{}),dir_data.find('out',{})]
+                for io_data: [dir_data.find(constants.IN,{}),dir_data.find(constants.OUT,{})]
                 for keyfix: ['topic','template','payload_on','payload_off']
                     data_update[io_data.find(keyfix+'_key')]=io_data.find(keyfix)
                 end

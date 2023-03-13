@@ -16,7 +16,7 @@ class Light : hct_entity.Entity
 
     def extend_endpoint_data(data)
 
-        data['state']['out']['template_key']='state_value_template'
+        data['state'][constants.OUT]['template_key']='state_value_template'
 
         return data
 

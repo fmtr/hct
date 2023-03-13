@@ -29,18 +29,18 @@ class Humidifier : hct_entity.Entity
         var direction
         var callbacks
 
-        if self.callback_data.find('state',{}).find('in')
-            data['state']['in']['converter']=tools.to_bool
+        if self.callback_data.find('state',{}).find(constants.IN)
+            data['state'][constants.IN]['converter']=tools.to_bool
         end
 
-        if self.callback_data.find('state',{}).find('out')
-            data['state']['out']['converter']=tools.from_bool
-            data['state']['out']['template_key']='state_value_template'
+        if self.callback_data.find('state',{}).find(constants.OUT)
+            data['state'][constants.OUT]['converter']=tools.from_bool
+            data['state'][constants.OUT]['template_key']='state_value_template'
         end
 
         name='mode'
 
-        direction='out'
+        direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
             tools.set_default(data,name,{})
@@ -53,7 +53,7 @@ class Humidifier : hct_entity.Entity
                 }
         end
 
-        direction='in'
+        direction=constants.IN
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
             tools.set_default(data,name,{})
@@ -68,7 +68,7 @@ class Humidifier : hct_entity.Entity
 
         name='target_humidity'
 
-        direction='out'
+        direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
             tools.set_default(data,name,{})
@@ -82,7 +82,7 @@ class Humidifier : hct_entity.Entity
                 }
         end
 
-        direction='in'
+        direction=constants.IN
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
             tools.set_default(data,name,{})

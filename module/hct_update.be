@@ -19,8 +19,8 @@ class Update : hct_entity.Entity
     def extend_endpoint_data(data)
 
 
-        data['state']['in']['converter']=str # Required?
-        data['state']['out']['converter']=str     # Required?
+        data['state'][constants.IN]['converter']=str # Required?
+        data['state'][constants.OUT]['converter']=str     # Required?
 
         var name
         var direction
@@ -28,7 +28,7 @@ class Update : hct_entity.Entity
 
         name='latest_version'
 
-        direction='out'
+        direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
             tools.set_default(data,name,{})

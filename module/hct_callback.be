@@ -1,3 +1,5 @@
+import hct_constants as constants
+
 class Publish
     var value
 
@@ -30,12 +32,12 @@ class Callback
 end
 
 class CallbackIn: Callback
-    static var direction='in'
+    static var direction=constants.IN
     
 end
 
 class CallbackOut: Callback
-    static var direction='out'
+    static var direction=constants.OUT
     var triggers
     def init(triggers, callback, endpoint, id)
         super(self).init(callback, endpoint, id)        

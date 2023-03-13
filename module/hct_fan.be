@@ -30,27 +30,27 @@ class Fan : hct_entity.Entity
         var direction
 
         name='state'
-        direction='in'
+        direction=constants.IN
 
         if self.callback_data.find(name,{}).find(direction)
             data[name][direction]['converter']=tools.to_bool
         end
 
-        direction='out'
+        direction=constants.OUT
         if self.callback_data.find(name,{}).find(direction)
             data[name][direction]['converter']=tools.from_bool
             data[name][direction]['template_key']='state_value_template'
         end
 
-        self.add_endpoint_data(data,'preset_mode','out')
-        self.add_endpoint_data(data,'preset_mode','in')
-        self.add_endpoint_data(data,'percentage','out',int)
-        self.add_endpoint_data(data,'percentage','in',int)
+        self.add_endpoint_data(data,'preset_mode',constants.OUT)
+        self.add_endpoint_data(data,'preset_mode',constants.IN)
+        self.add_endpoint_data(data,'percentage',constants.OUT,int)
+        self.add_endpoint_data(data,'percentage',constants.IN,int)
 
         self.add_endpoint_data(
             data,
             'oscillation',
-            'out',
+            constants.OUT,
             tools.from_bool,
             {
                 'template_key':'oscillation_value_template'
@@ -60,7 +60,7 @@ class Fan : hct_entity.Entity
         self.add_endpoint_data(
             data,
             'oscillation',
-            'in',
+            constants.IN,
             tools.to_bool,
             {
                 'payload_on': constants.ON,
