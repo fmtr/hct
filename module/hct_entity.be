@@ -170,6 +170,10 @@ class Entity
 
     def register_rule(trigger,closure)
         var id=[str(classname(self)),str(closure)].concat('_')
+        if trigger==nil
+            tools.log_debug([self.name,'Got nil trigger so skipping rule',id])
+            return nil
+        end
         var entry=tools.add_rule(id,trigger,closure)
         tools.log_debug([self.name,'Adding rule',entry,id])
         self.rule_registry[id]=entry

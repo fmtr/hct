@@ -127,6 +127,20 @@ def expose_updater_tasmota()
 
 end
 
+def expose_repl()
+    return hct.Text(
+        'REPL',
+        nil,
+        'mdi:code-braces-box',
+        nil,
+        nil,
+        [
+            hct.CallbackIn(/value->hct.Publish(str(tasmota.cmd(value)))), 
+            hct.CallbackOut()
+        ]
+)
+end
+
 var mod = module("hct_helper")
 mod.MapData=MapData
 mod.button_data=button_data
@@ -134,5 +148,6 @@ mod.BinarySensorMotionSwitch=BinarySensorMotionSwitch
 mod.ButtonSensor=ButtonSensor
 mod.expose_updater=expose_updater
 mod.expose_updater_tasmota=expose_updater_tasmota
+mod.expose_repl=expose_repl
 
 return mod
