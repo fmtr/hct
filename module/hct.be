@@ -1,4 +1,4 @@
-var VERSION='0.3.7'
+var VERSION='0.3.8'
 
 import hct_tools as tools
 
