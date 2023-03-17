@@ -13,10 +13,20 @@ tasmota.add_rule('Mqtt#Connected',tuyasend0)
 
 preset_data=hct.MapData({'Smart':0, 'Purify':1})
 
+def set_mode_if_power(value,fan_keyword,dry_keyword)
+
+    if !tasmota.get_power()[0]
+        return 'off'
+    end
+
+    return value==1?fan_keyword:dry_keyword
+
+end
+
 callbacks=[
     Out(
         'tuyareceived#DpType4Id2',
-        /value->value==1?'fan':'drying',
+        /value->set_mode_if_power(value,'fan','drying'),
         'action'
     ),
     Out(
@@ -54,7 +64,7 @@ callbacks=[
     ),
     Out(
         'tuyareceived#DpType4Id2',
-        /value->value==1?'fan_only':'dry',
+        /value->set_mode_if_power(value,'fan_only','dry'),
         'mode'
     ),
     Out(
