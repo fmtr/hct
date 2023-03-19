@@ -5,6 +5,7 @@ import hct_tools as tools
 class BinarySensor : hct_sensor.Sensor
 
     static var platform='binary_sensor'
+    static var DeviceClass=constants.BinarySensorDeviceClass
     var off_delay
 
     def init(name, entity_id, icon, callbacks, device_class, off_delay)

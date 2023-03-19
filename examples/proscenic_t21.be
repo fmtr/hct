@@ -169,7 +169,8 @@ hct.Sensor(
             'tuyareceived#dptype4id5',
             /value->{0:'Ready',1:'Delayed Cook',2:'Cooking',3:'Keep Warm',4:'Off',5:'Cooking Complete'}.find(value,'Unknown')        
         )
-    ]
+    ],
+    hct.Sensor.DeviceClass.ENUM
 )
 
 hct.Sensor(   
@@ -178,7 +179,8 @@ hct.Sensor(
     nil,
     nil,
     'mdi:timer',
-    [Out('tuyareceived#dptype2Id8')]
+    Out('tuyareceived#dptype2Id8'),
+    hct.Sensor.DeviceClass.DURATION
 )
 
 # Lastly we add the cookbook pull-down. This has already been covered in the README: https://github.com/fmtr/hct#example-walkthrough
@@ -197,7 +199,7 @@ hct.Select(
         ),
         In(
             /value->hct.tuya_send(4,3,food_data.in.find(value,0))
-    )
+        )
     ]
 )   
 

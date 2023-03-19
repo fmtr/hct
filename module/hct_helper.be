@@ -21,6 +21,19 @@ end
 
 var button_data=MapData({0:'CLEAR',1:'SINGLE',2:'DOUBLE',3:'TRIPLE',4:'QUAD',5:'PENTA',6:'HOLD'})
 
+class TuyaIO    
+    
+    var in
+    var out
+    var io
+
+    def init(type_id,dp_id)
+        self.in=callback.In(/value->tools.tuya_send(type_id,dp_id,value))
+        self.out=callback.Out(['tuyareceived','#','DpType',type_id,'Id',dp_id].concat())
+        self.io=[self.in,self.out]
+    end
+end
+
 # Convenience classes. Simplify common use-cases.
 
 class BinarySensorMotionSwitch: hct_binary_sensor.BinarySensor
@@ -128,15 +141,16 @@ def expose_updater_tasmota()
 end
 
 def expose_repl()
-    return hct.Text(
+    import hct_text
+    return hct_text.Text(
         'REPL',
         nil,
         'mdi:code-braces-box',
         nil,
         nil,
         [
-            hct.CallbackIn(/value->hct.Publish(str(tasmota.cmd(value)))), 
-            hct.CallbackOut()
+            callback.In(/value->hct.Publish(str(tasmota.cmd(value)))), 
+            callback.Out()
         ]
 )
 end
@@ -146,6 +160,7 @@ mod.MapData=MapData
 mod.button_data=button_data
 mod.BinarySensorMotionSwitch=BinarySensorMotionSwitch
 mod.ButtonSensor=ButtonSensor
+mod.TuyaIO=TuyaIO
 mod.expose_updater=expose_updater
 mod.expose_updater_tasmota=expose_updater_tasmota
 mod.expose_repl=expose_repl

@@ -66,6 +66,7 @@ hct.read_url=tools.read_url
 hct.log_debug=tools.log_debug
 hct.tuya_send=tools.tuya_send
 
+hct.TuyaIO=hct_helper.TuyaIO
 hct.button_data=hct_helper.button_data
 
 hct.expose_updater=hct_helper.expose_updater
