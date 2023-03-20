@@ -5,11 +5,6 @@ import hct_tools as tools
 tools.log_debug("hct.be compiling...")
 
 var NAME='hct'
-import mqtt
-import json
-import string
-import math
-import uuid
 
 import hct_config
 import hct_callback as callback
