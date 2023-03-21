@@ -53,6 +53,7 @@ hct.Publish=callback.Publish
 hct.NoPublish=callback.NoPublish
 hct.CallbackOut=callback.Out
 hct.CallbackIn=callback.In
+hct.callback=callback
 hct.MapData=hct_helper.MapData
 
 hct.add_rule_once=tools.add_rule_once
