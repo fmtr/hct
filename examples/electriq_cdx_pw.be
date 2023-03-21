@@ -117,5 +117,24 @@ light_indicator=hct.Light(
     [
         In(/value->hct.tuya_send(1,101,value)),
         Out('tuyareceived#DpType1Id101'),
+        Out(
+            'tuyareceived#DpType2Id3',
+            def (value)
+
+                # The indicator color is not reported from the Tuya MCU, but we can infer it from the current humidity, using values from the manual.
+
+                if value>=70
+                    return hct.Light.DataRGB(255,102,102)
+                elif value>=60
+                    return hct.Light.DataRGB(255,178,102)
+                else
+                    return hct.Light.DataRGB(178,255,102)
+                end
+            
+            end,
+            'rgb'
+        ),
+
     ]
+
 )
