@@ -113,7 +113,7 @@ climate=hct.Climate(
 light_indicator=hct.Light(    
     'Humidity Health Indicator',
     nil,
-    'mdi:led-on',
+    'mdi:wall-sconce-flat-variant',
     [
         In(/value->hct.tuya_send(1,101,value)),
         Out('tuyareceived#DpType1Id101'),
