@@ -27,7 +27,9 @@ callbacks=[
     Out(
         'tuyareceived#DpType2Id4',
         nil,
-        'target_humidity'
+        'target_humidity',
+        nil,
+        true
     ),
     In(
         def (value,entity)
@@ -43,12 +45,16 @@ callbacks=[
     Out(
         'tuyareceived#DpType2Id103',
         nil,
-        'current_temperature'
+        'current_temperature',
+        nil,
+        true # Dedupe, as Tuya published every 10 seconds, including duplicates.
     ),
     Out(
         'tuyareceived#DpType2Id3',
         nil,
-        'current_humidity'
+        'current_humidity',
+        nil,
+        true # Dedupe, as Tuya published every 10 seconds, including duplicates.
     ),
     Out(
         'tuyareceived#DpType4Id2',
@@ -128,11 +134,11 @@ light_indicator=hct.Light(
                 end
             
             end,
-            'rgb'
-        ),
-
+            'rgb',        
+            nil,
+            true # Dedupe.
+        )
     ]
-
 )
 
 light_uv=hct.Light(    
@@ -142,6 +148,13 @@ light_uv=hct.Light(
     [
         In(/value->hct.tuya_send(1,10,value)),
         Out('tuyareceived#DpType1Id10'),
+        Out(
+            'tuyareceived#DpType1Id10',
+            /value->hct.Light.DataRGB(178,102,255),
+            'rgb',        
+            nil,
+            true # Dedupe.
+        )
     ]
 
 )

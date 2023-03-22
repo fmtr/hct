@@ -55,12 +55,16 @@ callbacks=[
     Out(
         'tuyareceived#DpType2Id103',
         nil,
-        'current_temperature'
+        'current_temperature',
+        nil,
+        true # Dedupe, as Tuya published every 10 seconds, including duplicates.
     ),
     Out(
         'tuyareceived#DpType2Id3',
         nil,
-        'current_humidity'
+        'current_humidity',
+        nil,
+        true # Dedupe, as Tuya published every 10 seconds, including duplicates.
     ),
     Out(
         'tuyareceived#DpType4Id2',
@@ -132,9 +136,9 @@ light_indicator=hct.Light(
                 end
             
             end,
-            'rgb'
-        ),
-
+            'rgb',        
+            nil,
+            true # Dedupe.
+        )
     ]
-
 )

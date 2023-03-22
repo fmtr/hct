@@ -19,11 +19,14 @@ class Callback
     var callback
     var id
     var name_endpoint
-    def init(callback, endpoint, id)
+    var dedupe
+
+    def init(callback, endpoint, id, dedupe)
         import uuid
         self.id=id?id:callback
         self.callback=callback?callback:/value->value
         self.endpoint=endpoint?endpoint:'state'
+        self.dedupe=bool(dedupe)
     end
 
     def get_desc()
@@ -39,8 +42,8 @@ end
 class CallbackOut: Callback
     static var direction=constants.OUT
     var triggers
-    def init(triggers, callback, endpoint, id)
-        super(self).init(callback, endpoint, id)        
+    def init(triggers, callback, endpoint, id, dedupe)
+        super(self).init(callback, endpoint, id, dedupe)        
         self.triggers=classname(triggers)=='list'?triggers:[triggers]
 
     end

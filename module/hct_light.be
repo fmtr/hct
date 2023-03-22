@@ -20,6 +20,10 @@ class LightDataRGB
         return self.channels.concat(',')
     end
 
+    def ==(other)
+        return self.channels==other.channels
+    end
+
     static def from_channels(channels)
         return LightDataRGB(channels[0],channels[1],channels[2])
     end

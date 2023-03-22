@@ -227,7 +227,7 @@ class Entity
             output_raw=value_raw
         end
 
-        self.publish(name,output_raw)
+        self.publish(name,output_raw, cbo.dedupe)
 
     end
 
@@ -275,19 +275,25 @@ class Entity
             output_raw=value
         end
 
-        return self.publish(name, output_raw)
+        return self.publish(name, output_raw, cbo.dedupe)
 
     end
 
-    def publish(name, value)
+    def publish(name, value, dedupe)
 
         var topic=self.endpoint_data[name].find(constants.OUT,{}).find('topic')
 
         if topic
-            var converter=self.endpoint_data[name].find(constants.OUT,{}).find('converter',/value->value)
-            var output=json.dump({'value':converter(value)})
-            tools.log_debug([self.name,name,'Incoming publishing to state topic:', output, topic])
-            mqtt.publish(topic,output,true)
+
+            if dedupe && self.values.find(name)==value
+                tools.log_debug([self.name,name,'not publishing duplicate value', value, topic])
+            else
+                var converter=self.endpoint_data[name].find(constants.OUT,{}).find('converter',/value->value)
+                var output=json.dump({'value':converter(value)})
+                tools.log_debug([self.name,name,'publishing', output, topic])
+                mqtt.publish(topic,output,true)
+            end
+            
         end
 
         self.values[name]=value
