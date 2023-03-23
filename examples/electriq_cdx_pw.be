@@ -100,7 +100,7 @@ callbacks=[
 ]
 
 climate=hct.Climate(
-    'Dehumidifier',
+    hct.UseDeviceName,
     nil,
     nil,
     'C',

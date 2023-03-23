@@ -16,6 +16,10 @@ var MAC_LAST_SIX=tools.get_mac_last_six()
 var DEVICE_NAME=tools.get_device_name()
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
 
+class UseDeviceName
+
+end
+
 class Entity
 
     static var platform=nil
@@ -42,14 +46,7 @@ class Entity
         self.rule_registry={}
         self.callbacks_wrappeds={}
 
-        if Config.USE_LONG_NAMES
-            name=[
-                Config.DEVICE_NAME?Config.DEVICE_NAME:DEVICE_NAME,
-                name
-            ].concat(' ')
-        end
-
-        self.name=name
+        self.name=self.get_name(name)
         self.entity_id=entity_id
         self.icon=icon
         self.name_sanitized=tools.sanitize_name(self.name)
@@ -78,6 +75,22 @@ class Entity
             self.announce()
         end
 
+    end
+
+    def get_name(name)
+
+        if classname(name)==classname(UseDeviceName)
+            return DEVICE_NAME
+        end
+
+        if Config.USE_LONG_NAMES
+            name=[
+                Config.DEVICE_NAME?Config.DEVICE_NAME:DEVICE_NAME,
+                name
+            ].concat(' ')
+        end
+
+        return name
     end
 
     def get_endpoint_data()
@@ -401,4 +414,5 @@ end
 
 var mod = module("hct_entity")
 mod.Entity=Entity
+mod.UseDeviceName=UseDeviceName
 return mod

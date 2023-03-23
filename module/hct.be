@@ -68,6 +68,7 @@ hct.button_data=hct_helper.button_data
 hct.expose_updater=hct_helper.expose_updater
 hct.expose_updater_tasmota=hct_helper.expose_updater_tasmota
 hct.expose_repl=hct_helper.expose_repl
+hct.UseDeviceName=hct_entity.UseDeviceName
 hct.update_hct=tools.update_hct
 
 tools.log_debug("hct.be compiled OK.")
