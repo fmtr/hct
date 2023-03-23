@@ -351,39 +351,39 @@ class Entity
     def get_data_announce()
 
         var data
-            data= {
-                'device': {
-                    'connections': [['mac', MAC_SHORT]],
-                    'identifiers': MAC_SHORT
-                },
-                'name': self.name,
-                'unique_id': self.get_unique_id(),
-                'force_update': True,
-                'payload_available': 'Online',
-                'payload_not_available': 'Offline',
-                'availability_topic': TOPIC_LWT,
+        data= {
+            'device': {
+                'connections': [['mac', MAC_SHORT]],
+                'identifiers': MAC_SHORT
+            },
+            'name': self.name,
+            'unique_id': self.get_unique_id(),
+            'force_update': True,
+            'payload_available': 'Online',
+            'payload_not_available': 'Offline',
+            'availability_topic': TOPIC_LWT,
 
-            }
+        }
 
-            var data_update={
-                'icon':self.icon,
-                'object_id':self.entity_id
-            }
+        var data_update={
+            'icon':self.icon,
+            'object_id':self.entity_id
+        }
 
-            for name: self.endpoint_data.keys()
-                var dir_data=self.endpoint_data[name]
-                for io_data: [dir_data.find(constants.IN,{}),dir_data.find(constants.OUT,{})]
+        for name: self.endpoint_data.keys()
+            var dir_data=self.endpoint_data[name]
+            for io_data: [dir_data.find(constants.IN,{}),dir_data.find(constants.OUT,{})]
                 for keyfix: ['topic','template','payload_on','payload_off']
                     data_update[io_data.find(keyfix+'_key')]=io_data.find(keyfix)
                 end
-                end
             end
-
-            data=tools.update_map(data,data_update)
-
-            return data
-
         end
+
+        data=tools.update_map(data,data_update)
+
+        return data
+
+    end
 
     def announce()
         var data=self.get_data_announce()
