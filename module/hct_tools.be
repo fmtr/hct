@@ -229,6 +229,8 @@ end
 
 def update_hct(value)
 
+    value=value==nil?'INSTALL':value
+
     if value!='INSTALL'
         return false
     end
