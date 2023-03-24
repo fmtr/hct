@@ -21,6 +21,7 @@ import hct_update
 import hct_climate
 import hct_light
 import hct_helper
+import hct_entity
 
 # Start module definition.
 
