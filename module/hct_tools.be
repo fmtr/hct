@@ -284,6 +284,27 @@ def tuya_send(type_id,dp_id,data)
     return tasmota.cmd(cmd)
 end
 
+def get_current_version_tasmota()
+
+    import string 
+
+    var version_current=tasmota.cmd('status 2').find('StatusFWR',{}).find('Version','Unknown')    
+    var tas_seps=['(tasmota32)','(tasmota)']
+
+    var sep
+    for tas_sep: tas_seps
+        if string.find(version_current,tas_sep)>=0
+            sep=tas_sep
+        end
+    end
+
+    if sep==nil
+        return version_current
+    end    
+
+    return string.split(version_current,sep)[0]
+end
+
 var mod = module("hct_tools")
 mod.to_bool=to_bool
 mod.from_bool=from_bool
@@ -309,4 +330,5 @@ mod.get_keys=get_keys
 mod.update_hct=update_hct
 mod.get_latest_version=get_latest_version
 mod.tuya_send=tuya_send
+mod.get_current_version_tasmota=get_current_version_tasmota
 return mod

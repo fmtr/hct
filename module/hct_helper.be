@@ -6,6 +6,8 @@ import hct_callback as callback
 import hct_update
 import hct_button
 
+var VERSION_CURRENT_TASMOTA=tools.get_current_version_tasmota()
+
 class MapData
 
     var in
@@ -132,12 +134,7 @@ def expose_updater(org,repo,version_current,callback_update)
 end
 
 def expose_updater_tasmota()
-
-    var version_current=tasmota.cmd('status 2').find('StatusFWR',{}).find('Version','Unknown')
-    version_current=string.replace(version_current,'(tasmota)','')
-
-    return expose_updater('arendst','Tasmota',version_current,/value->tasmota.cmd('upgrade 1'))
-
+    return expose_updater('arendst','Tasmota',VERSION_CURRENT_TASMOTA,/value->tasmota.cmd('upgrade 1'))
 end
 
 def expose_repl()
