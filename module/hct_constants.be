@@ -89,4 +89,6 @@ mod.IN='in'
 mod.OUT='out'
 
 mod.VALUE_TEMPLATE='{{ value_json.value }}'
+mod.INT_MAX=2147483647
+
 return mod

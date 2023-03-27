@@ -9,6 +9,11 @@ class Config
     static var URL_MODULE='https://raw.githubusercontent.com/fmtr/hct/release/hct.tapp'
     static var DEVICE_NAME
 
+    static def debug()
+        Config.IS_DEBUG=!Config.IS_DEBUG
+        return Config.IS_DEBUG
+    end
+
 
 end
 

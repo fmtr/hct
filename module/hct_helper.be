@@ -80,16 +80,32 @@ class ButtonSensor: hct_sensor.Sensor
 
 end
 
+def update_hct_cb(value)
+
+    var install_payload='INSTALL'
+    value=value==nil?install_payload:value
+
+    if value!=install_payload
+        log('Update callback got unexpected payload. Was expecting "'+str(install_payload)+'". Got "'+str(value)+'".')
+        return false
+    end
+
+    log('Starting hct update...')
+
+    return tools.update_hct()
+
+end
+
 def expose_updater(org,repo,version_current,callback_update)
 
     import hct
     org=org?org:'fmtr'
     repo=repo?repo:'hct'
     version_current=version_current?version_current:hct.VERSION
-    callback_update=callback_update?callback_update:/value->callback.NoPublish(tools.update_hct(value))
+    callback_update=callback_update?callback_update:/value->callback.NoPublish(update_hct_cb(value))
 
-
-    var trigger='cron:0 0 */12 * * *'
+    var trigger=[tools.rand_up_to(60), tools.rand_up_to(60),tools.rand_up_to(12),'*','*','*'].concat(' ')    
+    trigger=['cron',trigger].concat(':')
 
     def callback_latest(value)
         var version=tools.get_latest_version(org,repo)

@@ -29,6 +29,7 @@ var hct = module(NAME)
 
 hct.VERSION=VERSION
 hct.Config=hct_config.Config
+hct.debug=hct_config.Config.debug
 
 hct.Select=hct_select.Select
 hct.Number=hct_number.Number
@@ -70,7 +71,7 @@ hct.expose_updater=hct_helper.expose_updater
 hct.expose_updater_tasmota=hct_helper.expose_updater_tasmota
 hct.expose_repl=hct_helper.expose_repl
 hct.UseDeviceName=hct_entity.UseDeviceName
-hct.update_hct=tools.update_hct
+hct.update=tools.update_hct
 
 tools.log_debug("hct.be compiled OK.")
 

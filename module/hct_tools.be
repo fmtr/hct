@@ -72,7 +72,7 @@ def download_url(url, file_path, retries)
         return true
     except .. as exception
 
-        log(['Error downloading URL',str(url),':',str(exception),'.','retries remaining:',str(retries)].concat(' '))      
+        log(['Error downloading URL',str(url),':',str(exception),'.',' Retries remaining: ',str(retries)].concat(''))      
 
         retries-=1
         if !retries
@@ -226,18 +226,14 @@ def update_map(data,data_update)
     return data
 end
 
+def update_hct(url,path_module)
 
-def update_hct(value)
-
-    value=value==nil?'INSTALL':value
-
-    if value!='INSTALL'
-        return false
-    end
+    url=url==nil?Config.URL_MODULE:url
+    path_module=path_module==nil?Config.PATH_MODULE:path_module
 
     log('Starting hct update...')
 
-    var is_download_success=download_url(Config.URL_MODULE,Config.PATH_MODULE)
+    var is_download_success=download_url(url,path_module)
     if is_download_success
         log('Download succeeded. Restarting...')
         tasmota.cmd('restart 1')        
@@ -245,10 +241,11 @@ def update_hct(value)
     else
         log('Download failed.')
         return false
-    end
-    
+    end    
 
 end
+
+
 
 def get_latest_version(org,repo)
 
@@ -305,6 +302,13 @@ def get_current_version_tasmota()
     return string.split(version_current,sep)[0]
 end
 
+def rand_up_to(limit)
+	import math
+	import hct_constants as constants
+    math.srand(tasmota.millis()) 
+	return int(math.rand()/((constants.INT_MAX*1.0)+10000)*limit)
+end
+
 var mod = module("hct_tools")
 mod.to_bool=to_bool
 mod.from_bool=from_bool
@@ -331,4 +335,5 @@ mod.update_hct=update_hct
 mod.get_latest_version=get_latest_version
 mod.tuya_send=tuya_send
 mod.get_current_version_tasmota=get_current_version_tasmota
+mod.rand_up_to=rand_up_to
 return mod
