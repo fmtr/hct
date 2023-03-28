@@ -1,4 +1,5 @@
 name: hct
 path: module
+code_mask: hct.update("{url}")
 version_updates:
   hct_constants.be: VERSION\s*=\s*'({version})'
