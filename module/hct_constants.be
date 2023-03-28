@@ -1,3 +1,5 @@
+var VERSION='0.3.21-development+2023.03.27-14.58.51'
+
 class BinarySensorDeviceClass
     static var NONE=nil
     static var BATTERY='battery'
@@ -80,6 +82,8 @@ class SensorDeviceClass
 end
 
 var mod = module("hct_constants")
+mod.NAME='hct'
+mod.VERSION=VERSION
 mod.ON='ON'
 mod.OFF='OFF'
 mod.BinarySensorDeviceClass=BinarySensorDeviceClass

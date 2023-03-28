@@ -53,7 +53,7 @@ def log_debug(messages)
         as_strs.push(str(message))
     end
 
-    var as_str=as_strs.concat(', ')
+    var as_str=as_strs.concat(' ')
     log(as_str)
 
     var timestamp=str(tasmota.cmd('Time').find('Time'))

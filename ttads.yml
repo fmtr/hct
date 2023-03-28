@@ -1,4 +1,4 @@
 name: hct
 path: module
 version_updates:
-  hct.be: VERSION\s*=\s*'({version})'
+  hct_constants.be: VERSION\s*=\s*'({version})'

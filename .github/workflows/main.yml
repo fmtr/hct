@@ -35,7 +35,7 @@ jobs:
           zip -0 -r -j hct.tapp module/*
           
           git add version
-          git add module/hct.be
+          git add module/hct_constants.be
           git add README.md
           git add hct.tapp
           

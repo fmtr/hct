@@ -1,10 +1,7 @@
-var VERSION='0.3.23'
-
+import hct_constants as constants
 import hct_tools as tools
 
-tools.log_debug("hct.be compiling...")
-
-var NAME='hct'
+tools.log_debug(["hct.be",constants.VERSION, "compiling..."])
 
 import hct_config
 import hct_callback as callback
@@ -25,9 +22,11 @@ import hct_entity
 
 # Start module definition.
 
-var hct = module(NAME)
+var hct = module(constants.NAME)
 
-hct.VERSION=VERSION
+hct.VERSION=constants.VERSION
+hct.version=constants.VERSION
+
 hct.Config=hct_config.Config
 hct.debug=hct_config.Config.debug
 
@@ -73,7 +72,7 @@ hct.expose_repl=hct_helper.expose_repl
 hct.UseDeviceName=hct_entity.UseDeviceName
 hct.update=tools.update_hct
 
-tools.log_debug("hct.be compiled OK.")
+tools.log_debug(["hct.be",constants.VERSION, "compiled OK."])
 
 log("HCT: Successfully imported Home Assistant Controls for Tasmota (hct) version "+hct.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc.")
 

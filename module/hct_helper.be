@@ -1,4 +1,5 @@
 import string
+import hct_constants as constants
 import hct_tools as tools
 import hct_sensor
 import hct_binary_sensor
@@ -101,7 +102,7 @@ def expose_updater(org,repo,version_current,callback_update)
     import hct
     org=org?org:'fmtr'
     repo=repo?repo:'hct'
-    version_current=version_current?version_current:hct.VERSION
+    version_current=version_current?version_current:constants.VERSION
     callback_update=callback_update?callback_update:/value->callback.NoPublish(update_hct_cb(value))
 
     var trigger=[tools.rand_up_to(60), tools.rand_up_to(60),tools.rand_up_to(12),'*','*','*'].concat(' ')    
