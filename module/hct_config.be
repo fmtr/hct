@@ -11,6 +11,8 @@ class Config
     static var PATH_MODULE='/hct.tapp'
     static var URL_MODULE='https://raw.githubusercontent.com/fmtr/hct/release/hct.tapp'
     static var DEVICE_NAME
+    static var IS_RAND_SET=false
+
 
     static def debug()
         Config.IS_DEBUG=!Config.IS_DEBUG

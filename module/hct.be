@@ -71,6 +71,7 @@ hct.expose_updater_tasmota=hct_helper.expose_updater_tasmota
 hct.expose_repl=hct_helper.expose_repl
 hct.UseDeviceName=hct_entity.UseDeviceName
 hct.update=tools.update_hct
+hct.rs=/->tasmota.cmd('restart 1')
 
 tools.log_debug(["hct.be",constants.VERSION, "compiled OK."])
 

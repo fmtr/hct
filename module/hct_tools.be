@@ -1,10 +1,10 @@
 import string
 import uuid
+import math
 import hct_constants as constants
 import hct_config
 
 var Config=hct_config.Config
-
 var MAC_EMPTY='00:00:00:00:00:00'
 
 def get_device_name()
@@ -302,11 +302,14 @@ def get_current_version_tasmota()
     return string.split(version_current,sep)[0]
 end
 
-def rand_up_to(limit)
-	import math
-	import hct_constants as constants
-    math.srand(tasmota.millis()) 
-	return int(math.rand()/((constants.INT_MAX*1.0)+10000)*limit)
+def get_rand(limit)
+
+    if !Config.IS_RAND_SET
+        math.srand(tasmota.millis())
+        Config.IS_RAND_SET=true
+    end
+
+    return math.rand()%limit
 end
 
 var mod = module("hct_tools")
@@ -335,5 +338,5 @@ mod.update_hct=update_hct
 mod.get_latest_version=get_latest_version
 mod.tuya_send=tuya_send
 mod.get_current_version_tasmota=get_current_version_tasmota
-mod.rand_up_to=rand_up_to
+mod.get_rand=get_rand
 return mod
