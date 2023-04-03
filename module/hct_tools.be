@@ -23,18 +23,10 @@ def from_bool(value)
   return to_bool(value)?constants.ON:constants.OFF
 end
 
-def read_url(url, retries)
 
-  var client = webclient()
-  client.begin(url)
-  var status=client.GET()
-  if status==200
-      return client.get_string()
-  else
-      log(['Error reading',str(url),'Code',str(status)].concat(' '))
-      return false
-  end
-  
+
+def log_hct(message)
+    log(string.format('%s: %s',string.toupper(constants.NAME),message))
 end
 
 def log_debug(messages)
@@ -54,14 +46,27 @@ def log_debug(messages)
     end
 
     var as_str=as_strs.concat(' ')
-    log(as_str)
+    log_hct(as_str)
 
     var timestamp=str(tasmota.cmd('Time').find('Time'))
-
-    as_str=[timestamp,as_str].concat(': ')
-    print(as_str)
+    
+    print(string.format('%s: %s',timestamp, as_str))
 
 end
+
+def read_url(url, retries)
+
+    var client = webclient()
+    client.begin(url)
+    var status=client.GET()
+    if status==200
+        return client.get_string()
+    else        
+        log_hct(string.format('Error reading "%s". Code %s', url, status))
+        return false
+    end
+    
+  end
 
 def download_url(url, file_path, retries)
 
@@ -231,15 +236,15 @@ def update_hct(url,path_module)
     url=url==nil?Config.URL_MODULE:url
     path_module=path_module==nil?Config.PATH_MODULE:path_module
 
-    log('Starting hct update...')
+    log_hct('Starting hct update...')
 
     var is_download_success=download_url(url,path_module)
     if is_download_success
-        log('Download succeeded. Restarting...')
+        log_hct('Download succeeded. Restarting...')
         tasmota.cmd('restart 1')        
         return true
     else
-        log('Download failed.')
+        log_hct('Download failed.')
         return false
     end    
 
@@ -247,22 +252,27 @@ end
 
 
 
-def get_latest_version(org,repo)
+def get_latest_version(org,repo)    
 
-    log(['Fetching', org, repo, 'latest version...'].concat(' '))
+    log_hct(string.format('Fetching %s/%s latest version...', org, repo))
 
-    var url=[
-        'https://europe-west2-extreme-flux-351112.cloudfunctions.net/get_github_latest_release_version?org=',
+    var url=string.format(
+        'https://europe-west2-extreme-flux-351112.cloudfunctions.net/get_github_latest_release_version?org=%s&repo=%s',
         org,
-        '&repo=',
         repo
-        ].concat()
+    )
 
     var version=read_url(url)
     if version
         return version
     else
-        log('Reading URL failed.')
+        log_hct(
+            string.format('Failed reading %s/%s latest version from URL "%s".',
+                org,
+                repo,
+                url
+            )
+        )
         return false
     end
 
@@ -274,10 +284,7 @@ def tuya_send(type_id,dp_id,data)
         data=int(to_bool(data))
     end
 
-    var cmd=[
-        ['TuyaSend',str(type_id)].concat(),
-        [str(dp_id),str(data)].concat(','),
-    ].concat(' ')
+    var cmd=string.format('TuyaSend%s %s,%s',type_id,dp_id,data)
     return tasmota.cmd(cmd)
 end
 

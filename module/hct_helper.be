@@ -71,7 +71,7 @@ class ButtonSensor: hct_sensor.Sensor
         icon=icon?icon:'mdi:radiobox-marked'
 
         var callback=callback.Out(
-            'BUTTON'+str(button_id)+'#ACTION',
+            string.format('BUTTON%s#ACTION',button_id),
             /value->button_data.out.find(value,-1)
         )
 
@@ -87,11 +87,11 @@ def update_hct_cb(value)
     value=value==nil?install_payload:value
 
     if value!=install_payload
-        log('Update callback got unexpected payload. Was expecting "'+str(install_payload)+'". Got "'+str(value)+'".')
+        tools.log_hct(
+            string.format('Update callback got unexpected payload. Was expecting "%s". Got "%s".',install_payload,value)
+        )        
         return false
-    end
-
-    log('Starting hct update...')
+    end    
 
     return tools.update_hct()
 
@@ -104,8 +104,7 @@ def expose_updater(org,repo,version_current,callback_update)
     version_current=version_current?version_current:constants.VERSION
     callback_update=callback_update?callback_update:/value->callback.NoPublish(update_hct_cb(value))
 
-    var trigger=[tools.get_rand(60), tools.get_rand(60),tools.get_rand(12),'*','*','*'].concat(' ')    
-    trigger=['cron',trigger].concat(':')
+    var trigger=string.format('cron:%s %s %s * * *',tools.get_rand(60), tools.get_rand(60),tools.get_rand(12))    
 
     def callback_latest(value)
         var version=tools.get_latest_version(org,repo)
@@ -117,8 +116,8 @@ def expose_updater(org,repo,version_current,callback_update)
     end
 
     var updater=hct_update.Update(
-        ['Update (',repo,')'].concat(),
-        ['https://github.com',org,repo,'releases/latest'].concat('/'),
+        string.format('Update (%s)',repo),
+        string.format('https://github.com/%s/%s/releases/latest',org,repo),        
         nil,
         nil,
         nil,
@@ -137,7 +136,7 @@ def expose_updater(org,repo,version_current,callback_update)
     end
 
     var button_check=hct_button.Button(
-        ['Update (',repo,') Check'].concat(),
+        string.format('Update (%s) Check',repo),
         nil,
         'mdi:source-branch-sync',
         [
