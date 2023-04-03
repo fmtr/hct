@@ -1,4 +1,4 @@
-var VERSION='0.3.25'
+var VERSION='0.3.26'
 
 class BinarySensorDeviceClass
     static var NONE=nil
