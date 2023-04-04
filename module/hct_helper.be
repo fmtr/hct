@@ -161,7 +161,7 @@ def expose_repl()
         nil,
         nil,
         [
-            callback.In(/value->hct.Publish(str(tasmota.cmd(value)))), 
+            callback.In(/value->callback.Publish(str(tasmota.cmd(value)))), 
             callback.Out()
         ]
 )
