@@ -4,8 +4,9 @@ import math
 import hct_constants as constants
 import hct_config
 
+import tools as tools_be
+
 var Config=hct_config.Config
-var MAC_EMPTY='00:00:00:00:00:00'
 
 def get_device_name()
     var device_name=tasmota.cmd('DeviceName').find('DeviceName')
@@ -89,27 +90,12 @@ def download_url(url, file_path, retries)
     end
 end
 
-def get_mac()
-    
-    var status_net=tasmota.cmd('status 5').find('StatusNET',{})
-    var mac_wifi=status_net.find('Mac', MAC_EMPTY)
-    var mac_ethernet=status_net.find('Ethernet', {}).find('Mac', MAC_EMPTY)    
-    
-    if [MAC_EMPTY,nil].find(mac_wifi)==nil
-        return mac_wifi
-    elif [MAC_EMPTY,nil].find(mac_ethernet)==nil
-        return mac_ethernet    
-    end
-    
-    raise "Couldn't get MAC address"
-end
-
 def get_mac_short()
-    return string.split(string.tolower(get_mac()),':').concat()
+    return string.split(string.tolower(tools_be.get_mac()),':').concat()
 end
 
 def get_mac_last_six()
-    return string.replace(string.split(get_mac(),':',3)[3],':','')
+    return string.replace(string.split(tools_be.get_mac(),':',3)[3],':','')
 end
 
 def get_topic()
@@ -325,7 +311,7 @@ mod.from_bool=from_bool
 mod.read_url=read_url
 mod.log_debug=log_debug
 mod.download_url=download_url
-mod.get_mac=get_mac
+mod.get_mac=tools_be.get_mac
 mod.get_topic=get_topic
 mod.get_topic_lwt=get_topic_lwt
 mod.get_mac_short=get_mac_short
