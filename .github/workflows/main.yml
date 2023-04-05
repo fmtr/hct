@@ -15,6 +15,7 @@ jobs:
     env:
       VERSION: ${{ github.event.inputs.version }}
       NAME: ${{ github.event.repository.name }}
+      NAME_SHORT: ${{ github.event.repository.name }}
       ORG: ${{ github.repository_owner }}
       REBRANDLY_API_KEY: ${{ secrets.REBRANDLY_API_KEY }}
       LINK_ID: 468cadc01bce4dda9b8a81f7789b0023
@@ -23,6 +24,11 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
+      - name: Install Tools
+        run: |
+          pip install tappack
+
       - name: Increment Version
         run: |
           git config --global user.name 'Frontmatter Actions'
@@ -31,13 +37,12 @@ jobs:
           echo -n ${VERSION} > version
           python3 update_version.py ${VERSION}
           
-          rm -f hct.tapp
-          zip -0 -r -j hct.tapp module/*
+          tappack --module-path module/ --tapp-path ./${NAME_SHORT}.tapp
           
           git add version
-          git add module/hct_constants.be
+          git add module/${NAME_SHORT}_constants.be
           git add README.md
-          git add hct.tapp
+          git add ${NAME_SHORT}.tapp
           
           git commit -am "Increment version number to ${VERSION} for release"
           git push          
@@ -57,6 +62,6 @@ jobs:
 
       - name: Update Link
         run: |
-          URL=https://github.com/${ORG}/${NAME}/releases/download/v${VERSION}/${NAME}.tapp
+          URL=https://github.com/${ORG}/${NAME}/releases/download/v${VERSION}/${NAME_SHORT}.tapp
           DATA="{\"destination\": \"${URL}\"}"
           curl --request POST --url https://api.rebrandly.com/v1/links/${LINK_ID} --header 'accept: application/json' --header "apikey: ${REBRANDLY_API_KEY}" --header 'content-type: application/json' --data "$DATA" &> /dev/null
