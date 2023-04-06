@@ -8,21 +8,9 @@ import tools as tools_be
 
 var Config=hct_config.Config
 
-def get_device_name()
-    var device_name=tasmota.cmd('DeviceName').find('DeviceName')
-    if !device_name
-        raise "Couldn't get device name"
-    end
-    return device_name
-end
 
-def to_bool(value)
-  return [str(true),str(1),string.tolower(constants.ON)].find(string.tolower(str(value)))!=nil
-end
 
-def from_bool(value)
-  return to_bool(value)?constants.ON:constants.OFF
-end
+
 
 
 
@@ -55,40 +43,7 @@ def log_debug(messages)
 
 end
 
-def read_url(url, retries)
 
-    var client = webclient()
-    client.begin(url)
-    var status=client.GET()
-    if status==200
-        return client.get_string()
-    else        
-        log_hct(string.format('Error reading "%s". Code %s', url, status))
-        return false
-    end
-    
-  end
-
-def download_url(url, file_path, retries)
-
-    retries=retries==nil?10:retries
-
-    try
-        tasmota.urlfetch(url,file_path)
-        return true
-    except .. as exception
-
-        log(['Error downloading URL',str(url),':',str(exception),'.',' Retries remaining: ',str(retries)].concat(''))      
-
-        retries-=1
-        if !retries
-            return false
-        else
-            return download_url(url,file_path,retries)
-        end
-
-    end
-end
 
 def get_mac_short()
     return string.split(string.tolower(tools_be.get_mac()),':').concat()
@@ -224,7 +179,7 @@ def update_hct(url,path_module)
 
     log_hct('Starting hct update...')
 
-    var is_download_success=download_url(url,path_module)
+    var is_download_success=tools_be.download_url(url,path_module)
     if is_download_success
         log_hct('Download succeeded. Restarting...')
         tasmota.cmd('restart 1')        
@@ -248,7 +203,7 @@ def get_latest_version(org,repo)
         repo
     )
 
-    var version=read_url(url)
+    var version=tools_be.read_url(url)
     if version
         return version
     else
@@ -267,7 +222,7 @@ end
 def tuya_send(type_id,dp_id,data)
 
     if type_id==1
-        data=int(to_bool(data))
+        data=int(tools_be.to_bool(data))
     end
 
     var cmd=string.format('TuyaSend%s %s,%s',type_id,dp_id,data)
@@ -306,17 +261,18 @@ def get_rand(limit)
 end
 
 var mod = module("hct_tools")
-mod.to_bool=to_bool
-mod.from_bool=from_bool
-mod.read_url=read_url
+mod.to_bool=tools_be.to_bool
+mod.from_bool=tools_be.from_bool
+mod.read_url=tools_be.read_url
+mod.download_url=tools_be.download_url
 mod.log_debug=log_debug
-mod.download_url=download_url
+
 mod.get_mac=tools_be.get_mac
 mod.get_topic=get_topic
 mod.get_topic_lwt=get_topic_lwt
 mod.get_mac_short=get_mac_short
 mod.get_mac_last_six=get_mac_last_six
-mod.get_device_name=get_device_name
+mod.get_device_name=tools_be.get_device_name
 mod.get_uptime_sec=get_uptime_sec
 mod.to_chars=to_chars
 mod.sanitize_name=sanitize_name
