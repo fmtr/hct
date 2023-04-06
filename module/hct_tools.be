@@ -43,16 +43,6 @@ def log_debug(messages)
 
 end
 
-
-
-def get_mac_short()
-    return string.split(string.tolower(tools_be.get_mac()),':').concat()
-end
-
-def get_mac_last_six()
-    return string.replace(string.split(tools_be.get_mac(),':',3)[3],':','')
-end
-
 var CHARS_ALLOWED=tools_be.to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
 var SEPS=tools_be.to_chars('_- ')
 
@@ -202,10 +192,12 @@ mod.download_url=tools_be.download_url
 mod.log_debug=log_debug
 
 mod.get_mac=tools_be.get_mac
+mod.get_mac_short=tools_be.get_mac_short
+mod.get_mac_last_six=tools_be.get_mac_last_six
+
 mod.get_topic=tools_be.get_topic
 mod.get_topic_lwt=tools_be.get_topic_lwt
-mod.get_mac_short=get_mac_short
-mod.get_mac_last_six=get_mac_last_six
+
 mod.get_device_name=tools_be.get_device_name
 mod.get_uptime_sec=tools_be.get_uptime_sec
 mod.to_chars=tools_be.to_chars
