@@ -53,44 +53,13 @@ def get_mac_last_six()
     return string.replace(string.split(tools_be.get_mac(),':',3)[3],':','')
 end
 
-def get_topic()
-    var topic=tasmota.cmd('topic').find('Topic')
-    if !topic
-        raise "Couldn't get topic"
-    end   
-    
-    topic=string.replace(topic,'%06X',get_mac_last_six())
-
-    return topic
-end
-
-def get_topic_lwt()
-    return ['tele',get_topic(),'LWT'].concat('/')
-end
-
-def get_uptime_sec()
-    var uptime=tasmota.cmd('status 11').find('StatusSTS',{}).find('UptimeSec')
-    if uptime==nil
-        raise "Couldn't get uptime"
-    end
-    return uptime
-end
-
-def to_chars(s)
-    var chars=[]
-    for i: 0..(size(s)-1) 
-        chars.push(s[i]) 
-    end 
-    return chars
-end
-
-var CHARS_ALLOWED=to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
-var SEPS=to_chars('_- ')
+var CHARS_ALLOWED=tools_be.to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
+var SEPS=tools_be.to_chars('_- ')
 
 def sanitize_name(s, sep)
     sep= sep ? sep : '-'
     var chars=[]
-    for c: to_chars(string.tolower(s))
+    for c: tools_be.to_chars(string.tolower(s))
         if SEPS.find(c)!=nil
             chars.push(sep)
         elif CHARS_ALLOWED.find(c)!=nil
@@ -98,13 +67,6 @@ def sanitize_name(s, sep)
         end        
     end 
     return chars.concat()
-end
-
-def set_default(data,key,value)
-    if !data.contains(key)
-        data[key]=value
-    end
-    return data
 end
 
 def add_rule(id,trigger,closure)   
@@ -146,32 +108,6 @@ def add_rule_once(trigger, function)
 
 end
 
-def reverse_map(data)
-    var reversed={}
-    for key: data.keys()
-        reversed[data[key]]=key
-    end
-    return reversed
-end
-
-def get_keys(data)
-    var keys=[]
-    for key: data.keys()
-        keys.push(key)
-    end
-    return keys
-end
-
-def update_map(data,data_update)
-    for key: data_update.keys()
-        var value=data_update[key]
-        if value!=nil
-            data[key]=value
-        end
-    end
-    return data
-end
-
 def update_hct(url,path_module)
 
     url=url==nil?Config.URL_MODULE:url
@@ -190,8 +126,6 @@ def update_hct(url,path_module)
     end    
 
 end
-
-
 
 def get_latest_version(org,repo)    
 
@@ -268,21 +202,21 @@ mod.download_url=tools_be.download_url
 mod.log_debug=log_debug
 
 mod.get_mac=tools_be.get_mac
-mod.get_topic=get_topic
-mod.get_topic_lwt=get_topic_lwt
+mod.get_topic=tools_be.get_topic
+mod.get_topic_lwt=tools_be.get_topic_lwt
 mod.get_mac_short=get_mac_short
 mod.get_mac_last_six=get_mac_last_six
 mod.get_device_name=tools_be.get_device_name
-mod.get_uptime_sec=get_uptime_sec
-mod.to_chars=to_chars
+mod.get_uptime_sec=tools_be.get_uptime_sec
+mod.to_chars=tools_be.to_chars
 mod.sanitize_name=sanitize_name
-mod.set_default=set_default
+mod.set_default=tools_be.set_default
 mod.add_rule=add_rule
 mod.remove_rule=remove_rule
 mod.add_rule_once=add_rule_once
-mod.reverse_map=reverse_map
-mod.update_map=update_map
-mod.get_keys=get_keys
+mod.reverse_map=tools_be.reverse_map
+mod.update_map=tools_be.update_map
+mod.get_keys=tools_be.get_keys
 mod.update_hct=update_hct
 mod.get_latest_version=get_latest_version
 mod.tuya_send=tuya_send
