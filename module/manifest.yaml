@@ -3,6 +3,7 @@ dependencies:
   tools:
     .type: URL
     url: https://github.com/fmtr/tools.be/releases/download/v0.0.7/tools.tapp
-    .channel:development:
-      .type: LocalPath
-      path: /fm/tools.be/module
+    .channels:
+      development:
+        .type: LocalPath
+        path: /fm/tools.be/module
