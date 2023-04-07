@@ -2,7 +2,7 @@ name: hct
 dependencies:
   tools:
     .type: URL
-    url: https://github.com/fmtr/tools.be/releases/download/v0.0.7/tools.tapp
+    url: https://github.com/fmtr/tools.be/releases/download/v0.0.8/tools.tapp
     .channels:
       development:
         .type: LocalPath
