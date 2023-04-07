@@ -37,7 +37,7 @@ jobs:
           echo -n ${VERSION} > version
           python3 update_version.py ${VERSION}
           
-          tappack --module-path module/ --tapp-path ./${NAME_SHORT}.tapp
+          tappack --module-path module/ --output ./${NAME_SHORT}.tapp
           
           git add version
           git add module/${NAME_SHORT}_constants.be
