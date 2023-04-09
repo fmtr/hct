@@ -1,5 +1,7 @@
 var VERSION='0.3.35'
 
+import tools_constants
+
 class BinarySensorDeviceClass
     static var NONE=nil
     static var BATTERY='battery'
@@ -84,8 +86,8 @@ end
 var mod = module("hct_constants")
 mod.NAME='hct'
 mod.VERSION=VERSION
-mod.ON='ON'
-mod.OFF='OFF'
+mod.ON=tools_constants.ON
+mod.OFF=tools_constants.OFF
 mod.BinarySensorDeviceClass=BinarySensorDeviceClass
 mod.SensorDeviceClass=SensorDeviceClass
 
