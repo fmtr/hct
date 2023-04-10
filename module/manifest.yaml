@@ -1,10 +1,23 @@
 name: hct
+
 dependencies:
+
   tools:
-    .type: URL
-    url: https://github.com/fmtr/tools.be/releases/download/v0.0.9/tools.tapp
+    .type: GitHubReleaseAsset
+    org: fmtr
+    repo: tools.be
+    filename: tools.tapp
 
     .channels:
       development:
         .type: LocalPath
         path: /fm/tools.be/module
+
+patches:
+  - .channels:
+      development:
+        .type: Version
+        path: hct_constants.be
+        pattern: \bvar\s+VERSION\s*=\s*'{version}'
+
+code_mask: hct.update("{url}")

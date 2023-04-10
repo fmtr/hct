@@ -1,5 +1,0 @@
-name: hct
-path: module
-code_mask: hct.update("{url}")
-version_updates:
-  hct_constants.be: var\s+VERSION\s*=\s*'({version})'
