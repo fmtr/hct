@@ -20,6 +20,8 @@ import hct_light
 import hct_helper
 import hct_entity
 
+import hct_debug
+
 # Start module definition.
 
 var hct = module(constants.NAME)
@@ -72,6 +74,8 @@ hct.expose_repl=hct_helper.expose_repl
 hct.UseDeviceName=hct_entity.UseDeviceName
 hct.update=tools.update_hct
 hct.rs=/->tasmota.cmd('restart 1')
+
+hct.debug=hct_debug
 
 tools.log_debug(["hct.be",constants.VERSION, "compiled OK."])
 
