@@ -77,16 +77,6 @@ def update_hct(url,path_module)
 
 end
 
-def tuya_send(type_id,dp_id,data)
-
-    if type_id==1
-        data=int(tools_be.to_bool(data))
-    end
-
-    var cmd=string.format('TuyaSend%s %s,%s',type_id,dp_id,data)
-    return tasmota.cmd(cmd)
-end
-
 def get_rand(limit)
 
     if !Config.IS_RAND_SET
@@ -98,8 +88,8 @@ def get_rand(limit)
 end
 
 var mod = module("hct_tools")
-mod.to_bool=tools_be.to_bool
-mod.from_bool=tools_be.from_bool
+mod.to_bool=tools_be.converter.to_bool
+mod.from_bool=tools_be.converter.from_bool
 mod.read_url=tools_be.read_url
 mod.download_url=tools_be.download_url
 mod.log_debug=log_debug
@@ -125,7 +115,7 @@ mod.update_map=tools_be.update_map
 mod.get_keys=tools_be.get_keys
 mod.update_hct=update_hct
 mod.get_latest_version=tools_be.get_latest_version
-mod.tuya_send=tuya_send
+mod.tuya_send=tools_be.tuya.tuya_send
 mod.get_current_version_tasmota=tools_be.get_current_version_tasmota
 mod.get_rand=get_rand
 
