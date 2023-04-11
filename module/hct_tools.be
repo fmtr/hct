@@ -8,51 +8,21 @@ import tools as tools_be
 
 var Config=hct_config.Config
 
-
-
-
-
-
-
-def log_hct(message)
-    log(string.format('%s: %s',string.toupper(constants.NAME),message))
-end
+var log_hct=tools_be.get_logger(constants.NAME)
 
 def log_debug(messages)
 
-    if !Config.IS_DEBUG
-        return
-    end
-
-    if classname(messages)!='list'
-        messages=[messages]
-    end
-
-    var as_strs=[]
-
-    for message: messages
-        as_strs.push(str(message))
-    end
-
-    var as_str=as_strs.concat(' ')
-    log_hct(as_str)
-
-    var timestamp=str(tasmota.cmd('Time').find('Time'))
-    
-    print(string.format('%s: %s',timestamp, as_str))
+    tools_be.logger_debug(log_hct,messages,Config.IS_DEBUG)
 
 end
-
-var CHARS_ALLOWED=tools_be.to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
-var SEPS=tools_be.to_chars('_- ')
 
 def sanitize_name(s, sep)
     sep= sep ? sep : '-'
     var chars=[]
     for c: tools_be.to_chars(string.tolower(s))
-        if SEPS.find(c)!=nil
+        if constants.SEPS_ALLOWED.find(c)!=nil
             chars.push(sep)
-        elif CHARS_ALLOWED.find(c)!=nil
+        elif constants.CHARS_ALLOWED.find(c)!=nil
             chars.push(c)
         end        
     end 
@@ -103,43 +73,7 @@ def update_hct(url,path_module)
     url=url==nil?Config.URL_MODULE:url
     path_module=path_module==nil?Config.PATH_MODULE:path_module
 
-    log_hct('Starting hct update...')
-
-    var is_download_success=tools_be.download_url(url,path_module)
-    if is_download_success
-        log_hct('Download succeeded. Restarting...')
-        tasmota.cmd('restart 1')        
-        return true
-    else
-        log_hct('Download failed.')
-        return false
-    end    
-
-end
-
-def get_latest_version(org,repo)    
-
-    log_hct(string.format('Fetching %s/%s latest version...', org, repo))
-
-    var url=string.format(
-        'https://europe-west2-extreme-flux-351112.cloudfunctions.net/get_github_latest_release_version?org=%s&repo=%s',
-        org,
-        repo
-    )
-
-    var version=tools_be.read_url(url)
-    if version
-        return version
-    else
-        log_hct(
-            string.format('Failed reading %s/%s latest version from URL "%s".',
-                org,
-                repo,
-                url
-            )
-        )
-        return false
-    end
+    return tools_be.update_tapp(constants.NAME, url, path_module, log_hct)
 
 end
 
@@ -169,6 +103,7 @@ mod.from_bool=tools_be.from_bool
 mod.read_url=tools_be.read_url
 mod.download_url=tools_be.download_url
 mod.log_debug=log_debug
+mod.log_hct=log_hct
 
 mod.get_mac=tools_be.get_mac
 mod.get_mac_short=tools_be.get_mac_short
@@ -189,7 +124,7 @@ mod.reverse_map=tools_be.reverse_map
 mod.update_map=tools_be.update_map
 mod.get_keys=tools_be.get_keys
 mod.update_hct=update_hct
-mod.get_latest_version=get_latest_version
+mod.get_latest_version=tools_be.get_latest_version
 mod.tuya_send=tuya_send
 mod.get_current_version_tasmota=tools_be.get_current_version_tasmota
 mod.get_rand=get_rand

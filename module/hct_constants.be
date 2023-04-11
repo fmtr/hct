@@ -1,6 +1,7 @@
 var VERSION='0.3.37'
 
 import tools_constants
+import tools as tools_be
 
 class BinarySensorDeviceClass
     static var NONE=nil
@@ -86,13 +87,17 @@ end
 var mod = module("hct_constants")
 mod.NAME='hct'
 mod.VERSION=VERSION
+
 mod.ON=tools_constants.ON
 mod.OFF=tools_constants.OFF
-mod.BinarySensorDeviceClass=BinarySensorDeviceClass
-mod.SensorDeviceClass=SensorDeviceClass
-
 mod.IN='in'
 mod.OUT='out'
+
+mod.CHARS_ALLOWED=tools_be.to_chars('abcdefghijklmnopqrstuvwxyz0123456789')
+mod.SEPS_ALLOWED=tools_be.to_chars('_- ')
+
+mod.BinarySensorDeviceClass=BinarySensorDeviceClass
+mod.SensorDeviceClass=SensorDeviceClass
 
 mod.VALUE_TEMPLATE='{{ value_json.value }}'
 mod.INT_MAX=2147483647

@@ -20,4 +20,4 @@ patches:
         path: hct_constants.be
         pattern: \bvar\s+VERSION\s*=\s*'{version}'
 
-code_mask: hct.update("{url}")
+code_mask: try hct.update("{url}") except 'attribute_error' tasmota.urlfetch("{url}") tasmota.cmd('restart 1') end

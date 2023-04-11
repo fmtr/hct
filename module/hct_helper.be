@@ -107,7 +107,7 @@ def expose_updater(org,repo,version_current,callback_update)
     var trigger=string.format('cron:%s %s %s * * *',tools.get_rand(60), tools.get_rand(60),tools.get_rand(12))    
 
     def callback_latest(value)
-        var version=tools.get_latest_version(org,repo)
+        var version=tools.get_latest_version(org,repo,tools.log_hct)
         return version?version:callback.NoPublish()
     end
 
