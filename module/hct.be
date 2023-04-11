@@ -79,6 +79,10 @@ hct.debug=hct_debug
 
 tools.log_debug(["hct.be",constants.VERSION, "compiled OK."])
 
-log("HCT: Successfully imported Home Assistant Controls for Tasmota (hct) version "+hct.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc.")
+def autoexec()
+    tools.log_hct("Successfully imported Home Assistant Controls for Tasmota (hct) version "+hct.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc.")
+end
+
+hct.autoexec=autoexec
 
 return hct
