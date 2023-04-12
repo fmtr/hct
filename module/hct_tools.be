@@ -77,16 +77,6 @@ def update_hct(url,path_module)
 
 end
 
-def get_rand(limit)
-
-    if !Config.IS_RAND_SET
-        math.srand(tasmota.millis())
-        Config.IS_RAND_SET=true
-    end
-
-    return math.rand()%limit
-end
-
 var mod = module("hct_tools")
 mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool
@@ -117,6 +107,6 @@ mod.update_hct=update_hct
 mod.get_latest_version=tools_be.get_latest_version
 mod.tuya_send=tools_be.tuya.tuya_send
 mod.get_current_version_tasmota=tools_be.get_current_version_tasmota
-mod.get_rand=get_rand
+mod.get_rand=tools_be.random.get_rand
 
 return mod
