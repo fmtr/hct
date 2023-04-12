@@ -8,11 +8,11 @@ import tools as tools_be
 
 var Config=hct_config.Config
 
-var log_hct=tools_be.get_logger(constants.NAME)
+var log_hct=tools_be.logging.get_logger(constants.NAME)
 
 def log_debug(messages)
 
-    tools_be.logger_debug(log_hct,messages,Config.IS_DEBUG)
+    tools_be.logging.logger_debug(log_hct,messages,Config.IS_DEBUG)
 
 end
 
