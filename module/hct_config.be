@@ -13,9 +13,9 @@ class Config
     static var DEVICE_NAME
     static var IS_RAND_SET=false
 
-
-    static def debug()
-        Config.IS_DEBUG=!Config.IS_DEBUG
+    static def debug(value)
+        value=value==nil?(!Config.IS_DEBUG):value
+        Config.IS_DEBUG=value
         return Config.IS_DEBUG
     end
 

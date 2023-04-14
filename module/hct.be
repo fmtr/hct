@@ -75,7 +75,7 @@ hct.UseDeviceName=hct_entity.UseDeviceName
 hct.update=tools.update_hct
 hct.rs=/->tasmota.cmd('restart 1')
 
-hct.debug=hct_debug
+hct.debug=hct_debugging
 
 tools.log_debug(["hct.be",constants.VERSION, "compiled OK."])
 
