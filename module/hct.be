@@ -20,7 +20,7 @@ import hct_light
 import hct_helper
 import hct_entity
 
-import hct_debug
+import hct_debugging
 
 # Start module definition.
 
