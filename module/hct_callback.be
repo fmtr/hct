@@ -49,9 +49,28 @@ class CallbackOut: Callback
     end
 end
 
+class CallbackData
+    var name, value, entity, callback_obj, value_last, value_raw, trigger, message, topic, code, value_bytes
+
+    def init(name, value, entity, callback_obj, value_raw, trigger, message, topic, code, value_bytes)
+        self.name=name
+        self.value=value
+        self.entity=entity
+        self.callback_obj=callback_obj
+        self.value_last=entity.values.find(name)
+        self.value_raw=value_raw
+        self.trigger=trigger
+        self.message=message
+        self.topic=topic
+        self.code=code
+        self.value_bytes=value_bytes
+    end
+end
+
 var mod = module("hct_callback")
 mod.In=CallbackIn
 mod.Out=CallbackOut
 mod.Publish=Publish
 mod.NoPublish=NoPublish
+mod.Data=CallbackData
 return mod

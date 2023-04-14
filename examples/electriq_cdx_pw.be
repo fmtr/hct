@@ -36,12 +36,12 @@ callbacks=[
     ),
     Out(
         'tuyareceived#DpType2Id4',
-        def (value,entity)
+        def (value,data)
             # Bit of a hack to workaround a bug with the MCU. Whenever Purify mode is selected, the target humidity defaults to 55%.
             # The next time Smart (Drying) mode is selected, the original target humidity is restored on the unit, but that change is never sent to the ESP.
             # The only way to resolve this is to force a full Tuya update whenever the target humidity changes to 55.
             # That update is wrapped in a delay, so that its result should not win the race condition with the original update to 55, and be overridden.
-            if value==55 && entity.values.find('target_humidity')!=55
+            if value==55 && data.value_last!=55
                 tasmota.set_timer(TUYA0_DELAY, tuyasend0)
             end
             return value

@@ -228,7 +228,20 @@ class Entity
 
         tools.log_debug([self.name,'Outgoing input:', cbo, self,name, value_raw, trigger, message])
 
-        var output_raw=cbo.callback(value_raw,self, value_raw, trigger, message)
+        var cb_data=callback.Data(
+            name, #name
+            value_raw, #value
+            self, #entity
+            cbo, #callback_obj
+            value_raw, #value_raw
+            trigger, #trigger
+            message, #message
+            nil, #topic
+            nil, #code
+            nil #value_bytes
+        )
+
+        var output_raw=cbo.callback(value_raw,cb_data)
 
         tools.log_debug([self.name,'Outgoing callback output:',name, output_raw])
 
@@ -278,7 +291,21 @@ class Entity
         var converter=self.endpoint_data[name].find(constants.IN,{}).find('converter',/value->value)
 
         var value=converter(value_raw)
-        var output_raw=cbo.callback(value,self, topic, code, value_raw, value_bytes)
+
+        var cb_data=callback.Data(
+            name, #name
+            value, #value
+            self, #entity
+            cbo, #callback_obj
+            value_raw, #value_raw
+            nil, #trigger
+            nil, #message
+            topic, #topic
+            code, #code
+            value_bytes #value_bytes
+        )
+
+        var output_raw=cbo.callback(value,cb_data)
 
         if classname(output_raw)==classname(callback.Publish)
             output_raw=output_raw.value

@@ -32,8 +32,8 @@ callbacks=[
         true
     ),
     In(
-        def (value,entity)
-            if entity.values.find('preset_mode','Smart')=='Smart'
+        def (value,data)
+            if data.entity.values.find('preset_mode','Smart')=='Smart'
                 # If unit is in Smart mode, disallow any changes to target humidity, by force-publishing 55%.
                 return hct.Publish(55)
             else
