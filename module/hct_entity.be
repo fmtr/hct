@@ -219,6 +219,7 @@ class Entity
                 )
                 self.register_rule(trigger_callback,closure_outgoing)
                 self.callbacks_wrappeds[callback_obj.id]=closure_outgoing
+                callback_obj.callbackw=closure_outgoing
 
             end
         end
@@ -279,6 +280,7 @@ class Entity
             )
             mqtt.subscribe(topic, closure_incoming)
             self.callbacks_wrappeds[callback_obj.id]=closure_incoming
+            callback_obj.callbackw=closure_incoming
 
         end
 

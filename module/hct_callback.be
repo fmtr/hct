@@ -17,6 +17,7 @@ class Callback
     static var direction
     var endpoint
     var callback
+    var callbackw
     var id
     var name_endpoint
     var dedupe
