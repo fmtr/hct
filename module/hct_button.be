@@ -6,6 +6,10 @@ class Button : hct_entity.Entity
 
 end
 
-var mod = module("hct_button")
-mod.Button=Button
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_button',
+    [
+        Button
+    ]
+)

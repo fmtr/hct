@@ -55,7 +55,11 @@ class Password : Text
     static var mode='password'
 end
 
-var mod = module("hct_text")
-mod.Text=Text
-mod.Password=Password
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_text',
+    [
+        Text,
+        Password
+    ]
+)

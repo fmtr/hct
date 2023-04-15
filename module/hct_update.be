@@ -64,6 +64,10 @@ class Update : hct_entity.Entity
 
 end
 
-var mod = module("hct_update")
-mod.Update=Update
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_update',
+    [
+        Update
+    ]
+)

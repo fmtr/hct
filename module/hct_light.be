@@ -67,6 +67,10 @@ class Light : hct_entity.Entity
 
 end
 
-var mod = module("hct_light")
-mod.Light=Light
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_light',
+    [
+        Light
+    ]
+)

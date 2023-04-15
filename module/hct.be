@@ -32,46 +32,49 @@ hct.version=constants.VERSION
 hct.Config=hct_config.Config
 hct.debug=hct_config.Config.debug
 
-hct.Select=hct_select.Select
-hct.Number=hct_number.Number
-hct.Text=hct_text.Text
-hct.Password=hct_text.Password
-hct.Sensor=hct_sensor.Sensor
-hct.Button=hct_button.Button
-hct.Switch=hct_switch.Switch
-hct.Light=hct_light.Light
-hct.BinarySensor=hct_binary_sensor.BinarySensor
-hct.ButtonSensor=hct_helper.ButtonSensor
-hct.BinarySensorMotionSwitch=hct_helper.BinarySensorMotionSwitch
+import tools as tools_be
+tools_be.module.create_module(
+    hct,
+    [
+        hct_select.Select,
+        hct_number.Number,
+        hct_text.Text,
+        hct_text.Password,
+        hct_sensor.Sensor,
+        hct_button.Button,
+        hct_switch.Switch,
+        hct_light.Light,
+        hct_binary_sensor.BinarySensor,
+        hct_helper.ButtonSensor,
+        hct_helper.BinarySensorMotionSwitch,
+        hct_humidifier.Humidifier,
+        hct_humidifier.Dehumidifier,
+        hct_climate.Climate,
+        hct_fan.Fan,
+        hct_update.Update,
+        callback.Publish,
+        callback.NoPublish,
+        hct_helper.MapData,
+        hct_helper.TuyaIO,
+        hct_entity.UseDeviceName
+    ]
+)
 
-hct.Humidifier=hct_humidifier.Humidifier
-hct.Dehumidifier=hct_humidifier.Dehumidifier
-hct.Climate=hct_climate.Climate
-
-hct.Fan=hct_fan.Fan
-
-hct.Update=hct_update.Update
-
-hct.Publish=callback.Publish
-hct.NoPublish=callback.NoPublish
 hct.CallbackOut=callback.Out
 hct.CallbackIn=callback.In
 hct.callback=callback
-hct.MapData=hct_helper.MapData
-
 hct.add_rule_once=tools.add_rule_once
 hct.download_url=tools.download_url
 hct.read_url=tools.read_url
 hct.log_debug=tools.log_debug
 hct.tuya_send=tools.tuya_send
 
-hct.TuyaIO=hct_helper.TuyaIO
 hct.button_data=hct_helper.button_data
 
 hct.expose_updater=hct_helper.expose_updater
 hct.expose_updater_tasmota=hct_helper.expose_updater_tasmota
 hct.expose_repl=hct_helper.expose_repl
-hct.UseDeviceName=hct_entity.UseDeviceName
+
 hct.update=tools.update_hct
 hct.rs=/->tasmota.cmd('restart 1')
 

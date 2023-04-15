@@ -127,7 +127,11 @@ class Dehumidifier : Humidifier
 
 end
 
-var mod = module("hct_humidifier")
-mod.Humidifier=Humidifier
-mod.Dehumidifier=Dehumidifier
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_humidifier',
+    [
+        Humidifier,
+        Dehumidifier
+    ]
+)

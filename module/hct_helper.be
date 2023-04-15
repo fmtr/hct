@@ -167,12 +167,18 @@ def expose_repl()
 )
 end
 
-var mod = module("hct_helper")
-mod.MapData=MapData
+import tools as tools_be
+var mod=tools_be.module.create_module(
+    'hct_helper',
+    [
+        MapData,
+        BinarySensorMotionSwitch,
+        ButtonSensor,
+        TuyaIO
+    ]
+)
+
 mod.button_data=button_data
-mod.BinarySensorMotionSwitch=BinarySensorMotionSwitch
-mod.ButtonSensor=ButtonSensor
-mod.TuyaIO=TuyaIO
 mod.expose_updater=expose_updater
 mod.expose_updater_tasmota=expose_updater_tasmota
 mod.expose_repl=expose_repl

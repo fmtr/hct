@@ -22,6 +22,10 @@ class Config
 
 end
 
-var mod = module("hct_config")
-mod.Config=Config
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_config',
+    [
+        Config
+    ]
+)

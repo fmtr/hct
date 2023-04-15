@@ -25,6 +25,10 @@ class Select : hct_entity.Entity
 
 end
 
-var mod = module("hct_select")
-mod.Select=Select
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_select',
+    [
+        Select
+    ]
+)

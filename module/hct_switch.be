@@ -27,6 +27,10 @@ class Switch : hct_entity.Entity
 
 end
 
-var mod = module("hct_switch")
-mod.Switch=Switch
-return mod
+import tools as tools_be
+return tools_be.module.create_module(
+    'hct_switch',
+    [
+        Switch
+    ]
+)
