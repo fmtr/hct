@@ -20,4 +20,18 @@ patches:
         path: hct_constants.be
         pattern: \bvar\s+VERSION\s*=\s*'{version}'
 
-code_mask: try hct.update("{url}") except 'attribute_error' tasmota.urlfetch("{url}") tasmota.cmd('restart 1') end
+code_mask: |
+  def download(url,path)
+  
+      def updater_default()
+          print('Using default updater...')
+          tasmota.urlfetch(url,path)
+          return tasmota.cmd('restart 1')  
+      end
+  
+      var updater=global.hct!=nil?global.hct.update:updater_default
+      var result=updater(url,path)
+      print(result)
+      return result
+  end
+  download('{url}','/hct.tapp')
