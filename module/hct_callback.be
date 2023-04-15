@@ -58,6 +58,8 @@ class CallbackData
         self.value=value
         self.entity=entity
         self.callback_obj=callback_obj
+        self.callback=callback_obj.callback
+        self.callbackw=callback_obj.callbackw
         self.value_last=entity.values.find(name)
         self.value_raw=value_raw
         self.trigger=trigger
