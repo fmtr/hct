@@ -51,7 +51,7 @@ class CallbackOut: Callback
 end
 
 class CallbackData
-    var name, value, entity, callback_obj, value_last, value_raw, trigger, message, topic, code, value_bytes
+    var name, value, entity, callback_obj, callback, callbackw, value_last, value_raw, trigger, message, topic, code, value_bytes
 
     def init(name, value, entity, callback_obj, value_raw, trigger, message, topic, code, value_bytes)
         self.name=name
