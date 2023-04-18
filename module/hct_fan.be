@@ -45,6 +45,17 @@ class Fan : hct_entity.Entity
         self.add_endpoint_data(data,'preset_mode',constants.OUT)
         self.add_endpoint_data(data,'preset_mode',constants.IN)
         self.add_endpoint_data(data,'percentage',constants.OUT,int)
+
+        self.add_endpoint_data(
+            data,
+            'percentage',
+            constants.OUT,
+            int,
+            {
+                'template_key':'percentage_value_template'
+            }
+        )
+
         self.add_endpoint_data(data,'percentage',constants.IN,int)
 
         self.add_endpoint_data(
