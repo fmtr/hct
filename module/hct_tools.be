@@ -69,15 +69,15 @@ def add_rule_once(trigger, function)
 end
 
 def update_hct(url,path_module)
-
-    url=url==nil?Config.URL_MODULE:url
-    path_module=path_module==nil?Config.PATH_MODULE:path_module
-
-    return tools_be.update_tapp(constants.NAME, url, path_module, log_hct)
-
+    return tools_be.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, path_module, log_hct)
 end
 
+
+
 var mod = module("hct_tools")
+
+mod.tools_be=tools_be
+
 mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool
 mod.read_url=tools_be.read_url
@@ -104,7 +104,7 @@ mod.reverse_map=tools_be.reverse_map
 mod.update_map=tools_be.update_map
 mod.get_keys=tools_be.get_keys
 mod.update_hct=update_hct
-mod.get_latest_version=tools_be.get_latest_version
+mod.get_latest_version_github=tools_be.get_latest_version_github
 mod.tuya_send=tools_be.tuya.tuya_send
 mod.get_current_version_tasmota=tools_be.get_current_version_tasmota
 mod.get_rand=tools_be.random.get_rand

@@ -1,5 +1,6 @@
 var VERSION='0.3.47'
 
+import string
 import tools_constants
 import tools as tools_be
 
@@ -86,6 +87,8 @@ end
 
 var mod = module("hct_constants")
 mod.NAME='hct'
+mod.ORG='fmtr'
+mod.ASSET_FILENAME=string.format('%s.tapp',mod.NAME)
 mod.VERSION=VERSION
 
 mod.ON=tools_constants.ON

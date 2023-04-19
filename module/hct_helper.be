@@ -81,7 +81,7 @@ class ButtonSensor: hct_sensor.Sensor
 
 end
 
-def update_hct_cb(value)
+def update_hct_cb(value, data)
 
     var install_payload='INSTALL'
     value=value==nil?install_payload:value
@@ -91,14 +91,20 @@ def update_hct_cb(value)
             string.format('Update callback got unexpected payload. Was expecting "%s". Got "%s".',install_payload,value)
         )        
         return false
-    end    
+    end
 
-    return tools.update_hct()
+    var version=data.values.get('latest_version')
+
+    return tools.update_hct(version)
 
 end
 
 def expose_updater(org,repo,version_current,callback_update)
-    
+
+    if !tools.tools_be.constants.WEB_CLIENT_SUPPORTS_REDIRECTS
+        raise 'runtime_error', 'GitHub-based updaters require Tasmota >=12.5.0'
+    end
+
     org=org?org:'fmtr'
     repo=repo?repo:'hct'
     version_current=version_current?version_current:constants.VERSION
@@ -107,7 +113,7 @@ def expose_updater(org,repo,version_current,callback_update)
     var trigger=string.format('cron:%s %s %s * * *',tools.get_rand(60), tools.get_rand(60),tools.get_rand(12))    
 
     def callback_latest(value)
-        var version=tools.get_latest_version(org,repo,tools.log_hct)
+        var version=tools.get_latest_version_github(org,repo)
         return version?version:callback.NoPublish()
     end
 

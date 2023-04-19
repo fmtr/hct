@@ -75,6 +75,11 @@ hct.expose_updater=hct_helper.expose_updater
 hct.expose_updater_tasmota=hct_helper.expose_updater_tasmota
 hct.expose_repl=hct_helper.expose_repl
 
+hct.constants=constants
+hct.tools_be=tools_be
+hct.hct_tools=tools
+hct.log_hct=tools.log_hct
+
 hct.update=tools.update_hct
 hct.rs=/->tasmota.cmd('restart 1')
 

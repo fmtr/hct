@@ -51,7 +51,7 @@ class CallbackOut: Callback
 end
 
 class CallbackData
-    var name, value, entity, callback_obj, callback, callbackw, value_last, value_raw, trigger, message, topic, code, value_bytes
+    var name, value, entity, callback_obj, callback, callbackw, value_last, values, value_raw, trigger, message, topic, code, value_bytes
 
     def init(name, value, entity, callback_obj, value_raw, trigger, message, topic, code, value_bytes)
         self.name=name
@@ -61,6 +61,7 @@ class CallbackData
         self.callback=callback_obj.callback
         self.callbackw=callback_obj.callbackw
         self.value_last=entity.values.find(name)
+        self.values=entity.values
         self.value_raw=value_raw
         self.trigger=trigger
         self.message=message
