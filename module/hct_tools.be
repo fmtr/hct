@@ -69,7 +69,7 @@ def add_rule_once(trigger, function)
 end
 
 def update_hct(url,path_module)
-    return tools_be.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, path_module, log_hct)
+    return tools_be.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, path_module, log_debug)
 end
 
 
