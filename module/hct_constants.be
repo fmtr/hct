@@ -1,4 +1,4 @@
-var VERSION='0.3.47'
+var VERSION='0.3.48'
 
 import string
 import tools_constants
