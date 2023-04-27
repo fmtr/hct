@@ -1,7 +1,10 @@
 import hct_constants as constants
 import hct_tools as tools
+import hct_logger
 
-tools.log_debug(["hct.be",constants.VERSION, "compiling..."])
+var logger=hct_logger.logger
+
+logger.debug(["hct.be",constants.VERSION, "compiling..."])
 
 import hct_config
 import hct_callback as callback
@@ -66,7 +69,6 @@ hct.callback=callback
 hct.add_rule_once=tools.add_rule_once
 hct.download_url=tools.download_url
 hct.read_url=tools.read_url
-hct.log_debug=tools.log_debug
 hct.tuya_send=tools.tuya_send
 
 hct.button_data=hct_helper.button_data
@@ -78,17 +80,17 @@ hct.expose_repl=hct_helper.expose_repl
 hct.constants=constants
 hct.tools_be=tools_be
 hct.hct_tools=tools
-hct.log_hct=tools.log_hct
+hct.logger=logger
 
 hct.update=tools.update_hct
 hct.rs=/->tasmota.cmd('restart 1')
 
 hct.debugging=hct_debugging
 
-tools.log_debug(["hct.be",constants.VERSION, "compiled OK."])
+logger.debug(["hct.be",constants.VERSION, "compiled OK."])
 
 def autoexec()
-    tools.log_hct("Successfully imported Home Assistant Controls for Tasmota (hct) version "+hct.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc.")
+    logger.info("Successfully imported Home Assistant Controls for Tasmota (hct) version "+hct.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc.")
 end
 
 hct.autoexec=autoexec

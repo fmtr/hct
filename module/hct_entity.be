@@ -1,10 +1,13 @@
+import mqtt
+import json
+import string
+
 import hct_constants as constants
 import hct_callback as callback
 import hct_tools as tools
 import hct_config
-import mqtt
-import json
-import string
+import hct_logger as logger
+
 
 var Config=hct_config.Config
 
@@ -184,11 +187,11 @@ class Entity
     def register_rule(trigger,closure)
         var id=[str(classname(self)),str(closure)].concat('_')
         if trigger==nil
-            tools.log_debug([self.name,'Got nil trigger so skipping rule',id])
+            logger.logger.debug([self.name,'Got nil trigger so skipping rule',id])
             return nil
         end
         var entry=tools.add_rule(id,trigger,closure)
-        tools.log_debug([self.name,'Adding rule',entry,id])
+        logger.logger.debug([self.name,'Adding rule',entry,id])
         self.rule_registry[id]=entry
         return id
     end
@@ -227,7 +230,7 @@ class Entity
 
     def callback_out_wrapper(cbo, name, value_raw, trigger, message)
 
-        tools.log_debug([self.name,'Outgoing input:', cbo, self,name, value_raw, trigger, message])
+        logger.logger.debug([self.name,'Outgoing input:', cbo, self,name, value_raw, trigger, message])
 
         var cb_data=callback.Data(
             name, #name
@@ -244,7 +247,7 @@ class Entity
 
         var output_raw=cbo.callback(value_raw,cb_data)
 
-        tools.log_debug([self.name,'Outgoing callback output:',name, output_raw])
+        logger.logger.debug([self.name,'Outgoing callback output:',name, output_raw])
 
         if classname(output_raw)==classname(callback.NoPublish)
             return
@@ -288,7 +291,7 @@ class Entity
 
     def callback_in_wrapper(cbo, name, topic, code, value_raw, value_bytes)
 
-        tools.log_debug([self.name,'Incoming input:', cbo, self, name, topic, code, value_raw, value_bytes])
+        logger.logger.debug([self.name,'Incoming input:', cbo, self, name, topic, code, value_raw, value_bytes])
 
         var converter=self.endpoint_data[name].find(constants.IN,{}).find('converter',/value->value)
 
@@ -328,11 +331,11 @@ class Entity
         if topic
 
             if dedupe && self.values.find(name)==value
-                tools.log_debug([self.name,name,'not publishing duplicate value', value, topic])
+                logger.logger.debug([self.name,name,'not publishing duplicate value', value, topic])
             else
                 var converter=self.endpoint_data[name].find(constants.OUT,{}).find('converter',/value->value)
                 var output=json.dump({'value':converter(value)})
-                tools.log_debug([self.name,name,'publishing', output, topic])
+                logger.logger.debug([self.name,name,'publishing', output, topic])
                 mqtt.publish(topic,output,true)
             end
             
@@ -416,13 +419,13 @@ class Entity
 
     def announce()
         var data=self.get_data_announce()
-        tools.log_debug([self.name, 'Doing announce', data])
+        logger.logger.debug([self.name, 'Doing announce', data])
         return mqtt.publish(self.topic_announce, json.dump(data), true)
     end
 
     def close()
 
-        tools.log_debug(['Closing',classname(self),self.name,'...'].concat(' '))
+        logger.logger.debug(['Closing',classname(self),self.name,'...'].concat(' '))
         var entry
         for id: self.rule_registry.keys()
             entry=self.rule_registry[id]

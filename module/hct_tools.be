@@ -3,18 +3,11 @@ import uuid
 import math
 import hct_constants as constants
 import hct_config
+import hct_logger as logger
 
 import tools as tools_be
 
 var Config=hct_config.Config
-
-var log_hct=tools_be.logging.get_logger(constants.NAME)
-
-def log_debug(messages)
-
-    tools_be.logging.logger_debug(log_hct,messages,Config.IS_DEBUG)
-
-end
 
 def sanitize_name(s, sep)
     sep= sep ? sep : '-'
@@ -58,18 +51,18 @@ def add_rule_once(trigger, function)
     var id=uuid.uuid4()
 
     def wrapper(value, trigger_wrapper, message)      
-        log_debug(['Removing rule-once', trigger, id])          
+        logger.logger.debug(['Removing rule-once', trigger, id])          
         tasmota.remove_rule(trigger,id)        
         return function(value, trigger_wrapper, message)
     end
     
-    log_debug(['Adding rule-once', trigger, id])          
+    logger.logger.debug(['Adding rule-once', trigger, id])          
     tasmota.add_rule(trigger,wrapper, id)    
 
 end
 
 def update_hct(url,path_module)
-    return tools_be.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, path_module, log_debug)
+    return tools_be.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, path_module)
 end
 
 
@@ -82,8 +75,6 @@ mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool
 mod.read_url=tools_be.read_url
 mod.download_url=tools_be.download_url
-mod.log_debug=log_debug
-mod.log_hct=log_hct
 
 mod.get_mac=tools_be.get_mac
 mod.get_mac_short=tools_be.get_mac_short

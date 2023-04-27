@@ -34,7 +34,7 @@ callbacks=[
     In(
         def (value,data)
             if data.entity.values.find('preset_mode','Smart')=='Smart'
-                hct.log_debug('Unit is in Smart mode, so disallowing any changes to target humidity. Force-publishing 55%.')
+                hct.logger.debug('Unit is in Smart mode, so disallowing any changes to target humidity. Force-publishing 55%.')
                 return hct.Publish(55)
             else
                 hct.tuya_send(2,4,value)

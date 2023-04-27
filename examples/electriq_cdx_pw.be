@@ -42,7 +42,7 @@ callbacks=[
             # The only way to resolve this is to force a full Tuya update whenever the target humidity changes to 55.
             # That update is wrapped in a delay, so that its result should not win the race condition with the original update to 55, and be overridden.
             if value==55 && data.value_last!=55
-                hct.log_debug('Unit set to 55% target humidity. Forcing full Tuya update (TuyaSend0)')
+                hct.logger.debug('Unit set to 55% target humidity. Forcing full Tuya update (TuyaSend0)')
                 tasmota.set_timer(TUYA0_DELAY, tuyasend0)
             end
             return value

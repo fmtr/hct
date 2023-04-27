@@ -6,6 +6,7 @@ import hct_binary_sensor
 import hct_callback as callback
 import hct_update
 import hct_button
+import hct_logger as logger
 
 var VERSION_CURRENT_TASMOTA=tools.get_current_version_tasmota()
 
@@ -87,7 +88,7 @@ def update_hct_cb(value, data)
     value=value==nil?install_payload:value
 
     if value!=install_payload
-        tools.log_hct(
+        logger.debug(
             string.format('Update callback got unexpected payload. Was expecting "%s". Got "%s".',install_payload,value)
         )        
         return false
