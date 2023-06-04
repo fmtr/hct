@@ -34,4 +34,6 @@ code_mask: |
       print(result)
       return result
   end
+  import string
+  print(string.format('%s Starting download...',tasmota.time_str(tasmota.rtc()['utc']))) 
   download('{url}','/hct.tapp')

@@ -1,4 +1,5 @@
 import string
+import tools as tools_be
 import hct_constants as constants
 import hct_tools as tools
 import hct_sensor
@@ -111,7 +112,7 @@ def expose_updater(org,repo,version_current,callback_update)
     version_current=version_current?version_current:constants.VERSION
     callback_update=callback_update?callback_update:/value->callback.NoPublish(update_hct_cb(value))
 
-    var trigger=string.format('cron:%s %s %s * * *',tools.get_rand(60), tools.get_rand(60),tools.get_rand(12))    
+    var trigger=string.format('%s %s %s * * *',tools.get_rand(60), tools.get_rand(60),tools.get_rand(12))
 
     def callback_latest(value)
         var version=tools.get_latest_version_github(org,repo)
@@ -129,16 +130,16 @@ def expose_updater(org,repo,version_current,callback_update)
         nil,
         nil,
         [
-            callback.Out(trigger, callback_current),
+            callback.Out(trigger, callback_current, nil, nil, nil, tools_be.callbacks.Cron),
             callback.In(callback_update),
-            callback.Out(trigger, callback_latest,'latest_version')
+            callback.Out(trigger, callback_latest,'latest_version',nil, nil, tools_be.callbacks.Cron)
         ]
 
     )
 
     def callback_force_publish(value)
-        updater.callbacks_wrappeds[callback_current]()
-        updater.callbacks_wrappeds[callback_latest]()
+        updater.registry.get(callback_current).function()
+        updater.registry.get(callback_latest).function()
         return version_current
     end
 
@@ -174,7 +175,6 @@ def expose_repl()
 )
 end
 
-import tools as tools_be
 var mod=tools_be.module.create_module(
     'hct_helper',
     [

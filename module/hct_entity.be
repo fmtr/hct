@@ -2,6 +2,8 @@ import mqtt
 import json
 import string
 
+import tools as tools_be
+
 import hct_constants as constants
 import hct_callback as callback
 import hct_tools as tools
@@ -38,7 +40,7 @@ class Entity
     var unique_id
     var entity_id
     var icon
-    var rule_registry
+    var registry
     var callbacks_wrappeds
     var callback_data
     var endpoint_data
@@ -46,8 +48,8 @@ class Entity
     def init(name, entity_id, icon, callbacks)
 
         self.values={}
-        self.rule_registry={}
-        self.callbacks_wrappeds={}
+
+        self.registry=tools_be.callbacks.Registry()
 
         self.name=self.get_name(name)
         self.entity_id=entity_id
@@ -62,7 +64,8 @@ class Entity
             self.callback_data[cb.endpoint][cb.direction].push(cb)
         end
 
-        self.rule_registry={}
+        
+
         #self.register_rule('System#Save',/value->self.close())
         self.topic_announce=self.get_topic_announce()
         self.subscribe_announce()
@@ -184,20 +187,9 @@ class Entity
 
     end
 
-    def register_rule(trigger,closure)
-        var id=[str(classname(self)),str(closure)].concat('_')
-        if trigger==nil
-            logger.logger.debug([self.name,'Got nil trigger so skipping rule',id])
-            return nil
-        end
-        var entry=tools.add_rule(id,trigger,closure)
-        logger.logger.debug([self.name,'Adding rule',entry,id])
-        self.rule_registry[id]=entry
-        return id
-    end
-
     def subscribe_announce()
-        self.register_rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())
+        var rule=tools_be.callbacks.Rule(RULE_MQTT_CONNECTED,/ value trigger message -> self.announce())
+        self.registry.add(rule)
     end
 
     def subscribe_out(name)
@@ -214,17 +206,15 @@ class Entity
 
         var closure_outgoing
         for callback_obj: callback_outs
+            
+            closure_outgoing=(
+                / value trigger message ->
+                self.callback_out_wrapper(callback_obj, name, value, trigger, message)
+            )
 
-            for trigger_callback: callback_obj.triggers
-                closure_outgoing=(
-                    / value trigger message ->
-                    self.callback_out_wrapper(callback_obj, name, value, trigger, message)
-                )
-                self.register_rule(trigger_callback,closure_outgoing)
-                self.callbacks_wrappeds[callback_obj.id]=closure_outgoing
-                callback_obj.callbackw=closure_outgoing
-
-            end
+            callback_obj.init_rule(closure_outgoing)
+            self.registry.add(callback_obj.rule_obj)
+            
         end
     end
 
@@ -281,9 +271,9 @@ class Entity
                 / topic code value value_bytes ->
                 self.callback_in_wrapper(callback_obj, name, topic, code, value, value_bytes)
             )
-            mqtt.subscribe(topic, closure_incoming)
-            self.callbacks_wrappeds[callback_obj.id]=closure_incoming
-            callback_obj.callbackw=closure_incoming
+
+            callback_obj.init_rule(topic,closure_incoming)
+            self.registry.add(callback_obj.rule_obj)
 
         end
 
@@ -426,11 +416,14 @@ class Entity
     def close()
 
         logger.logger.debug(['Closing',classname(self),self.name,'...'].concat(' '))
-        var entry
-        for id: self.rule_registry.keys()
-            entry=self.rule_registry[id]
-            tools.remove_rule(id, entry)
-        end
+        self.registry.remove_all()
+
+    end
+
+    def deinit()
+
+        self.close()
+
     end
 
     def converter_state_in(value)
@@ -443,7 +436,6 @@ class Entity
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_entity',
     [

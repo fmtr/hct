@@ -1,4 +1,5 @@
 import hct_constants as constants
+import tools as tools_be
 
 class Publish
     var value
@@ -18,36 +19,58 @@ class Callback
     var endpoint
     var callback
     var callbackw
+    var rule_obj
+
     var id
     var name_endpoint
     var dedupe
 
     def init(callback, endpoint, id, dedupe)
+
         import uuid
         self.id=id?id:callback
         self.callback=callback?callback:/value->value
         self.endpoint=endpoint?endpoint:'state'
         self.dedupe=bool(dedupe)
+        
+
     end
 
     def get_desc()
         return [self.endpoint, self.direction].concat(', ')
     end
+
+
+    
 end
 
 class CallbackIn: Callback
     static var direction=constants.IN
+
+    def init_rule(trigger,callbackw)
+        self.rule_obj=tools_be.callbacks.MqttSubscription(trigger,callbackw,self.id)
+        self.callbackw=callbackw
+        return self.rule_obj
+    end
     
 end
 
 class CallbackOut: Callback
     static var direction=constants.OUT
-    var triggers
-    def init(triggers, callback, endpoint, id, dedupe)
-        super(self).init(callback, endpoint, id, dedupe)        
-        self.triggers=classname(triggers)=='list'?triggers:[triggers]
-
+    var trigger
+    var RuleType
+    def init(trigger, callback, endpoint, id, dedupe, RuleType)
+        super(self).init(callback, endpoint, id, dedupe)
+        self.RuleType=RuleType?RuleType:tools_be.callbacks.Rule
+        self.trigger=trigger
     end
+
+    def init_rule(callbackw)
+        self.rule_obj=self.RuleType(self.trigger,callbackw,self.id)
+        self.callbackw=callbackw
+        return self.rule_obj
+    end
+
 end
 
 class CallbackData

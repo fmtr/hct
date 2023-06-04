@@ -74,6 +74,6 @@ def expose_climate()
 
 end
 
-var mod = module("hct_debug")
+var mod = module("hct_debugging")
 mod.expose_climate=expose_climate
 return mod

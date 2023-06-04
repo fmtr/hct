@@ -22,30 +22,6 @@ def sanitize_name(s, sep)
     return chars.concat()
 end
 
-def add_rule(id,trigger,closure)   
-    
-    var entry
-    if string.find(trigger,'cron:')!=0
-        entry={'type': 'trigger', 'trigger':trigger, 'function':closure} 
-        tasmota.add_rule(entry['trigger'],closure,id)           
-    else
-        entry={'type': 'cron', 'trigger':string.replace(trigger,'cron:',''), 'function':closure}
-        tasmota.add_cron(entry['trigger'],closure,id)
-    end
-
-    return entry
-end
-
-def remove_rule(id, entry)   
-            
-    if entry['type']=='trigger'
-        tasmota.remove_rule(entry['trigger'],id)
-    else
-        tasmota.remove_cron(id)
-    end
-
-end
-
 def add_rule_once(trigger, function)
 
     var id=uuid.uuid4()
@@ -88,8 +64,6 @@ mod.get_uptime_sec=tools_be.get_uptime_sec
 mod.to_chars=tools_be.to_chars
 mod.sanitize_name=sanitize_name
 mod.set_default=tools_be.set_default
-mod.add_rule=add_rule
-mod.remove_rule=remove_rule
 mod.add_rule_once=add_rule_once
 mod.reverse_map=tools_be.reverse_map
 mod.update_map=tools_be.update_map
