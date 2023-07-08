@@ -72,6 +72,6 @@ mod.update_hct=update_hct
 mod.get_latest_version_github=tools_be.get_latest_version_github
 mod.tuya_send=tools_be.tuya.tuya_send
 mod.get_current_version_tasmota=tools_be.get_current_version_tasmota
-mod.get_rand=tools_be.random.get_rand
+mod.get_random=tools_be.random.get_random
 
 return mod

@@ -112,7 +112,12 @@ def expose_updater(org,repo,version_current,callback_update)
     version_current=version_current?version_current:constants.VERSION
     callback_update=callback_update?callback_update:/value->callback.NoPublish(update_hct_cb(value))
 
-    var trigger=string.format('%s %s %s * * *',tools.get_rand(60), tools.get_rand(60),tools.get_rand(12))
+    var trigger=string.format(
+        '%s %s %s * * *',
+        tools.get_random(0,59),
+        tools.get_random(0,59),
+        tools.get_random(0,23)
+    )
 
     def callback_latest(value)
         var version=tools.get_latest_version_github(org,repo)
