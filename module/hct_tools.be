@@ -22,23 +22,27 @@ def sanitize_name(s, sep)
     return chars.concat()
 end
 
-def add_rule_once(trigger, function)
+def add_rule_once(trigger_outer, function)
 
     var id=uuid.uuid4()
 
     def wrapper(value, trigger_wrapper, message)      
-        logger.logger.debug(['Removing rule-once', trigger, id])          
-        tasmota.remove_rule(trigger,id)        
+        logger.logger.debug(['Removing rule-once', trigger_outer, id])          
+        tasmota.remove_rule(trigger_outer,id)        
         return function(value, trigger_wrapper, message)
     end
     
-    logger.logger.debug(['Adding rule-once', trigger, id])          
-    tasmota.add_rule(trigger,wrapper, id)    
+    logger.logger.debug(['Adding rule-once', trigger_outer, id])          
+    tasmota.add_rule(trigger_outer,wrapper, id)    
 
 end
 
 def update_hct(url,path_module)
-    return tools_be.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, path_module)
+    return tools_be.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, constants.PATH_MODULE)
+end
+
+def test(a,b,c)
+    print(a,b,c)
 end
 
 
@@ -46,6 +50,8 @@ end
 var mod = module("hct_tools")
 
 mod.tools_be=tools_be
+
+mod.test=test
 
 mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool

@@ -1,98 +1,100 @@
 import hct_constants as constants
-import hct_tools as tools
 import hct_logger
+import tools as tools_be
 
 var logger=hct_logger.logger
 
 logger.debug(["hct.be",constants.VERSION, "compiling..."])
 
-import hct_config
-import hct_callback as callback
-import hct_select
-import hct_number
-import hct_sensor
-import hct_button
-import hct_switch
-import hct_binary_sensor
-import hct_text
-import hct_humidifier
-import hct_fan
-import hct_update
-import hct_climate
-import hct_light
-import hct_helper
-import hct_entity
+var MEMBERS={
 
-import hct_debugging
+    'VERSION':def (self) return constants.VERSION end,
+    'version':def (self) return constants.VERSION end,
 
-# Start module definition.
+    'logger':def (self) return logger end,
+    'constants':def (self) return constants end,
 
-var hct = module(constants.NAME)
+    'tools_be':def (self) return tools_be end,
 
-hct.VERSION=constants.VERSION
-hct.version=constants.VERSION
+    'light':def (self) import hct_light return hct_light end,
+    'Light':def (self) return self.light.Light end,
+    'Config':def (self) import hct_config return hct_config.Config end,
 
-hct.Config=hct_config.Config
-hct.debug=hct_config.Config.debug
+    'select':def (self) import hct_select return hct_select end,
+    'Select':def (self) return self.select.Select end,
 
-import tools as tools_be
-tools_be.module.create_module(
-    hct,
-    [
-        hct_select.Select,
-        hct_number.Number,
-        hct_text.Text,
-        hct_text.Password,
-        hct_sensor.Sensor,
-        hct_button.Button,
-        hct_switch.Switch,
-        hct_light.Light,
-        hct_binary_sensor.BinarySensor,
-        hct_helper.ButtonSensor,
-        hct_helper.BinarySensorMotionSwitch,
-        hct_humidifier.Humidifier,
-        hct_humidifier.Dehumidifier,
-        hct_climate.Climate,
-        hct_fan.Fan,
-        hct_update.Update,
-        callback.Publish,
-        callback.NoPublish,
-        hct_helper.MapData,
-        hct_helper.TuyaIO,
-        hct_entity.UseDeviceName
-    ]
-)
+    'number':def (self) import hct_number return hct_number end,
+    'Number':def (self) return self.number.Number end,
 
-hct.CallbackOut=callback.Out
-hct.CallbackIn=callback.In
-hct.callback=callback
-hct.add_rule_once=tools.add_rule_once
-hct.download_url=tools.download_url
-hct.read_url=tools.read_url
-hct.tuya_send=tools.tuya_send
+    'sensor':def (self) import hct_sensor return hct_sensor end,
+    'Sensor':def (self) return self.sensor.Sensor end,
 
-hct.button_data=hct_helper.button_data
+    'switch':def (self) import hct_switch return hct_switch end,
+    'Switch':def (self) return self.switch.Switch end,
 
-hct.expose_updater=hct_helper.expose_updater
-hct.expose_updater_tasmota=hct_helper.expose_updater_tasmota
-hct.expose_repl=hct_helper.expose_repl
+    'button':def (self) import hct_button return hct_button end,
+    'Button':def (self) return self.button.Button end,
+    
+    'binary_sensor':def (self) import hct_binary_sensor return hct_binary_sensor end,
+    'BinarySensor':def (self) return self.binary_sensor.BinarySensor end,
 
-hct.constants=constants
-hct.tools_be=tools_be
-hct.hct_tools=tools
-hct.logger=logger
+    'text':def (self) import hct_text return hct_text end,
+    'Text':def (self) return self.text.Text end,
+    'Password':def (self) return self.text.Password end,
 
-hct.update=tools.update_hct
-hct.rs=/->tasmota.cmd('restart 1')
+    'helper':def (self) import hct_helper return hct_helper end,
+    'ButtonSensor':def (self) return self.helper.ButtonSensor end,
+    'BinarySensorMotionSwitch':def (self) return self.helper.BinarySensorMotionSwitch end,
+    'MapData':def (self) return self.helper.MapData end,
+    'button_data':def (self) return self.helper.button_data end,
+    'expose_updater':def (self) return self.helper.expose_updater end,
+    'expose_updater_tasmota':def (self) return self.helper.expose_updater_tasmota end,
+    'expose_repl':def (self) return self.helper.expose_repl end,
 
-hct.debugging=hct_debugging
+    'humidifier':def (self) import hct_humidifier return hct_humidifier end,
+    'Humidifier':def (self) return self.humidifier.Humidifier end,
+    'Dehumidifier':def (self) return self.humidifier.Dehumidifier end,
+
+    'climate':def (self) import hct_climate return hct_climate end,
+    'Climate':def (self) return self.climate.Climate end,
+
+    'fan':def (self) import hct_fan return hct_fan end,
+    'Fan':def (self) return self.fan.Fan end,
+
+    'update':def (self) import hct_update return hct_update end,
+    'Update':def (self) return self.update.Update end,
+
+    'debugging':def (self) import hct_debugging return hct_debugging end,
+
+    'callback':def (self) import hct_callback return hct_callback end,
+    'CallbackOut':def (self) return self.callback.Out end,
+    'CallbackIn':def (self) return self.callback.In end,
+    'Publish':def (self) return self.callback.Publish end,
+    'NoPublish':def (self) return self.callback.NoPublish end,
+    'TuyaIO':def (self) return self.callback.TuyaIO end,
+
+    'UseDeviceName':def (self) import hct_entity return hct_entity.UseDeviceName end,
+
+    'hct_tools':def (self) import hct_tools return hct_tools end,
+    'tools':def (self) return self.hct_tools end,
+
+    #'test':MW(def (self) return import hct_tools return hct_tools.test end),
+
+    # 'update':def (self) return self.hct_tools.update_hct end,
+    # 'add_rule_once':def (self) return self.hct_tools.add_rule_once end,
+    # 'download_url':def (self) return self.hct_tools.download_url end,
+    # 'read_url':def (self) return self.hct_tools.read_url end,
+    # 'tuya_send':def (self) return self.hct_tools.tuya_send end,
+
+    'rs':def (self) return tasmota.cmd('restart 1') end,
+    
+    
+}
+
+
+
+var interface=tools_be.create_lazy_import_interface(constants.NAME,MEMBERS)
 
 logger.debug(["hct.be",constants.VERSION, "compiled OK."])
 
-def autoexec()
-    logger.info("Successfully imported Home Assistant Controls for Tasmota (hct) version "+hct.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc.")
-end
-
-hct.autoexec=autoexec
-
-return hct
+return interface
