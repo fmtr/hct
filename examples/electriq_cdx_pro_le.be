@@ -1,6 +1,8 @@
 # To use this code, add it to your `autoexec.be` - or upload this script to your device and add `load("/<filename>.be")`.
 # Before using this code, make sure you've completed the initial Tuya setup, as shown here: https://templates.blakadder.com/electriq_CD12PW.html
 
+import hct
+
 var In=hct.CallbackIn
 var Out=hct.CallbackOut
 
@@ -37,7 +39,7 @@ callbacks=[
                 hct.logger.debug('Unit is in Smart mode, so disallowing any changes to target humidity. Force-publishing 55%.')
                 return hct.Publish(55)
             else
-                hct.tuya_send(2,4,value)
+                hct.tools.tuya_send(2,4,value)
             end
         end,
         'target_humidity'
@@ -72,7 +74,7 @@ callbacks=[
                 tasmota.set_power(0,false)
             else
                 tasmota.set_power(0,true)
-                hct.tuya_send(4,2,value=='fan_only'?1:0)
+                hct.tools.tuya_send(4,2,value=='fan_only'?1:0)
             end
         end,
         'mode'
@@ -83,7 +85,7 @@ callbacks=[
         'preset_mode'
     ),
     In(
-        /value->hct.tuya_send(4,2,preset_data.in.find(value,0)),
+        /value->hct.tools.tuya_send(4,2,preset_data.in.find(value,0)),
         'preset_mode'
     ),
     Out(
@@ -92,7 +94,7 @@ callbacks=[
         'swing_mode'
     ),
     In(
-        /value->hct.tuya_send(4,102,swing_data.in.find(value,0)),
+        /value->hct.tools.tuya_send(4,102,swing_data.in.find(value,0)),
         'swing_mode'
     )
 ]
@@ -117,7 +119,7 @@ light_indicator=hct.Light(
     nil,
     'mdi:wall-sconce-flat-variant',
     [
-        In(/value->hct.tuya_send(1,101,value)),
+        In(/value->hct.tools.tuya_send(1,101,value)),
         Out('tuyareceived#DpType1Id101'),
         Out(
             'tuyareceived#DpType2Id3',
@@ -146,7 +148,7 @@ light_uv=hct.Light(
     nil,
     'mdi:sun-wireless',
     [
-        In(/value->hct.tuya_send(1,10,value)),
+        In(/value->hct.tools.tuya_send(1,10,value)),
         Out('tuyareceived#DpType1Id10'),
         Out(
             'tuyareceived#DpType1Id10',

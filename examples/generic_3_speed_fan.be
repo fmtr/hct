@@ -2,6 +2,8 @@
 # To use this code, add it to your `autoexec.be` - or upload this script to your device and add `load("/<filename>.be")`.
 # See the following for additional relay config: https://gist.github.com/ejohb/07484e1a158baca4c7d33ffa8787699b
 
+import hct
+
 log("Setting up Home Assistant controls (using hct version "+hct.VERSION+")...")
 
 POWER_TRIGGERS=['Power1#state','Power2#state','Power3#state','Power4#state']
