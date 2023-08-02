@@ -7,7 +7,6 @@ dependencies:
     org: fmtr
     repo: tools.be
     filename: tools.tapp
-    extras: [ hello, bye ]
 
     .channels:
       development:
