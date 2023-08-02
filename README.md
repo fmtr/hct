@@ -8,7 +8,7 @@ Using `hct` to expose, for example, a "Restart Tasmota" button to Home Assistant
 following line to your `autoexec.be`:
 
 ```be
-hct.Button(        
+import hct hct.Button(        
     'Restart Tasmota',
     nil,
     'mdi:restart',
@@ -110,7 +110,7 @@ Then we write a very simple callback closure to set those Tuya IDs (the `value` 
 their names are selected in Home Assistant. This again uses an `hct` utility function, `tuya_send`, to send the value.
 
 ```be   
-set_cookbook_entry=/value->hct.tuya_send(4,3,food_data.in.find(value,0))
+set_cookbook_entry=/value->hct.tools.tuya_send(4,3,food_data.in.find(value,0))
 ```
 
 Now we specify a trigger, for when a change has happened on the Tasmota side (e.g. a button pressed on the air fryer),
