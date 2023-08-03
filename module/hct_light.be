@@ -1,3 +1,4 @@
+import tools as tools_be
 import json
 import hct_constants as constants
 import hct_entity
@@ -67,7 +68,6 @@ class Light : hct_entity.Entity
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_light',
     [

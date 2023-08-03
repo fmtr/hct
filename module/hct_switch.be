@@ -1,3 +1,4 @@
+import tools as tools_be
 import hct_constants as constants
 import hct_entity
 import hct_tools as tools
@@ -27,7 +28,6 @@ class Switch : hct_entity.Entity
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_switch',
     [

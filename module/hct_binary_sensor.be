@@ -1,3 +1,4 @@
+import tools as tools_be
 import hct_constants as constants
 import hct_sensor
 import hct_tools as tools
@@ -32,7 +33,7 @@ class BinarySensor : hct_sensor.Sensor
             'payload_off':constants.OFF,
             'off_delay':self.off_delay
         }
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
         return data
 

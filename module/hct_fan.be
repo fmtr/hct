@@ -1,3 +1,4 @@
+import tools as tools_be
 import hct_constants as constants
 import hct_entity
 import hct_tools as tools
@@ -97,7 +98,7 @@ class Fan : hct_entity.Entity
             'speed_range_max':self.max_speed
         }
 
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
         return data
 
@@ -105,7 +106,6 @@ class Fan : hct_entity.Entity
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_fan',
     [

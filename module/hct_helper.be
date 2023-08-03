@@ -19,8 +19,8 @@ class MapData
 
     def init(data)
         self.in=data
-        self.out=tools.reverse_map(self.in)
-        self.keys=tools.get_keys(self.in)
+        self.out=tools_be.iterator.reverse_map(self.in)
+        self.keys=tools_be.iterator.get_keys(self.in)
     end
 end
 
@@ -120,7 +120,7 @@ def expose_updater(org,repo,version_current,callback_update)
     )
 
     def callback_latest(value)
-        var version=tools.get_latest_version_github(org,repo)
+        var version=tools_be.update.get_latest_version_github(org,repo)
         return version?version:callback.NoPublish()
     end
 

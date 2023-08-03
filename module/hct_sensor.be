@@ -1,3 +1,4 @@
+import tools as tools_be
 import hct_constants as constants
 import hct_entity
 import hct_tools as tools
@@ -34,14 +35,13 @@ class Sensor : hct_entity.Entity
             'unit_of_measurement':self.uom,
             'device_class': self.device_class
         }
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
         return data
     end
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_sensor',
     [

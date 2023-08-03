@@ -1,3 +1,4 @@
+import tools as tools_be
 import hct_entity
 
 class Select : hct_entity.Entity
@@ -25,7 +26,6 @@ class Select : hct_entity.Entity
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_select',
     [

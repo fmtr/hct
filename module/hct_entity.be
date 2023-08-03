@@ -15,9 +15,9 @@ var Config=hct_config.Config
 
 var TOPIC=tools.get_topic()
 var TOPIC_LWT=tools.get_topic_lwt()
-var MAC=tools.get_mac()
-var MAC_SHORT=tools.get_mac_short()
-var MAC_LAST_SIX=tools.get_mac_last_six()
+var MAC=tools_be.network.get_mac()
+var MAC_SHORT=tools_be.network.get_mac_short()
+var MAC_LAST_SIX=tools_be.network.get_mac_last_six()
 var DEVICE_NAME=tools.get_device_name()
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
 
@@ -59,8 +59,8 @@ class Entity
         callbacks=classname(callbacks)=='list'?callbacks:[callbacks]
         self.callback_data={}
         for cb : callbacks
-            tools.set_default(self.callback_data, cb.endpoint,{})
-            tools.set_default(self.callback_data[cb.endpoint], cb.direction,[])
+            tools_be.iterator.set_default(self.callback_data, cb.endpoint,{})
+            tools_be.iterator.set_default(self.callback_data[cb.endpoint], cb.direction,[])
             self.callback_data[cb.endpoint][cb.direction].push(cb)
         end
 
@@ -112,7 +112,7 @@ class Entity
         direction=constants.IN
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            tools.set_default(data,name,{})
+            tools_be.iterator.set_default(data,name,{})
             data[name][constants.IN]={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'command_topic',
@@ -124,7 +124,7 @@ class Entity
         direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            tools.set_default(data,name,{})
+            tools_be.iterator.set_default(data,name,{})
             data[name][constants.OUT]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'state_topic',
@@ -165,7 +165,7 @@ class Entity
             }
 
         if dir==constants.OUT
-            data_update=tools.update_map(
+            data_update=tools_be.iterator.update_map(
                 data_update,
                 {
                     'template':constants.VALUE_TEMPLATE,
@@ -174,12 +174,12 @@ class Entity
             )
         end
 
-        data_update=tools.update_map(
+        data_update=tools_be.iterator.update_map(
             data_update,
             extensions
         )
 
-        data=tools.set_default(data,name,{})
+        data=tools_be.iterator.set_default(data,name,{})
         data[name][dir]=data_update
 
         return data
@@ -401,7 +401,7 @@ class Entity
             end
         end
 
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
         return data
 
@@ -435,7 +435,6 @@ class Entity
     end
 
 end
-
 return tools_be.module.create_module(
     'hct_entity',
     [

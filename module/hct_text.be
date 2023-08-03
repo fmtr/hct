@@ -1,3 +1,4 @@
+import tools as tools_be
 import hct_entity
 import hct_tools as tools
 
@@ -42,7 +43,7 @@ class Text : hct_entity.Entity
             'mode': self.mode
         }
 
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
 
         return data
@@ -55,7 +56,6 @@ class Password : Text
     static var mode='password'
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_text',
     [

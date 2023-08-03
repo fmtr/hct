@@ -1,3 +1,4 @@
+import tools as tools_be
 import hct_constants as constants
 import hct_entity
 import hct_tools as tools
@@ -31,7 +32,7 @@ class Update : hct_entity.Entity
         direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            tools.set_default(data,name,{})
+            tools_be.iterator.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'latest_version_topic',
@@ -56,7 +57,7 @@ class Update : hct_entity.Entity
             'release_url':self.release_url
         }
 
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
         return data
 
@@ -64,7 +65,6 @@ class Update : hct_entity.Entity
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_update',
     [

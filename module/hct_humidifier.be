@@ -1,6 +1,6 @@
+import tools as tools_be
 import hct_constants as constants
 import hct_entity
-import hct_tools as tools
 
 class Humidifier : hct_entity.Entity
 
@@ -43,7 +43,7 @@ class Humidifier : hct_entity.Entity
         direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            tools.set_default(data,name,{})
+            tools_be.iterator.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'mode_state_topic',
@@ -56,7 +56,7 @@ class Humidifier : hct_entity.Entity
         direction=constants.IN
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            tools.set_default(data,name,{})
+            tools_be.iterator.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'mode_command_topic',
@@ -71,7 +71,7 @@ class Humidifier : hct_entity.Entity
         direction=constants.OUT
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            tools.set_default(data,name,{})
+            tools_be.iterator.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('state',name),
                 'topic_key': 'target_humidity_state_topic',
@@ -85,7 +85,7 @@ class Humidifier : hct_entity.Entity
         direction=constants.IN
         callbacks=self.callback_data.find(name,{}).find(direction)
         if callbacks
-            tools.set_default(data,name,{})
+            tools_be.iterator.set_default(data,name,{})
             data[name][direction]={
                 'topic': self.get_topic('command',name),
                 'topic_key': 'target_humidity_command_topic',
@@ -113,7 +113,7 @@ class Humidifier : hct_entity.Entity
 
         }
 
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
         return data
 
@@ -127,7 +127,6 @@ class Dehumidifier : Humidifier
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_humidifier',
     [

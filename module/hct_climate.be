@@ -1,7 +1,8 @@
-import hct_constants as constants
-
-import hct_entity
+import tools as tools_be
 import hct_tools as tools
+import hct_constants as constants
+import hct_entity
+
 
 class Climate : hct_entity.Entity
 
@@ -148,15 +149,13 @@ class Climate : hct_entity.Entity
 
         }
 
-        data=tools.update_map(data,data_update)
+        data=tools_be.iterator.update_map(data,data_update)
 
         return data
 
     end
 
 end
-
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_climate',
     [

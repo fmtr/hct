@@ -1,3 +1,4 @@
+import tools as tools_be
 import string
 import hct_constants as constants
 
@@ -25,7 +26,6 @@ class Config
 
 end
 
-import tools as tools_be
 return tools_be.module.create_module(
     'hct_config',
     [
