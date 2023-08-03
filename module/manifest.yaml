@@ -17,7 +17,7 @@ patches:
   - .channels:
       development:
         .type: Version
-        path: hct_constants.be
+        path: hct_version.be
         pattern: \bvar\s+VERSION\s*=\s*'{version}'
 
 code_mask: |

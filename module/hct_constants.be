@@ -1,4 +1,6 @@
-var VERSION='0.3.52'
+import hct_version
+
+var VERSION=hct_version.VERSION
 
 import string
 import tools_constants
