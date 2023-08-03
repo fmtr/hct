@@ -3,13 +3,15 @@ import hct_version
 import string
 import hct_constants as constants
 
+var IS_DEVELOPMENT=string.find(hct_version.VERSION,'development')>=0
+
 class Config
 
     # Module-wide configuration
 
     static var USE_LONG_NAMES=false
-    static var IS_DEBUG=hct_version.IS_DEVELOPMENT
-    static var IS_DEVELOPMENT=hct_version.IS_DEVELOPMENT
+    static var IS_DEBUG=IS_DEVELOPMENT
+    static var IS_DEVELOPMENT=IS_DEVELOPMENT
 
     static var URL_VERSION='https://raw.githubusercontent.com/fmtr/hct/release/version'
     static var PATH_MODULE='/hct.tapp'
