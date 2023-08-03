@@ -48,9 +48,6 @@ mod.tools_be=tools_be
 mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool
 
-mod.get_device_name=tools_be.get_device_name
-mod.get_uptime_sec=tools_be.get_uptime_sec
-
 mod.sanitize_name=sanitize_name
 
 mod.add_rule_once=add_rule_once
@@ -58,6 +55,6 @@ mod.add_rule_once=add_rule_once
 
 mod.update_hct=update_hct
 
-mod.get_current_version_tasmota=tools_be.get_current_version_tasmota
+
 mod.get_random=tools_be.random.get_random
 return mod

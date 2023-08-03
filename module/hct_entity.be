@@ -18,7 +18,7 @@ var TOPIC_LWT=tools_be.mqtt.get_topic_lwt()
 var MAC=tools_be.network.get_mac()
 var MAC_SHORT=tools_be.network.get_mac_short()
 var MAC_LAST_SIX=tools_be.network.get_mac_last_six()
-var DEVICE_NAME=tools.get_device_name()
+var DEVICE_NAME=tools_be.platform.get_device_name()
 var RULE_MQTT_CONNECTED='Mqtt#Connected'
 
 class UseDeviceName

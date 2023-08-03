@@ -9,7 +9,7 @@ import hct_update
 import hct_button
 import hct_logger as logger
 
-var VERSION_CURRENT_TASMOTA=tools.get_current_version_tasmota()
+var VERSION_CURRENT_TASMOTA=tools_be.platform.get_current_version_tasmota()
 
 class MapData
 
