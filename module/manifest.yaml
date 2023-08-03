@@ -1,5 +1,11 @@
 name: hct
 
+config:
+  auto_import: false
+  .channels:
+    development:
+      auto_import: true
+
 dependencies:
 
   tools:
