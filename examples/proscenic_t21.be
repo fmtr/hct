@@ -22,7 +22,7 @@ hct.Number(
     [
         Out('tuyareceived#dptype2id103'),
         In(
-            /value->hct.tools.tuya_send(2,103,value)
+            /value->hct.tuya.send(2,103,value)
         )
     ]
 )
@@ -40,7 +40,7 @@ callback_f_to_c=Out(
     )
 
 callback_c_to_f=In(
-    /value->hct.tools.tuya_send(2,103,int((value*1.8)+32))
+    /value->hct.tuya.send(2,103,int((value*1.8)+32))
 )
 
 hct.Number(
@@ -65,7 +65,7 @@ hct.Number(
     [
         Out('tuyareceived#DpType2Id7'),
         In(
-            /value->hct.tools.tuya_send(2,7,value)
+            /value->hct.tuya.send(2,7,value)
         )
     ]
 )
@@ -88,12 +88,12 @@ def keep_warm_enable_if_time_set(value)
     if !tasmota.get_power()[2]
         hct.tools.add_rule_once(
             'Power3#state=1',
-            /->hct.tools.tuya_send(2,105,value)
+            /->hct.tuya.send(2,105,value)
             
         )
         tasmota.set_power(2,true)
     else
-        hct.tools.tuya_send(2,105,value)
+        hct.tuya.send(2,105,value)
     end
 
     return hct.Publish(value)
@@ -132,12 +132,12 @@ def delay_enable_if_time_set(value)
     if !tasmota.get_power()[3]
         hct.tools.add_rule_once(
             'Power4#state=1',
-            /->hct.tools.tuya_send(2,6,value)
+            /->hct.tuya.send(2,6,value)
             
         )
         tasmota.set_power(3,true)
     else
-        hct.tools.tuya_send(2,6,value)
+        hct.tuya.send(2,6,value)
     end
 
     return hct.Publish(value)
@@ -200,7 +200,7 @@ hct.Select(
             /value->food_data.out.find(value,'Default')
         ),
         In(
-            /value->hct.tools.tuya_send(4,3,food_data.in.find(value,0))
+            /value->hct.tuya.send(4,3,food_data.in.find(value,0))
         )
     ]
 )   

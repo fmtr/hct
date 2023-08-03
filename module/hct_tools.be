@@ -55,8 +55,6 @@ mod.test=test
 
 mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool
-mod.read_url=tools_be.read_url
-mod.download_url=tools_be.download_url
 
 mod.get_mac=tools_be.get_mac
 mod.get_mac_short=tools_be.get_mac_short
@@ -76,7 +74,6 @@ mod.update_map=tools_be.update_map
 mod.get_keys=tools_be.get_keys
 mod.update_hct=update_hct
 mod.get_latest_version_github=tools_be.get_latest_version_github
-mod.tuya_send=tools_be.tuya.tuya_send
 mod.get_current_version_tasmota=tools_be.get_current_version_tasmota
 mod.get_random=tools_be.random.get_random
 

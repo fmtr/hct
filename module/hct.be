@@ -6,11 +6,10 @@ var logger=hct_logger.logger
 
 logger.debug(["hct.be",constants.VERSION, "compiling..."])
 
+class LazyImportInterfaceHCT: tools_be.lazy_import.LazyImportInterface
 
-
-class LazyImportInterfaceHCT: tools_be.module.LazyImportInterface
-
-    static var members={
+    static var NAME=constants.NAME
+    static var MEMBERS={
 
         'VERSION':def (self) return constants.VERSION end,
         'version':def (self) return constants.VERSION end,
@@ -81,18 +80,10 @@ class LazyImportInterfaceHCT: tools_be.module.LazyImportInterface
 
         'hct_tools':def (self) import hct_tools return hct_tools end,
         'tools':def (self) return self.hct_tools end,
-
-        #'test':MW(def (self) return import hct_tools return hct_tools.test end),
-
-        # 'update':def (self) return self.hct_tools.update_hct end,
-        # 'add_rule_once':def (self) return self.hct_tools.add_rule_once end,
-        # 'download_url':def (self) return self.hct_tools.download_url end,
-        # 'read_url':def (self) return self.hct_tools.read_url end,
-        # 'tuya_send':def (self) return self.hct_tools.tuya_send end,
+        'tuya':def (self) return tools_be.tuya end,
 
         'rs':def (self) return tasmota.cmd('restart 1') end,
-        
-        
+
     }
 
     def update(url)
@@ -103,7 +94,7 @@ class LazyImportInterfaceHCT: tools_be.module.LazyImportInterface
 
 end
 
-var interface=tools_be.module.create_monad(constants.NAME, LazyImportInterfaceHCT())
+var interface=LazyImportInterfaceHCT().create_module()
 
 logger.debug(["hct.be",constants.VERSION, "compiled OK."])
 

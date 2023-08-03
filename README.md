@@ -36,7 +36,7 @@ hct.Select(
             /value->food_data.out.find(value,'Default')
         ),
         hct.CallbackIn(
-            /value->hct.tuya_send(4,3,food_data.in.find(value,0))
+            /value->hct.tuya.send(4,3,food_data.in.find(value,0))
     )
     ]
 )
@@ -107,10 +107,10 @@ food_data=hct.MapData({'Default':0, 'Fries':1,'Shrimp':2,'Pizza':3,'Chicken':4,'
 ```
 
 Then we write a very simple callback closure to set those Tuya IDs (the `value` argument) on the Tasmota side, when
-their names are selected in Home Assistant. This again uses an `hct` utility function, `tuya_send`, to send the value.
+their names are selected in Home Assistant. This again uses an `hct` utility function, `tuya.send`, to send the value.
 
 ```be   
-set_cookbook_entry=/value->hct.tools.tuya_send(4,3,food_data.in.find(value,0))
+set_cookbook_entry=/value->hct.tuya.send(4,3,food_data.in.find(value,0))
 ```
 
 Now we specify a trigger, for when a change has happened on the Tasmota side (e.g. a button pressed on the air fryer),

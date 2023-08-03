@@ -33,7 +33,7 @@ class TuyaIO
     var io
 
     def init(type_id,dp_id)
-        self.in=callback.In(/value->tools.tuya_send(type_id,dp_id,value))
+        self.in=callback.In(/value->tools.tuya.send(type_id,dp_id,value))
         self.out=callback.Out(['tuyareceived','#','DpType',type_id,'Id',dp_id].concat())
         self.io=[self.in,self.out]
     end
