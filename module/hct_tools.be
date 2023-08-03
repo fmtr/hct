@@ -48,9 +48,6 @@ mod.tools_be=tools_be
 mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool
 
-mod.get_topic=tools_be.get_topic
-mod.get_topic_lwt=tools_be.get_topic_lwt
-
 mod.get_device_name=tools_be.get_device_name
 mod.get_uptime_sec=tools_be.get_uptime_sec
 
