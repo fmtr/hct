@@ -165,21 +165,6 @@ def expose_updater_tasmota()
     return expose_updater('arendst','Tasmota',VERSION_CURRENT_TASMOTA,/value->tasmota.cmd('upgrade 1'))
 end
 
-def expose_repl()
-    import hct_text
-    return hct_text.Text(
-        'REPL',
-        nil,
-        'mdi:code-braces-box',
-        nil,
-        nil,
-        [
-            callback.In(/value->callback.Publish(str(tasmota.cmd(value)))), 
-            callback.Out()
-        ]
-)
-end
-
 var mod=tools_be.module.create_module(
     'hct_helper',
     [
@@ -193,6 +178,5 @@ var mod=tools_be.module.create_module(
 mod.button_data=button_data
 mod.expose_updater=expose_updater
 mod.expose_updater_tasmota=expose_updater_tasmota
-mod.expose_repl=expose_repl
 
 return mod
