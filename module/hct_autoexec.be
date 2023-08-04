@@ -4,7 +4,7 @@ def autoexec(metadata)
     var IS_DEVELOPMENT=metadata['channel_id']=='development'
 
     var message
-    if metadata['auto_import']
+    if metadata['import']
         message="Successfully imported hct version "+hct_version.VERSION+". You can now access it using the `hct` module, e.g. in `autoexec.be`, Berry Console, etc."
     else
         message="Successfully loaded TAPP and configured paths for hct version "+hct_version.VERSION+". To use it, you will need to `import hct`, e.g. in `autoexec.be`, Berry Console, etc."
