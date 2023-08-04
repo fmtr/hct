@@ -29,14 +29,14 @@ patches:
 code_mask: |
   def download(url,path)
   
-      def updater_default()
+      def updater_default(mod,url,path)
           print('Using default updater...')
           tasmota.urlfetch(url,path)
           return tasmota.cmd('restart 1')  
       end
   
       var updater=global.hct!=nil?global.hct.update:updater_default
-      var result=updater(url,path)
+      var result=updater(global.hct,url,path)
       print(result)
       return result
   end
