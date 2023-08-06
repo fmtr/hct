@@ -6,7 +6,6 @@ import hct_tools as tools
 class Sensor : hct_entity.Entity
 
     static var platform='sensor'
-    static var DeviceClass=constants.SensorDeviceClass
     var device_class
     var uom
     var type

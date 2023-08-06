@@ -11,21 +11,6 @@ import hct_logger as logger
 
 var VERSION_CURRENT_TASMOTA=tools_be.platform.get_current_version_tasmota()
 
-class MapData
-
-    var in
-    var out
-    var keys
-
-    def init(data)
-        self.in=data
-        self.out=tools_be.iterator.reverse_map(self.in)
-        self.keys=tools_be.iterator.get_keys(self.in)
-    end
-end
-
-var button_data=MapData({0:'CLEAR',1:'SINGLE',2:'DOUBLE',3:'TRIPLE',4:'QUAD',5:'PENTA',6:'HOLD'})
-
 class TuyaIO    
     
     var in
@@ -69,12 +54,14 @@ class ButtonSensor: hct_sensor.Sensor
 
     def init(name, button_id, entity_id, icon)
 
+        import hct_map_data
+
         name=name?name:'Button'
         icon=icon?icon:'mdi:radiobox-marked'
 
         var callback=callback.Out(
             string.format('BUTTON%s#ACTION',button_id),
-            /value->button_data.out.find(value,-1)
+            /value->hct_map_data.button_data.out.find(value,-1)
         )
 
         super(self).init(name, 'presses', int, entity_id, icon, callback, nil)
@@ -168,14 +155,12 @@ end
 var mod=tools_be.module.create_module(
     'hct_helper',
     [
-        MapData,
         BinarySensorMotionSwitch,
         ButtonSensor,
         TuyaIO
     ]
 )
 
-mod.button_data=button_data
 mod.expose_updater=expose_updater
 mod.expose_updater_tasmota=expose_updater_tasmota
 

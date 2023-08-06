@@ -12,8 +12,6 @@ end
 class NoPublish    
 end
 
-
-
 class Callback
     static var direction
     var endpoint
@@ -31,17 +29,13 @@ class Callback
         self.id=id?id:callback
         self.callback=callback?callback:/value->value
         self.endpoint=endpoint?endpoint:'state'
-        self.dedupe=bool(dedupe)
-        
+        self.dedupe=bool(dedupe)        
 
     end
 
     def get_desc()
         return [self.endpoint, self.direction].concat(', ')
-    end
-
-
-    
+    end    
 end
 
 class CallbackIn: Callback

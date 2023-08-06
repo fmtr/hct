@@ -48,8 +48,7 @@ class LazyImportInterfaceHCT: tools_be.lazy_import.LazyImportInterface
         'helper':def (self) import hct_helper return hct_helper end,
         'ButtonSensor':def (self) return self.helper.ButtonSensor end,
         'BinarySensorMotionSwitch':def (self) return self.helper.BinarySensorMotionSwitch end,
-        'MapData':def (self) return self.helper.MapData end,
-        'button_data':def (self) return self.helper.button_data end,
+
         'expose_updater':def (self) return self.helper.expose_updater end,
         'expose_updater_tasmota':def (self) return self.helper.expose_updater_tasmota end,
         'expose_repl':def (self) return self.helper.expose_repl end,
@@ -75,6 +74,9 @@ class LazyImportInterfaceHCT: tools_be.lazy_import.LazyImportInterface
         'Publish':def (self) return self.callback.Publish end,
         'NoPublish':def (self) return self.callback.NoPublish end,
         'TuyaIO':def (self) return self.callback.TuyaIO end,
+
+        'MapData':def (self) import hct_map_data return hct_map_data.MapData end,
+        'button_data':def (self) import hct_map_data return hct_map_data.button_data end,
 
         'UseDeviceName':def (self) import hct_entity return hct_entity.UseDeviceName end,
 

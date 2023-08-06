@@ -109,7 +109,7 @@ def expose_memory(seconds)
         [
             hct_callback.Out(trigger, tools.platform.get_memory_kb, nil, nil, nil, tools.callbacks.Cron)
         ],
-        hct_sensor.Sensor.DeviceClass.DATA_SIZE
+        'DATA_SIZE'
     ) 
 end
 

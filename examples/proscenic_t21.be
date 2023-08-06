@@ -172,7 +172,7 @@ hct.Sensor(
             /value->{0:'Ready',1:'Delayed Cook',2:'Cooking',3:'Keep Warm',4:'Off',5:'Cooking Complete'}.find(value,'Unknown')        
         )
     ],
-    hct.Sensor.DeviceClass.ENUM
+    'ENUM'
 )
 
 hct.Sensor(   
@@ -182,7 +182,7 @@ hct.Sensor(
     nil,
     'mdi:timer',
     Out('tuyareceived#dptype2Id8'),
-    hct.Sensor.DeviceClass.DURATION
+    'DURATION'
 )
 
 # Lastly we add the cookbook pull-down. This has already been covered in the README: https://github.com/fmtr/hct#example-walkthrough
@@ -231,7 +231,7 @@ hct.Switch(
     ]
 )
 
-# Since the functions above make the Keep Warm/Delay switches redendant, expose them instead as sensors.
+# Since the functions above make the Keep Warm/Delay switches redundant, expose them instead as sensors.
 
 hct.BinarySensor(   
     'Keep Warm',        
