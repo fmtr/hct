@@ -27,8 +27,7 @@ end
 
 class Entity
 
-    static var platform=nil
-    #static var mac=string.split(string.tolower(MAC),':').concat()
+    static var platform=nil   
 
     var values
 
@@ -44,10 +43,12 @@ class Entity
     var callbacks_wrappeds
     var callback_data
     var endpoint_data
+    var metadata
 
     def init(name, entity_id, icon, callbacks)
 
         self.values={}
+        self.metadata={}
 
         self.registry=tools_be.callbacks.Registry()
 
