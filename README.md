@@ -1,3 +1,5 @@
+:warning: `hct` is no longer being maintained as it has been [replaced by `haco`](https://github.com/fmtr/haco).
+
 # Home Assistant Controls for Tasmota
 
 This is a Tasmota Berry Script library (so requires Tasmota32) to greatly simplify the process of exposing Home

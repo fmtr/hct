@@ -13,6 +13,7 @@ dependencies:
     org: fmtr
     repo: tools.be
     filename: tools.tapp
+    version: 0.2.1
 
     .channels:
       development:
