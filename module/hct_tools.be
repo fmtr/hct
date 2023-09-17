@@ -41,19 +41,31 @@ def update_hct(url)
     return tools_be.update.update_tapp_github_asset(url, constants.ORG, constants.NAME, constants.ASSET_FILENAME, constants.PATH_MODULE)
 end
 
+def get_topic_lwt()
+
+    import string
+
+    var topic_mask=tasmota.cmd('FullTopic')['FullTopic']
+    var prefix=tasmota.cmd('prefix')['Prefix3']
+
+    var topic=topic_mask
+    topic=string.replace(topic,'%topic%',tools_be.mqtt.get_topic())
+    topic=string.replace(topic,'%prefix%',prefix)
+
+    return string.format('%sLWT',topic)
+
+end
+
 var mod = module("hct_tools")
 
 mod.tools_be=tools_be
 
 mod.to_bool=tools_be.converter.to_bool
 mod.from_bool=tools_be.converter.from_bool
-
 mod.sanitize_name=sanitize_name
-
 mod.add_rule_once=add_rule_once
-
-
 mod.update_hct=update_hct
+mod.get_topic_lwt=get_topic_lwt
 
 
 mod.get_random=tools_be.random.get_random

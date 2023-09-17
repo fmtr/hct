@@ -14,7 +14,7 @@ import hct_logger as logger
 var Config=hct_config.Config
 
 var TOPIC=tools_be.mqtt.get_topic()
-var TOPIC_LWT=tools_be.mqtt.get_topic_lwt()
+var TOPIC_LWT=tools.get_topic_lwt()
 var MAC=tools_be.network.get_mac()
 var MAC_SHORT=tools_be.network.get_mac_short()
 var MAC_LAST_SIX=tools_be.network.get_mac_last_six()
