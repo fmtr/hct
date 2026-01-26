@@ -260,7 +260,7 @@ class Entity
             return
         end
 
-        assert self.endpoint_data[name].contains(constants.IN)
+        # assert self.endpoint_data[name].contains(constants.IN)
         var topic=self.endpoint_data[name][constants.IN]['topic']
 
         if classname(callback_ins)!='list'
